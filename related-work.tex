@@ -1,0 +1,151 @@
+\section{Related Work}
+\label{sec:related-work}
+We first provide a short overview of worst-case optimal join algorithms, then we introduce Spark and finally summarize existing distributed implementations of worst-case optimal join algorithms.
+
+The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}. 
+In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}.
+In the same year, Veldhuizen proved that the algorithm ``Leapfrog Triejoin'' used in LogicBlox, a database system developed by his company, is also worst-case optimal with regards to the
+fractional edge number bound.
+Both alorithms have been shown to be instances `Generic Join' in 2013 Ngo et al.~\cite{skew-strikes-back}.
+Leapfrog Triejoin is the only worst-case join algorithm that has been implemented and benchmarked numerous times in widely different settings, e.g. Oxford course work, published research and a commercial database system~\cite{leapfrog,andreas,olddog,myria,ammar2018distributed,leapfrog-triejoin-schroeder}.
+
+Spark is the probably most widely used and industry accepted cluster computing model. 
+It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop or Haloop~\cite{haloop}, by allowing to cache results in memory between multiple queries, using so-called resilient distributed datasets~\cite{rdd}. % TODO sources for hadoop and haloop
+However, although Spark implements most operations in memory, shuffles are an exception which still writes and reads the whole intermediary dataset to and from disk.
+Consequently, shuffling remains to be a highly expensive operation which is the bottleneck of many workflows.
+Still, Spark provides the user with a general distributed data processing model with strong fault- and struggler tolerance on commodity shared-nothing clusters.
+
+Due to its generality, widespread acceptance in the industry, the ability to use cloud hardware and its fault tolerance by design, it is an attractive target for big graph processing.
+For example, GraphFrames~\cite{graphframe}, GraphX~\cite{graphx} (a Pregel~\cite{pregel} implementation) or graph query languages as \mbox{G-CORE}~\cite{gcore} and \mbox{openCypher} with their `Cyper for Apache Spark'~\cite{caps} all aim to ease graph processing on Spark.
+The last two technologies translate their graph specific operations to the relational interface of Spark (SparkSQL) to profit from Spark's relational query optimizer Catalyst~\cite{spark-sql}.
+Hence, we believe that the WCOJ's, with their efficiency for analytical graph queries, are a valuable addition to Spark's built-in join algorithms in general and these graph-on-spark systems in particular.
+
+In 2014, a Leapfrog Triejoin variant, dubbed ``Tributary Join'', was used as a distributed join algorithm on a shared-nothing architecture called ``Myria''~\cite{myria-detailed}.
+They use Tributary Join as a local, serial worst-case optimal join algorithm, combined with the Hypercube shuffle algorithm to partition the data between their machines~\cite{hypercube}.
+% TODO sort out hypercube and shares usage
+However, it is not obvious how well Hypercube shuffles scales because it replicates many of its input tuples~\cite{myria-detailed}.
+The combination of Hypercube shuffles and Tributary Join in Myria does not scale well (speedup of 8 on 64 workers compared to the time it takes on 2 nodes) which, although unlikely to be optimal, is not investigated in great detail; we therefore, explain Hypercube shuffles in detail and show that they tend to replicate all data to all nodes for bigger graph patterns~\cref{ssec:hypercube-shuffle}.
+Their approach is directly applicable to Spark.
+
+%However, it has been shown that one can use multiple rounds of Shares to trade-off more shuffle operations for less replication while maintaining optimal communication costs~\cite{shares-multi-round}.
+%Lately, in 2018, Afrati et al. published a Shares version which can handle skew and implemented it in Hadoop~\cite{sharesSkew,hadoop}.
+
+A second distributed version of worst-case optimal joins was published in 2018 based on a Timely Data Flow system~\cite{ammar2018distributed,naiad}.
+In Timely Data Flow, shuffling is a streaming, asynchronous operation which requires no disk access\footnote{The most commonly used cluster computing engines (Hadoop and Spark) implement shuffling as a synchronizing operation that requires to write and read all tuples from disk.}.
+Therefore, the number of shuffle operations is less important than in Hadoop or Spark.
+The authors take advantage of this fact by using a uniform, non-replicating partitioning scheme for their relationships.
+Then they implement a worst-case optimal join using distributed data flow operators~\cite{naiad}, e.g. min and intersection.
+Similar to us, the authors focus on scalability and efficiency in their work but due to the use of a streaming, in memory shuffles and a fine-grained batched processing scheme their approach is unlikely to be successful in Spark.
+Hence, their and our research share the same goals, however, we aim to achieve it in a more restrictive, but widely used and industrial accepted, system.
+
+
+\subsection{Hypercube shuffle}\label{ssec:hypercube-shuffle}
+We first explain how the Hypercube shuffle algorithm, \texttt{HC}, partitions data.
+After, we provide an analysis of its scaling with regards to graph patterns with an increasing number of vertices.
+
+\texttt{HC} partitions the input relationships for a multi-way join over \textit{w} worker nodes, such that, all tuples, which could be joined, end up on the same worker in a single shuffle round.
+Hence, it allows running any multi-way join algorithm locally after one shuffle round.
+The output of the join is the union of all local results.
+\texttt{HC} realizes this partitioning by logical organizing all workers in a hypercube with one dimension per join variable; we call the number of variables \textit{A} and use $a_i$ to reference a single variable.
+Each dimension has a size $p_i$, the $p_i$'s have to be chosen such that the constraint $w \ge \prod_{i}p_i$ is satisfied.  % TODO choosing problem
+In other words, each worker can be addressed by its coordinate in the hypercube of the form $\{1..p_1\} \times ... \times \{1..p_A\}$.
+
+With this topology in mind, it is straightforward to find a partitioning for all tuples from all relationships such that tuples that could join are sent to the same node.
+We choose a hash function $h_i$ for each join variable which maps its values in the range of \{1..$p_i$\}.
+Then each worker determines where to send the tuple it holds by hashing its join variables.
+This results in a coordinate in the hypercube which is fixed for all join variables, which occur in the tuple, and unbounded for join variables not bound by the tuple.
+Then the tuple is sent to all workers with a matching coordinate.
+For example, assume a join with three variables $a_1$, $a_2$ and $a_3$ and tuple \textit{t} that binds $a_1$ and $a_2$ then we get the coordinates $h_{a1}(t_{a1}) \times h_{a2}(t_{a2}) \times \{0..p_{a3}\}$ and send the tuple
+to all workers with a coordinate matching the first two attributes and arbitrary third component of the coordinate; the tuple is replicated across $p_{a_3}$ machines. 
+
+Next, we analyse the scalability of \texttt{HC} on growing graph patterns - that is, joins over a single relationship, the edge relationship of the graph \textit{E} and with two variables per atom.
+In this context, atoms of the join can be seen as the edges of the pattern and variables as vertices.
+In the following we consider the join query represented by the Datalog rule $Q(a_1, ..., a_A) = R_1(a_1, a_2), ..., R_k(a_{A-1}, a_A)$, we call $atoms(Q)$ the set of all atoms in $Q$, $p_1(R)$ and $p_2(R)$ the $p_i$ corresponding to the variables of $R$.
+We use the method described in~\cite{myria-detailed} to calculate optimal shares allocation $p_1 ... p_A$.
+
+Each worker receives $\sum_{R \in atoms(Q)} |R| / (p_1(R) * p_2(R))$ tuples under the assumption of uniform data distribution and good hash functions.
+Our argument is that the tuples of each $R$ are divided onto $p_1(R) * p_2(R)$ workers - the workers that form the hypercube planes of its two variables.
+
+In the special case of graph pattern matching where all atoms of the query are pointing to the same relationship, we can optimize \texttt{HC} shuffle such that a tuple is only sent once to a worker, although it might be assigned to it via multiple atoms.
+If we apply this optimization, we can predict the probability with which each tuple is assigned to a worker using the Poisson binomial distribution.
+The Poisson binomial distribution $Pr(n, k, u_0, ..., u_n)$ allows us to calculate the likelihood that $k$ out of $n$ independent, binary and differently distributed trials succeed, under the condition that the $i$'th trial succeeds with a probability of $u_i$.
+We then use $n = |atoms(Q)|$, $k = 0$ and $u_i=1/(p_1(R_i) * p_2(R_i))$ to calculate the probability that a tuple is not assigned to an arbitrary, fixed worker $w$.
+This allows us to predict the number of tuples assigned to each worker by $|E| * (1 - Pr(|atoms(Q)|, 0, u_0, ..., u_{|atoms(Q)|})$.
+
+\Cref{table:workload} shows the expected percentage of tuples from $E$ assigned to each node for graph patterns of different sizes calculated using Poison binomial distribution and optimal shares assignments according to the method used in~\cite{myria-detailed}.
+As we can see in this table, the number of tuples assigned to each worker grows over linear in the size of the graph pattern and that doubling the number of workers is inefficient to counter this growth.
+
+The second observation has two reasons.
+First, doubling the number of workers does not allow to double the dimensions of the hypercube - a hypercube always needs $p_1 \times ... \times p_A$ workers to be built.
+Second, the number of replicated tuples increases with a growing hypercube because each tuple from $R_i$ is replicated to $\prod_{R_j \in atoms(Q)/R_i} p_1(R_j) * p_2(R_j)$; due to the fact that each tuple binds only two out of $A$ variables the tuple is replicated over many dimensions, e.g. let the bounded varibales be $a_p$ and $a_s$ then we get  $|\{0..p_0\} \times ... a_p ... \times ... a_s... \times \{0..p_A\}|$ matching worker coordinates.
+
+
+%First, a hypercube of size $s$ and $A$ dimensions requires $s^A$ workers.
+%Second, the replication increases with $A$ and $s$; we argue that each tuple is replicated to $(s+1)^{A-2}$ workers.
+%Each tuple binds two out of $A$ variables, let's assume these are $a_p$ and $a_s$ then we have $|\{0..s\} \times ... a_p ... \times ... a_s... \times \{0..s\}|$ matching worker coordinates\footnote{The argument can be rephrased as the number of all strings of the length $A-2$ over the alphabet $\{0..s\}$}. 
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Pattern  & Edges  & workload [64]/[128] \\ \midrule
+Triangle & 3                 & 0.18 / 0.12    \\
+4-clique & 6                 & 0.59 / 0.44    \\
+5-clique & 10                & 0.9  / 0.82    \\
+House    & 5                 & 0.42 / 0.32    \\
+Diamond  & 8                 & 0.76 / 0.67    \\
+\bottomrule
+\end{tabular}
+\caption{Workload, on 64 and 128 workers, in percentage of tuples of the edge table assigned to each worker, using Poison binominial distribution to estimate the workload and the method from~\cite{myria-detailed} to determine the optimal shares configuration.}
+\label{table:workload}
+% See hc-workload-1.csv computed with a28fc458f4f8959a5af81a65f593ea22dcb8dd44
+\end{table}
+
+In light of the numbers presented in \cref{table:workload} and in line \cite{ammar2018distributed}, we conclude that the communication costs for \texttt{HC} converge towards a full broadcast for bigger graph patterns and scaling becomes increasingly inefficient.
+Anyhow, \texttt{HC} is proven to be communication cost optimal for general multi-way joins in map-reduce like systems in a single round of shuffling in multiple settings~\cite{beame2013,beame2014,beame2016}.
+Therefore, we decide to follow a different direction for distributing WCOJ's which we explain in~\cref{sec:goals}.
+
+
+
+%Below we analyse the scalability of \texttt{HC} in the context of analytical graph queries.
+%First, we point out some simple implications of our use-case, then we analyse how a growing number of variables influences the number of tuples per server, the number of servers needed to build the hypercube and the number of replicated tuples in the system.
+
+%We are discussing multi-join processing in the context of graph pattern matching; this implies that variables correspond to the number of nodes in the pattern and relations to the number of edges.
+%Hence, we have at least as many relations in each join as we have variables, so the pattern is connected, e.g. as many relations as variables for a path query or $n * (n - 1) / 2$ relations for a n-clique.
+%Another implication is that the join ranges only over a single relationship: the edge relationship of the graph.
+%When all input relationships are of the same size, the optimal choice for shares in \texttt{HC} are $p_1 = ... = p_{A-1}$~\cite{myria-detailed}.
+%In the following, we call this number the size $s$ of the hypercube.
+%The third ramification of our use-case is that each relationship has exactly two attributes.
+%This means each tuple has two fixed components in its coordinate while the rest is unbounded.
+%In the next paragraph, we show how this knowledge helps us to understand how many tuples are sent to each node.
+
+
+%Each node receives $R * |E| / s^2$ tuples with $R$ the number of relationships in the join.
+%Our argument is that each relationship $r_i$ is divided onto $s^2$ nodes (the workers that form the planes of its two attributes) and all $r_i$ are of size $|E|$.
+%If a node holds $|E|$ or more tuples after the shuffle, it would have been as good or better to broadcast \textit{E} to all nodes.
+%Hence, $s^2$ needs to be bigger than \textit{R} and therefore bigger than \textit{A} (see implications above) to beat the communication costs of a shuffle in our case.
+% Extent to unique tuples only
+
+
+
+
+
+%A novel development in Spark is the ability to generate code to execute queries on the fly, called WholeStage codegeneration, based on a technique used in the Hyper database~\cite{hyper,jira-whole-stage,1m-rows-laptop}.
+%Compiled queries have been shown to be multiple magnitudes faster than interpreted queries traditionally used in most database systems.
+%Interpreted queries are most commonly implemented using the Volcano model~\cite{volcano}.
+%This model provides a simple and composable interface for algebraic operators; basically every operator would provide an iterator interface.
+%This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on, until the next calls reach the scanning operators at the bottom of the query execution tree. 
+%These would provide a single tuple which would then be "pulled" upwards through the query tree and processed by all operators. 
+%When it reaches the root operator, the result is delivered to the user. 
+%This happens for every tuple; hence, the approach can be described as tuple-at-a-time. % TODO wording
+%Although, this interface is simple yet powerful due to its composability, it is also quite computation intensive mainly due to the high number of calls to the next function, which is often a virtual function call.
+%This high number of virtual function call is not only CPU intensive but also makes bad use of CPU registers (they are spilled on every function call) and hinders compiler optimizations.
+%Compiled queries avoid these costs by generating code specific to each query consisting mainly out of multiple, tight for-loops following each other.
+%This speeds up processing by keeping data in the CPU registers as long as possible and avoiding materilization and function calls.
+%Furthermore, it allows compiler optimizations, such as loop unrolling or ~\cite{hyper}% TODO one more.
+%We are not aware of any published efforts to speed up worst-case optimal joins via code generation.
+
+%We aim to combine the research on worst-case optimal join algorithm and Spark's extensible optimizer Catalyst to speed up graph processing for all Spark users.
+%In particular, this work will be based on either of the two distributed versions of worst-case optimal join algorithms mentioned above. 
+%We hope to further their work by evaluating which approach (shuffle + local join or timely data flow) works best on a MapReduce based processing engine as well as proving that worst-case optimal join algorithms
+%can improve performance on a complex, optimized, existing platform that has not been built with them in mind originally, albeit their high additional cost (e.g. for sorting and need for special data structures).

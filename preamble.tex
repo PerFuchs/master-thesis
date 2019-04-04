@@ -1,0 +1,77 @@
+\renewcommand{\cite}[2][]{%
+\ifx&#2&
+    \parentcite{#1}%
+\else
+    \parencite[#1]{#2}%
+\fi
+}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[left=2.5cm, right=2.5cm, top=2.5cm,  bottom=2.5cm]{geometry}
+\usepackage[activate]{microtype}
+\usepackage[american]{babel}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{csquotes}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nth}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage[inline]{enumitem}
+\setlist{noitemsep}
+\renewcommand{\labelitemi}{$-$}
+
+\usepackage{placeins}
+\usepackage{footnote}
+
+\usepackage[
+	pdftitle={},
+	pdfauthor={},
+	pdfcreator={pdflatex, LaTeX with KOMA-Script},
+	pdfpagemode=UseOutlines,
+	pdfdisplaydoctitle=true,
+	pdflang={english}
+]{hyperref}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=black,
+	filecolor=black,
+	menucolor=black,
+	urlcolor=black,
+	linktocpage=true,
+	bookmarksnumbered=true,
+	linktoc=all
+}
+
+\usepackage[
+	backend=biber,
+	bibwarn=true,
+	bibencoding=utf8,
+	sortlocale=en_US,
+	style=numeric
+]{biblatex}
+
+\bibliography{bibliography} 
+
+\DeclareLanguageMapping{american}{american-apa}
+
+\renewcommand{\cite}{\parencite}
+\usepackage{cleveref}
+
+\usepackage{booktabs}
+\usepackage{makecell}
+
+
+%\usepackage[compact]{titlesec}
+%\titlespacing{\section}{0pt}{*2}{*0}
+%\titlespacing{\subsection}{0pt}{*2}{*0}
+%\titlespacing{\subsubsection}{0pt}{*2}{*0}
+\setlength{\parskip}{10pt}
+\setlength{\parindent}{0pt}

@@ -1,0 +1,38 @@
+\documentclass[11pt]{article}
+\input{preamble.tex}
+
+\title{
+  Fast, scalable WCOJ graph-pattern matching on in-memory graphs in Spark\\
+  \vspace{0.6cm}
+  \large Master thesis draft 1.1st iteration
+}
+\author{Per Fuchs}
+\date{April 2019}
+
+\begin{document}
+
+\maketitle
+
+\abstract{
+ Graph pattern matching with their vast number of cyclic foreign-key joins is a new challenge for data processing systems, like Spark, because their intermediary results grow over linear with regards to the inputs and are materialized by the traditionally used binary joins.
+ Worst-case optimal join algorithms, WCOJ's, are a natural match to tackle this challenge because they do not materialize the aforementioned large intermediary results.
+ We investigate two major open questions regarding WCOJ's.
+ First, we develop a WCOJ specialized to graph-pattern matching, namely self-joins on a relationship with two attributes, and compare its performance with a general WCOJ.
+ Second, we propose a novel method to distribute WCOJ's. 
+ We show in our proposal that current methods to distribute WCOJ's, suitable for Spark, do not scale well to bigger graph pattern (five vertices and more).
+ Based on this result we propose to keep the edge relationship cached on all workers but distribute the computation using a logical partitioning.
+ Along the line of argumentation in COST~\cite{cost}, we aim to provide a fast WCOJ implementation in Spark which scales well in use of computational resources by trading off scalability in memory usage.
+ This is a reasonable trade-off as most graphs today fit in main memory~\cite{snap}. % TODO also cite position paper from Sahihoglus colleague here
+ Our thesis provides the first distributed, open-source implementation of a WCOJ in a data processing system widely used in industry, namely Spark.
+}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.7em}
+
+\input{introduction.tex}
+\input{related-work.tex}
+\input{implementation.tex}
+
+\printbibliography
+
+\end{document}
