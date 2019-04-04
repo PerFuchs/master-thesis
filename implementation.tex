@@ -1,9 +1,28 @@
-\section{Implementation} \label{sec:implementation}
+\section{Implementation}\label{sec:implementation}
 
-\subsection{User interface}
+\subsection{User interface}\label{subsec:user-interface}
+\begin{listing}[H]
+    \inputminted{scala}{code/usage-example.scala}
+    \caption{Example usage of a WCOJ to find triangles in graph.}
+    \label{lst:usage-example}
+\end{listing}
 
-\subsection{Spark integration}
+As one can see in line 16 % LINE
+of~\cref{lst:usage-example}, we support a clean and precise DSL to match patterns in graphs.
+This DSL is inspired by GraphFrames~\cite{graph-frames}.
+The user can define a pattern by its edges, each edge is written as \texttt{(a) - [] -> (b)} where \texttt{a} is the
+source node and \texttt{b} is the destination, multiple edges are separated by a semicolon.
+A connected pattern is expressed by defining multiple edges with the same source or destination.
+One should be aware, that a named source or destination is not guaranteed to be a distinct element in the graph,
+e.g. \texttt{(a) - [] -> (b); (b) - [] -> (c)} could be a linear path of size two or a circle between \texttt{a} and
+\texttt{b}; in the second case \texttt{a} and \texttt{c} are the same element.
+The reader might wonders why we chose to stay with the GraphFrame syntax for edges of
+\texttt{- [] ->}, although, we could have went with something simpler, like \texttt{->}.
+However, sticking to the more verbose syntax allows us to include labels inside of the squared brackets, e.g.
+for our stretch goal of integration with CAPS.
 
-\subsection{General sequential version (\texttt{seq})}
+\subsection{Spark integration}\label{subsec:spark-integration}
+
+\subsection{General sequential version (\texttt{seq})}\label{subsec:general-sequential-versiontexttt}
 
 \subsubsection{Graph pattern sequential version (\texttt{graph-pattern-seq})}
