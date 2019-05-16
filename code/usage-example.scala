@@ -5,17 +5,16 @@ val sparkSession = SparkSession.builder.
 
 // read a dataframe
 val df = sparkSession.read
-  .format("com.databricks.spark.csv")
   .option("inferSchema", "true")
-  .load("/path/to/edge/relationship")
+  .csv("/path/to/edge/relationship")
 
 // df needs columns called `edge_id`, `src` and `dst`
-val edges: CachedGraphTopologyFrame = df.cachedGraphTopology()
-
 // Use WCOJ to find a triangle pattern
-val triangles = edges.find(
+val triangles = df.find(
   """(a) - [] -> (b);
     |(b) - [] -> (c);
-    |(a) - [] -> (c)""".stripMargin)
+    |(a) - [] -> (c)""".stripMargin,
+  Seq("a", "b", "c")
+)
 triangles.limit(10).show()
-// Shows a dataset with 6 columns: `a`, `b`, `c`, `ab_id`, `bc_id` and `ac_id`.
+// Shows a dataset with 3 columns: `a`, `b`, `c` being node ids

@@ -1,5 +1,22 @@
 \section{Implementation}\label{sec:implementation}
 
+\subsection{General sequential version (\texttt{seq})}\label{subsec:general-sequential-versiontexttt}
+
+% Leapfrogjoin
+% TrieIterator interface
+%   implementation on arrays TrieIterable.TrieIteratorImpl   cite to Myria and Tributary join
+% LeapfrogTriejoin  (cite to LFTJ2012)
+%    implementation of a state machine to iterate the tries
+
+% Optimizations
+%  no use of scala collections and foreach, instead while and arrays
+%  move indirections out of the critical path, e.g. by subclassing Spark's columnvector class to allow direct access to underlying array
+%  use linear search under threshold (experiments show that there is no big change in performance between 30 to 120 with peak for 60, and lower performance for 400 and 0)
+%  implement smallest possible version of lub and linear search
+%  no sorting
+%  state machine unrolling and predication not helpful
+%  reimplement in java not helpful
+
 \subsection{User interface}\label{subsec:user-interface}
 \begin{listing}[H]
     \inputminted{scala}{code/usage-example.scala}
@@ -11,18 +28,44 @@ As one can see in line 16 % LINE
 of~\cref{lst:usage-example}, we support a clean and precise DSL to match patterns in graphs.
 This DSL is inspired by GraphFrames~\cite{graph-frames}.
 The user can define a pattern by its edges, each edge is written as \texttt{(a) - [] -> (b)} where \texttt{a} is the
-source node and \texttt{b} is the destination, multiple edges are separated by a semicolon.
+source vertice and \texttt{b} is the destination, multiple edges are separated by a semicolon.
 A connected pattern is expressed by defining multiple edges with the same source or destination.
 One should be aware, that a named source or destination is not guaranteed to be a distinct element in the graph,
 e.g. \texttt{(a) - [] -> (b); (b) - [] -> (c)} could be a linear path of size two or a circle between \texttt{a} and
 \texttt{b}; in the second case \texttt{a} and \texttt{c} are the same element.
-The reader might wonders why we chose to stay with the GraphFrame syntax for edges of
+The reader might wonders, why we chose to stay with the GraphFrame syntax for edges of
 \texttt{- [] ->}, although, we could have went with something simpler, like \texttt{->}.
-However, sticking to the more verbose syntax allows us to include labels inside of the squared brackets, e.g.
-for our stretch goal of integration with CAPS.
+However, sticking to the more verbose syntax allows us to include labels inside of the squared brackets
+in future extensions, e.g. for our stretch goal of integration with CAPS.
+
+The second parameter to \texttt{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
+Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result,
+specify different relationships to be used as input for each edge of the pattern.
+The filters are \texttt{distinctFilter}, ensuring that each vertice can occur only as binding for one variable, and
+\texttt{smallerThanFilter} to allow only output bindings were the values decrease with regards to the specified variable ordering,
+e.g. the binding \texttt{[1, 2, 3]} but not \texttt{[2, 1, 3]} for the triangle query above.
+We experienced that these queries are typical for graph queries and that the performance greatly benefits from pushing
+them into the join.
+Implementing the possibility to push general filters into the join would be a valuable addition but we decided against it because
+it a pure engineering task.
+
 
 \subsection{Spark integration}\label{subsec:spark-integration}
 
-\subsection{General sequential version (\texttt{seq})}\label{subsec:general-sequential-versiontexttt}
+% Logical operator => WCOJ
+%   Attribute creation?
+%   pattern parsing?
+% Strategy => WCOJ2WCOJExec also generating the ToTrieIterableRDDExec children
+% Physical operator => WCOJExec
+%   general zip partitions?
+% Physical operator, ToTrieIterableRDDExec
+%    use ensure childOrdering to enforce sorting
+%    builds a TrieIterableRDD which is an RDD with TrieIterable partitions
+%    building these is a simple matter of adding all rows of each input RDD partition to one array as output partition
+%    from this array I can use TrieIteratorImpl to iterate these arrays in a trie form as explained in ref
+
+% JoinSpecification?  move to leapfrogJoin???
+% patterns?  move to LeapfrogJoin???
+
 
 \subsubsection{Graph pattern sequential version (\texttt{graph-pattern-seq})}
