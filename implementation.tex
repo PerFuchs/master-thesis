@@ -8,14 +8,14 @@ Our Leapfrog Triejoin is implemented in three components, which we explain in th
 \texttt{LeapfrogTriejoin}.
 
 The Leapfrog join is a variant of the sort-merge join for unary relationships, original described in~\cite{leapfrog1,leapfrog2}. % TODO see LFTJ paper 4 and 7
-To join $k$ unary relations $A_1(x)$, $A_2(x)$, ..., $A_k(x)$ it takes one iterator per input relations and offers an iterator
+To join $k$ unary relations $A_1(x)$, $A_2(x)$, \dots, $A_k(x)$ it takes one iterator per input relations and offers an iterator
 interface that yields the intersection of all relations.
 It requires that it's input iterators offer a \textit{key} method in $\mathcal{O}(1)$, a \textit{next} method and
 a \textit{least\_upper\_bound(key: Int)} both in $\mathcal{O} (\log n)$ ($n$ defined as the size of the input relationship).
 \textit{least\_upper\_bound} moves the iterator to the first position of the sought \textit{key} or the first position of the
 next higher value.
 An idiotmatic implementation of a Leapfrog join is shown in~\cref{lst:leapfrog-join}, for the optimized implementation see
-\textit{leapfrogTriejoin.LeapfrogJoin} in our repository.  % CODEREF
+\texttt{leapfrogTriejoin.LeapfrogJoin} in our repository.  % CODEREF
 
 \begin{listing}[H]
     \inputminted{scala}{code/LeapfrogJoin.scala}
@@ -23,11 +23,34 @@ An idiotmatic implementation of a Leapfrog join is shown in~\cref{lst:leapfrog-j
     \label{lst:leapfrog-join}
 \end{listing}
 
+To support j-arity relations, $A(a_1, a_2, \dots, a_j)$ we add two methods to the iterator interface that represents the input
+relationships: \textit{up} and \textit{down} both are required to work in $\mathcal{O} \log n$.
+We call this new iterator \textit{Trieiteraor} because it represents the relationship as a trie, see~\cref{fig:trie-example}.
+
+The implementation of a \textit{Trieiterator} backed by a columnwise representation of the relation using one array
+per column is straight forward, we outline the basic ideas next and refer to the interested reader to
+\texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl} in our repository for further details.  % CODEREF
+It helps to think about the \textit{Trieiterator} as consisting out of a linear component, containing the functions
+\textit{key}, \textit{next} and \textit{seek}, and horizontal component, made off the functions \textit{up} and \textit{down},
+to move the linear component from one trie level to another.
+First, we explain the horizontal component.
+They keep track of the current \textit{level} of the \textit{Trieiterator} and the \textit{startPosition} and \textit{endPosition}
+for in the columns,
+e.g. in~\cref{fig:trie-example} when the current \textit{level} is 1 (or x) and the key equals 4 the \textit{startPosition} is 2 and
+the \textit{endPosition} is 5 because the value 4 occurs 3 times.
+With these bookkeeping variables, updated by \textit{up} and \textit{down}, one can implement the linear part by
+a binary search over the current column (given by \textit{level}) which is limited to \textit{startPosition} and \textit{endPosition}.
+
+\begin{figure}
+    \centering
+    \includesvg[height=5cm]{trie}
+    \caption{A 3-ary relationship as table (left) and trie (right), to position the iterator at the tuple (1, 1, 5) one
+    calls \textit{down} twice, \textit{key} returns now 5, after a call to \textit{next}, \textit{key} returns 6 and \textit{up}
+    would lead to \textit{key} returning 1.}
+    \label{fig:trie-example}
+\end{figure}
 
 
-
-% TrieIterator interface
-%   implementation on arrays TrieIterable.TrieIteratorImpl   cite to Myria and Tributary join
 % LeapfrogTriejoin  (cite to LFTJ2012)
 %    implementation of a state machine to iterate the tries
 
