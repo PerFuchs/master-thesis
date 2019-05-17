@@ -1,5 +1,5 @@
-val sparkSession = SparkSession.builder.
-  master("local")
+val sparkSession = SparkSession.builder
+  .master("local[1]")
   .appName("WCOJ-spark")
   .getOrCreate()
 

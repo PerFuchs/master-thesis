@@ -1,8 +1,31 @@
 \section{Implementation}\label{sec:implementation}
 
 \subsection{General sequential version (\texttt{seq})}\label{subsec:general-sequential-versiontexttt}
+We implement the Leapfrog Triejoin~\cite{leapfrog} as our general sequential version of a WCOJ.
+However, instead of using B-Trees as a backing data structure, we use sorted arrays and a binary search
+to for its backing, which has been described in~\cite{myria-detailed} and is called Tributary join in their paper.
+Our Leapfrog Triejoin is implemented in three components, which we explain in this order below: \texttt{LeapfrogJoin}, \texttt{ArrayTrieIterable} and
+\texttt{LeapfrogTriejoin}.
 
-% Leapfrogjoin
+The Leapfrog join is a variant of the sort-merge join for unary relationships, original described in~\cite{leapfrog1,leapfrog2}. % TODO see LFTJ paper 4 and 7
+To join $k$ unary relations $A_1(x)$, $A_2(x)$, ..., $A_k(x)$ it takes one iterator per input relations and offers an iterator
+interface that yields the intersection of all relations.
+It requires that it's input iterators offer a \textit{key} method in $\mathcal{O}(1)$, a \textit{next} method and
+a \textit{least\_upper\_bound(key: Int)} both in $\mathcal{O} (\log n)$ ($n$ defined as the size of the input relationship).
+\textit{least\_upper\_bound} moves the iterator to the first position of the sought \textit{key} or the first position of the
+next higher value.
+An idiotmatic implementation of a Leapfrog join is shown in~\cref{lst:leapfrog-join}, for the optimized implementation see
+\textit{leapfrogTriejoin.LeapfrogJoin} in our repository.  % CODEREF
+
+\begin{listing}[H]
+    \inputminted{scala}{code/LeapfrogJoin.scala}
+    \caption{Leapfrog join.}
+    \label{lst:leapfrog-join}
+\end{listing}
+
+
+
+
 % TrieIterator interface
 %   implementation on arrays TrieIterable.TrieIteratorImpl   cite to Myria and Tributary join
 % LeapfrogTriejoin  (cite to LFTJ2012)
