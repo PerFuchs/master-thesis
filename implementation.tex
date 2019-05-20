@@ -27,6 +27,7 @@ To support j-arity relations, $A(a_1, a_2, \dots, a_j)$ we add two methods to th
 relationships: \textit{up} and \textit{down} both are required to work in $\mathcal{O} \log n$.
 We call this new iterator \textit{Trieiteraor} because it represents the relationship as a trie, see~\cref{fig:trie-example}.
 
+% TODO Trieiterator not in textit
 The implementation of a \textit{Trieiterator} backed by a columnwise representation of the relation using one array
 per column is straight forward, we outline the basic ideas next and refer to the interested reader to
 \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl} in our repository for further details.  % CODEREF
@@ -49,6 +50,109 @@ a binary search over the current column (given by \textit{level}) which is limit
     would lead to \textit{key} returning 1.}
     \label{fig:trie-example}
 \end{figure}
+
+The Leapfrog Triejoin combines \textit{Trieiterators} and Leapfrog joins to join $k$ relationships of arbitrary arity.
+Its input is one \textit{Trieiterator} per relationship, from this it builds one Leapfrog join per attribute which
+receives references to all \textit{Trieiterators} of relationships containing this attribute, e.g. for the triangle query
+\textit{R(a, b), S(b, c), T(a, c)} the Leapfrog Triejoin receives three Trieiterators, for \textit{R}, \textit{S} and \textit{T},
+and builds three Leapfrog joins, for $a$, $b$, $c$, which receive references to two TrieIterators each.
+To generate the join result the Leapfrog Triejoin operates the horizontal components of the Trieiterators directly and
+uses the Leapfrog joins to operate the linear component.
+
+% TODO can I reference lines?
+We show an idiomatic implementation in~\cref{lst:leapfrog-triejoin}, a performance oriented implementation can be found in our
+repository in \texttt{leapfrogTriejoin.LeapfrogTriejoin}.
+The listings contains two important functions: the initialization function from line TODO to line TODO % LINE
+and the \textit{moveToNextTuple} function at line TODO. % LINE
+We go through these functions in order.
+The initializer gets two arguments: a mapping from variables to \textit{TrieIterators} (each \textit{TrieIterator} belongs to
+the list of attributes of its relationship) and the global variable ordering as a list of \textit{Strings}.
+First, it creates one \textit{LeapfrogJoin} per variable (line 2 to 9) which receives references % LINE
+to each \textit{TrieIterator} operating on a relationship with this attribute; and builds a mapping from variables to
+all \textit{TrieIterators} acting on a relationship with an attribute of the same name (line TOOD). % LINE
+Then we initialize \textit{depth}, \textit{bindings} and \textit{atEnd} (line TODO to line TODO). % LINES
+\textit{depth} and \textit{bindings} are an internal variable storing the index of the variable to bind currently and the
+current bindings for all variables up to \textit{depth}.
+\textit{atEnd} signals that the join has been completed to the client.
+In line TODO, we move the join to the first tuple if it is not empty (line TODOff). % LINE
+That means to move all \textit{TrieIterators} to their deepest level and storing the current binding for each level
+in \textit{bindings}, so that these bindings are returned on the first call to \textit{next} - the join stores one output
+tuples in bindings and returns it in \textit{next} after moving to the next tuple. % TODO change this in the implementation.
+
+\textit{moveToNextTuple} implements a depth-first traversal of the intersection of the \textit{TrieIterators}.
+This traversal needs to stop each time when a complete tuple has been found to support the iterator interface of the join.
+Therefore, it is implemented as a state-machine which stops each time the deepest level is reached and all variables bound
+(loop condition in line TODO). % LINE
+The next action of the state machine is determined by the outcome of the current action variable.
+Hence, we can characterize the state machine by describing each possible action and it's possible outcomes.
+There are three possible actions: \textit{NEXT}, \textit{DOWN}, \textit{UP}.
+We summarize the possible actions, conditions for the next action and
+if the mainloop of the state machine yields the next tuple in~\cref{table:lftj-state-machine} and describe each action below.
+
+First, \textit{NEXT} moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable (line TODO). % LINE
+Then if \textit{LeapfrogJoin} reached its end, we continue with the \textit{UP} action (line TODO), % LINE
+otherwise we set the binding and continue by the \textit{NEXT} action, if we are at the deepest level or by moving
+to the next deeper level by the \textit{down} action (line TODO). % LINE
+Second, \textit{DOWN} moves to the next variable in the global variable ordering by opening all related \textit{TrieIterators}
+(line TODO) % LINE
+A \textit{DOWN} can be followed by an \textit{UP} if the \textit{LeapfrogJoin} is \textit{atEnd} (line TODO),
+by a \textit{NEXT} action if the trie join is at its lowest level (line TODO), or
+by another \textit{DOWN} to reach the last level.
+Finally, \textit{UP} can signal the completion of the join if all bindings for the first variable in the global ordering have
+been explored, or in other words, the first \textit{LeapfrogJoin} is \textit{atEnd} (condition \textit{depth == 0 $\wedge$ action ==  UP\_ACTION} line TODO). % LINE
+Otherwise, all \textit{TrieIterators} corresponding to the current variable are moved upwards
+and \textit{depth} and \textit{bindings} updatd (lines TODO, TODO and TODO).  % LINE
+Then, this action is followed by another \textit{UP} or a \textit{NEXT} depending on \textit{atEnd} of the current \textit{LeapfrogJoin} (lines TODO). % LINE
+label \ref{myline}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        Action                & Condition                                  & Next action & Yields \\ \midrule
+        \multirow{3}{*}{NEXT} & lf.atEnd                                   & UP          & no     \\
+        & !lf.atEnd $\wedge$ reachedMaxDepth             & NEXT        & yes    \\
+        & !lf.atEnd $\wedge$ !reachedMaxDepth            & DOWN        & no     \\
+        & & &\\
+        \multirow{3}{*}{DOWN} & lf.atEnd                                   & UP          & no     \\
+        & !lf.atEnd $\wedge$ reachedMaxDepth             & NEXT        & yes    \\
+        & !lf.atEnd $\wedge$ !reachedMaxDepth            & DOWN        & no     \\
+        & & &\\
+        \multirow{3}{*}{UP}     & depth == 0, means highest lf.atEnd is true & NA          & yes    \\
+        & lf.atEnd                                   & UP          & no     \\
+        & !lf.atEnd                                  & NEXT        & no     \\ \bottomrule
+    \end{tabular}
+    \caption{Summarizes which actions follow from the current action under certain conditions. \textit{lf} abbreviates the
+    \textit{LeapfrogJoin} of the current variable.
+    \textit{reachedMaxDepth} is true if we currently find bindings for the
+    last variable in the global order.
+    The columns \textit{Yields} details if the main loop of the state machine yields before computing the next action,
+    this is the case, when \textit{bindings} contains a complete tuple.
+    }
+    \label{table:lftj-state-machine}
+\end{table}
+
+
+% TODO use the word open not down for the trieiterator
+
+and \textit{UP}
+to clear the binding for the current variable and to find new bindings for the variable before the current.
+First, in line TODO we move the current \textit{LeapfrogJoin} to the next possible binding if
+
+
+\begin{listing}[H]
+    \inputminted[mathescape, linenos=true]{scala}{code/LeapfrogTriejoinIdiomatic.scala}
+    \caption{Shows the main methods of \textit{LeapfrogTriejoin}, the initializer and \textit{moveToNextTuple} functionality
+    helper methods are detailed in~\cref{lst:leapfrog-triejoin-helpers}.}
+    \label{lst:leapfrog-triejoin}
+\end{listing}
+
+\begin{listing}[H]
+    \inputminted{scala}{code/LeapfrogTriejoinHelpers.scala}
+    \caption{\textit{LeapfrogTriejoin} helpers.}
+    \label{lst:leapfrog-triejoin-helpers}
+\end{listing}
+
 
 
 % LeapfrogTriejoin  (cite to LFTJ2012)
