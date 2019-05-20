@@ -1,11 +1,11 @@
 \section{Implementation}\label{sec:implementation}
 
-\subsection{General sequential version (\texttt{seq})}\label{subsec:general-sequential-versiontexttt}
+\subsection{General sequential version (\textit{seq})}\label{subsec:general-sequential-version}
 We implement the Leapfrog Triejoin~\cite{leapfrog} as our general sequential version of a WCOJ.
 However, instead of using B-Trees as a backing data structure, we use sorted arrays and a binary search
 to for its backing, which has been described in~\cite{myria-detailed} and is called Tributary join in their paper.
-Our Leapfrog Triejoin is implemented in three components, which we explain in this order below: \texttt{LeapfrogJoin}, \texttt{ArrayTrieIterable} and
-\texttt{LeapfrogTriejoin}.
+Our Leapfrog Triejoin is implemented in three components, which we explain in this order below: \textit{LeapfrogJoin}, \textit{ArrayTrieIterable} and
+\textit{LeapfrogTriejoin}.
 
 The Leapfrog join is a variant of the sort-merge join for unary relationships, original described in~\cite{leapfrog1,leapfrog2}. % TODO see LFTJ paper 4 and 7
 To join $k$ unary relations $A_1(x)$, $A_2(x)$, \dots, $A_k(x)$ it takes one iterator per input relations and offers an iterator
@@ -154,10 +154,6 @@ First, in line TODO we move the current \textit{LeapfrogJoin} to the next possib
 \end{listing}
 
 
-
-% LeapfrogTriejoin  (cite to LFTJ2012)
-%    implementation of a state machine to iterate the tries
-
 % Optimizations
 %  no use of scala collections and foreach, instead while and arrays
 %  move indirections out of the critical path, e.g. by subclassing Spark's columnvector class to allow direct access to underlying array
@@ -177,23 +173,23 @@ First, in line TODO we move the current \textit{LeapfrogJoin} to the next possib
 As one can see in line 16 % LINE
 of~\cref{lst:usage-example}, we support a clean and precise DSL to match patterns in graphs.
 This DSL is inspired by GraphFrames~\cite{graph-frames}.
-The user can define a pattern by its edges, each edge is written as \texttt{(a) - [] -> (b)} where \texttt{a} is the
-source vertice and \texttt{b} is the destination, multiple edges are separated by a semicolon.
+The user can define a pattern by its edges, each edge is written as \textit{(a) - [] -> (b)} where \textit{a} is the
+source vertice and \textit{b} is the destination, multiple edges are separated by a semicolon.
 A connected pattern is expressed by defining multiple edges with the same source or destination.
 One should be aware, that a named source or destination is not guaranteed to be a distinct element in the graph,
-e.g. \texttt{(a) - [] -> (b); (b) - [] -> (c)} could be a linear path of size two or a circle between \texttt{a} and
-\texttt{b}; in the second case \texttt{a} and \texttt{c} are the same element.
+e.g. \textit{(a) - [] -> (b); (b) - [] -> (c)} could be a linear path of size two or a circle between \textit{a} and
+\textit{b}; in the second case \textit{a} and \textit{c} are the same element.
 The reader might wonders, why we chose to stay with the GraphFrame syntax for edges of
-\texttt{- [] ->}, although, we could have went with something simpler, like \texttt{->}.
+\textit{- [] ->}, although, we could have went with something simpler, like \textit{->}.
 However, sticking to the more verbose syntax allows us to include labels inside of the squared brackets
 in future extensions, e.g. for our stretch goal of integration with CAPS.
 
-The second parameter to \texttt{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
+The second parameter to \textit{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
 Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result,
 specify different relationships to be used as input for each edge of the pattern.
-The filters are \texttt{distinctFilter}, ensuring that each vertice can occur only as binding for one variable, and
-\texttt{smallerThanFilter} to allow only output bindings were the values decrease with regards to the specified variable ordering,
-e.g. the binding \texttt{[1, 2, 3]} but not \texttt{[2, 1, 3]} for the triangle query above.
+The filters are \textit{distinctFilter}, ensuring that each vertice can occur only as binding for one variable, and
+\textit{smallerThanFilter} to allow only output bindings were the values decrease with regards to the specified variable ordering,
+e.g. the binding \textit{[1, 2, 3]} but not \textit{[2, 1, 3]} for the triangle query above.
 We experienced that these queries are typical for graph queries and that the performance greatly benefits from pushing
 them into the join.
 Implementing the possibility to push general filters into the join would be a valuable addition but we decided against it because
@@ -218,4 +214,4 @@ it a pure engineering task.
 % patterns?  move to LeapfrogJoin???
 
 
-\subsubsection{Graph pattern sequential version (\texttt{graph-pattern-seq})}
+\subsubsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
