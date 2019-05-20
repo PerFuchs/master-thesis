@@ -131,14 +131,7 @@ label \ref{myline}
     }
     \label{table:lftj-state-machine}
 \end{table}
-
-
 % TODO use the word open not down for the trieiterator
-
-and \textit{UP}
-to clear the binding for the current variable and to find new bindings for the variable before the current.
-First, in line TODO we move the current \textit{LeapfrogJoin} to the next possible binding if
-
 
 \begin{listing}[H]
     \inputminted[mathescape, linenos=true]{scala}{code/LeapfrogTriejoinIdiomatic.scala}
@@ -153,15 +146,93 @@ First, in line TODO we move the current \textit{LeapfrogJoin} to the next possib
     \label{lst:leapfrog-triejoin-helpers}
 \end{listing}
 
+\subsubsection{Optimizations}
+A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \textit{BroadcastHashjoin} on any other query than the triangle query.
+Hence, we spent roughly 2 weeks to optimize our first implementation.
+After, we are able to beat Spark's \textit{BroadcastHashjoin} on nearly all queries and datasets.
+In this section, we discuss the implemented optimization and give a rough estimate how important each of these are.
+In total, we improved the WCOJ running time from 248.2 seconds to 44.5 seconds on the unfiltered 5-clique query on the
+\textit{Amazon-0602} dataset.
+We list all optimizations in~\cref{table:seq-optimizations} and label them `very important', `important' and `minor' based on the performance speedup encountered directly after applying it.
+It is not helpful to give more detailed information on the effect of single optimization because they are not independ of each other.
+Hence, they might have a hugely different effect when applied in different order, e.g. we first applied a optimization to the binary search of the arrays and then
+optimized the \textit{LeapfrogJoin.next} method to avoid many of its searches, giving detailed runtime measurements for the binary search optimization would
+overestimate its value.
+It is out of scope of this work to study the dependency and ordering of the optimization to gain correct runtime measurements.
 
-% Optimizations
-%  no use of scala collections and foreach, instead while and arrays
-%  move indirections out of the critical path, e.g. by subclassing Spark's columnvector class to allow direct access to underlying array
-%  use linear search under threshold (experiments show that there is no big change in performance between 30 to 120 with peak for 60, and lower performance for 400 and 0)
-%  implement smallest possible version of lub and linear search
+We discuss the optimization in categories in this order: Tributary join specific, binary search specific, Spark related, Scala related and general.
+Binary search specific optimizations become a category on its own because the sorted search is the most expensive operation in the Tributary join.
+According to profiler sessions the join spents more than 70\% of its time in this method. % TODO exact time
+This result is in line with the observation that `in the Tributary join algorithm, the most expensive step is the binary search' from~\cite{myria-detailed}.
+
+We applied to Tributary join specific optimizations one in the class \texttt{leapfrogTriejoin.LeapfrogJoin} (see also~\cref{lst:leapfrog-join}) and one
+in the \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl}.
+The \textit{LeapfrogJoin.init} method can be improve by avoiding to sort the \textit{TrieIterators} (line TODO)  % LINE
+- the unoptimized implementation is described as such in the original Leapfrog Triejoin paper~\cite{leapfrog}.
+However, we can start moving the \textit{TrieIterator} without sorting them and have them sorted in $\mathcal{O} \log n$ with $n$ the numbers of iterators.
+This improves over sorting in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection immediately without sorting them first and
+(2) it arrives at a sorted order in less steps than sorting.
+For that we find the maximum \textit{key} value in all iterators and store the index of this \textit{TrieIterator} in \textit{p}.
+Then we move the \textit{TrieIterator} at $p + 1$ to the least upper bound of this value (by calling \textit{seek}) and store the result as the new maximum.
+We proceed with this process, with wrapping \textit{p} around when it reaches \textit{iterators.length}, until \textit{p} equals the original maximum index.
+Now, we are either in a state in which all \textit{TrieIterators} point to the same value and we are done - the \textit{LeapfrogJoin} is initialized -
+or we arrived at a state in which the array \textit{iterators} is sorted according to \textit{key} and can proceed as in the original \textit{LeapfrogJoin}.
+To apply this optimization one replaces the call to \textit{sort} in line TODO with the procedure explained above~\footnote{The implementation of Scala's array sort for objects is really
+slow because it copies the array twice and casts them to \textit{Java.object} to use Java's sorting methods. Before we applied the sorting optimization above, we replaced Scala's sort
+method with an optimized insertion sort, which was way faster than Scala's sorting method - the \textit{iterator} array contains normally at most 20 items.}.
+
+
+
+
+First, we can optimize the \textit{next} method.
+This method moves the to the next value on the same level of the trie
+
+% comparision to other work
+% comparision to richards work
+
+
+%  no use of scala collections and foreach, instead while and arrays (huge speedup)
+%    removes casts but also use of direct lookup instead of hashing
+%    no use of _.up
+%    maps instead of linear lookups, then arrays instead of maps, then while looping instead of foreach
+%  private[this] (minor speedup)
+%  strength reduction of modulo (to ifs) and / 2 (speedup)
+%  move indirections out of the critical path, like columns(depth).getInt(position(depth)) (huge speedup)
+
+%  compiler optimizations (no big win)
+%    which ones? inlining
+
+
+
+% use of arrays directly instead of ColumnVector (huge speedup, avoids function calls in critical loop)
+
+%  use linear search under threshold (experiments show that there is no big change in performance between 30 to 120 with peak for 60, and lower performance for 400 and 0) (huge speedup)
+%  implement smallest possible version of lub and linear search, e.g. check pos < end only once, avoid third case in binary search (speedup)
+
+
 %  no sorting
+%   scala sort function is super expensive for small arrays, own insertion sort gives massive speedups (huge speedup)
+%   no sorting at all (speedup)
+
+%  next method optimization (huge speedup)
+
+
+%  filter?
+%    distinct filter does not help
+%    but smaller than does - a lot
+
+%  variable ordering
+
+
+
+
+
+
+
+%  galloping search
 %  state machine unrolling and predication not helpful
-%  reimplement in java not helpful
+%  reimplement in java not helpful (see 03.05), tried with Galloping search, where according to a profiler most of the time is spent,
+%  did not see improvement, given up
 
 \subsection{User interface}\label{subsec:user-interface}
 \begin{listing}[H]
