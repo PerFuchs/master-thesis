@@ -1,0 +1,50 @@
+\section{Experiments}
+
+TODO introduction
+
+\subsection{Setup}
+
+\subsubsection{Datasets}
+We run our the majority of our experiments on two datasets from different use-cases, social networks and product purchase.
+We motivate our choice in the next paragraph.
+\Cref{table:datasets} includes a whole list of all graph datasets mentioned throughout the thesis.
+
+\begin{table}[]
+    \begin{tabular}{lllll}
+        Name    & Variant & Vertices & Edges & Source          \\
+        SNB     & sf-1    &          &       & \cite{snb}      \\
+        Amazon  & 0302    &          &       & \cite{snapnets} \\
+                & 0601    &          &       & \cite{snapnets} \\
+        Twitter & sc-d    &          &       & \cite{snapnets} \\
+                & sc-u    &          &       & \cite{snapnets}
+    \end{tabular}
+    \caption{Summary of all datasets mentioned in the thesis.
+      Explanation of them and for the variants is given in running text.
+    }
+    \label{table:datasets}
+\end{table}
+
+% TODO add Vertices and edges numbers
+
+The SNB benchmark~\cite{snb} generates data emulating the posts, messages and friendships in a social network.
+For our experiments we use only the friendships relationship (\texttt{person_knows_person.csv}) which is an undirected relationship.
+After generation only edges of the kind \textit{src \le dst} exist, we generate the opposing edges before loading the dataset, such that the edge table we run our experiments
+on is truely undirected.
+The benchmark comes with an extensively parameterizable graph generation engine
+which allows us to experiment with sizes as small as 1GB and up to 1TB for big experiments and different levels of selectivity.
+The different sizes are called scale-factor or \texttt{sf}, e.g. \texttt{SNB-sf-1} refers to a Social network benchmark dataset generated with
+default parameters and scale-factor 1.
+We include the exact parameter used for generation in our repository under \texttt{experiments/snb/params.txt}. % CODEREF TODO include
+
+The Amazon co-purchasing network contains edges between products that have been purchased together and hence are closely related to each other~\cite{snapnets}.
+This is a directed relationship from the product purchased first to the product purchased second, both direction of an edge can exist if the order in which
+products have been purchased varies.
+The Snap dataset collection contains multiple Amazon co-purchase datasets each of them containing a single day of purchases.
+We choose the smallest and biggest dataset from the 2nd of March and the 1st of June, we call them \texttt{Amazon-0302} and \texttt{Amazon-0601}.
+We pick them for evaluation because former work often concentrated on social networks and web crawl based graphs~\cite{myria-detailed,ammar2018distributed}
+while~\cite{salihoglu2018} points out that the biggest graphs are actually graphs graphs like the aforementioned Amazon graph containing purchase information.
+
+To allow comparisions with former work, we run a subset of our experiments on the Twitter social circle network from~\cite{snapnets}.
+This dataset includes the follower relationship of one thousand twitter users each of these follows 10 to 4.964 other users and relationship between these are included.
+The graph is originally directed but for some experiments we add reversed edges to make the graph undirected - again for comparision with former work.
+We call this graph \texttt{Twitter-sc-d} and \texttt{Twitter-sc-u} for the directed respectively undirected variant.
