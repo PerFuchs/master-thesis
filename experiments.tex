@@ -27,8 +27,8 @@ We motivate our choice in the next paragraph.
 % TODO add Vertices and edges numbers
 
 The SNB benchmark~\cite{snb} generates data emulating the posts, messages and friendships in a social network.
-For our experiments we use only the friendships relationship (\texttt{person_knows_person.csv}) which is an undirected relationship.
-After generation only edges of the kind \textit{src \le dst} exist, we generate the opposing edges before loading the dataset, such that the edge table we run our experiments
+For our experiments we use only the friendships relationship (\texttt{person\_knows\_person.csv}) which is an undirected relationship.
+After generation only edges of the kind \textit{src $\le$ dst} exist, we generate the opposing edges before loading the dataset, such that the edge table we run our experiments
 on is truely undirected.
 The benchmark comes with an extensively parameterizable graph generation engine
 which allows us to experiment with sizes as small as 1GB and up to 1TB for big experiments and different levels of selectivity.
