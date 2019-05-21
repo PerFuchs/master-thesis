@@ -9,7 +9,7 @@ We run our the majority of our experiments on two datasets from different use-ca
 We motivate our choice in the next paragraph.
 \Cref{table:datasets} includes a whole list of all graph datasets mentioned throughout the thesis.
 
-\begin{table}[]
+\begin{table}[]  % TODO make booktab style
     \begin{tabular}{lllll}
         Name    & Variant & Vertices & Edges & Source          \\
         SNB     & sf-1    &          &       & \cite{snb}      \\
@@ -48,3 +48,41 @@ To allow comparisions with former work, we run a subset of our experiments on th
 This dataset includes the follower relationship of one thousand twitter users each of these follows 10 to 4.964 other users and relationship between these are included.
 The graph is originally directed but for some experiments we add reversed edges to make the graph undirected - again for comparision with former work.
 We call this graph \texttt{Twitter-sc-d} and \texttt{Twitter-sc-u} for the directed respectively undirected variant.
+
+\subsubsection{Graph patterns}
+
+In this section we detail the graph patterns used thoughout our experiments.
+Most of the queries are cyclic because that has been shown to be the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
+WCOJ also have been successfully applied to selective path queries in~\cite{olddog}; these results have not been reproduced by any other paper.
+
+To most of our queries we apply also some kind of filter to make them more realistic, e.g. a clique query does make more sense if it is combined with a
+smaller-than filter requiring that the attributes are bound such that \textit{a} smaller than \textit{b} smaller than \textit{c}, otherwise
+one gets the same clique in all possible orders as result, which not only takes much more time but is also most likely not the result a user would want.
+We ensure that filters can be pushed down through or in the join by Spark as well as by the WCOJ to compare both algorithms on equal basis.
+A complete list of all queries and filters used is shown in~\cref{table:patterns}.
+The less known queries are also detailed in text.
+Patterns and filters might be used in all possible combinations, we name the resulting query \textit{\textless pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
+
+\begin{table}[]
+    \begin{tabular}{@{}lcccp{6cm}@{}}
+        \toprule
+        Name     & Parameters                 & Vertices & Edges             & Example Datalog                                                                                                                                        \\ \midrule
+        \texttt{triangle} & NA                          & $3$        & 3                 & a $\rightarrow$ b; a $\rightarrow$ c; b $\rightarrow$ c                                                                                                \\
+        \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ & see above                                                                                                                                              \\
+        \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 & a $\rightarrow$ b; b $\rightarrow$ c; c $\rightarrow$ z; z $\rightarrow$ a                                                                             \\
+        \texttt{n-s-path} & \# edges / selectivity  & $n$       & $n - 1$             & a $\rightarrow$ b; b $\rightarrow$ c; c $\rightarrow$ z                                                                                                \\
+        \texttt{diamond}  & NA                         & $4$       & $5$                 & a $\rightarrow$ b; a $\rightarrow$ c; b $\rightarrow$ c; b $\rightarrow$ d; c $\rightarrow$ d                                                          \\
+        \texttt{house}    & NA                         & $5$        & $9$                 & a $\rightarrow$ b; a $\rightarrow$ c; a $\rightarrow$ d; b $\rightarrow$ c; b $\rightarrow$ d; c $\rightarrow$ d; c $\rightarrow$ e; d $\rightarrow$ e \\
+        \textbf{Filters}   &                            &          &                   &                                                                                                                                                        \\
+        \texttt{distinct} &                            &          &                   & a $\neq$ b; a $\neq$ c; a $\neq$ d; b $\neq$ c; ...                                                                                                                    \\
+        \texttt{lt}       &                            &          &                   & a \textless b; b \textless c; c \textless d; ...                                                                                                       \\ \bottomrule
+    \end{tabular}
+    \caption{Summary of patterns and filters used.}
+    \label{table:patterns}
+\end{table}
+% TODO is that a dimaond?
+
+For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
+Then we search for all path of a certain length according to the \textit{edges} parameter, e.g. \textit{4-0.1-path} finds all
+paths between two randomly selected, fixed sets of vertices of length 4 - the sets of nodes contain roughly 10\% of all input nodes and are not guaranteed to be intersection free.
+% TODO do I want them to be intersection free?
