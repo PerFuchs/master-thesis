@@ -33,7 +33,7 @@ We motivate our choice in the next paragraph.
 \begin{table}[]  % TODO make booktab style
     \begin{tabular}{lllll}
         Name    & Variant & Vertices & Edges & Source          \\
-        SNB     & sf-1    &          &       & \cite{snb}      \\
+        SNB     & sf1     &          &       & \cite{snb}      \\
         Amazon  & 0302    &          &       & \cite{snapnets} \\
                 & 0601    &          &       & \cite{snapnets} \\
         Twitter & sc-d    &          &       & \cite{snapnets} \\
@@ -112,10 +112,25 @@ paths between two randomly selected, fixed sets of vertices of length 4 - the se
 
 \begin{figure}
     \centering
-    \includesvg{seq}
-    \caption{test}
-    \label{TODO}
+    \includesvg{seq-bar-ama0302}
+    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0302}}
+    \label{fig:seq-bar-ama-0302}
 \end{figure}
+
+\begin{figure}
+    \centering
+    \includesvg{seq-bar-ama0601}
+    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0601}}
+    \label{fig:seq-bar-ama-0601}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includesvg{seq-bar-snb-sf1}
+    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{SNB-sf1}}
+    \label{fig:seq-bar-snb-sf1}
+\end{figure}
+
 % Spark setup code line
 % define measurements times
 % show DAG's for both algorithms in terms of DAG
