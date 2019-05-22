@@ -13,6 +13,8 @@
 *.cb
 *.cb2
 .*.lb
+*.pdf_tex
+*.pdf
 
 ## Intermediate documents:
 *.dvi
@@ -248,3 +250,4 @@ TSWLatexianTemp*
 *.spl
 
 /main.pdf
+/generated/
