@@ -131,6 +131,24 @@ paths between two randomly selected, fixed sets of vertices of length 4 - the se
     \label{fig:seq-bar-snb-sf1}
 \end{figure}
 
+\begin{table}
+    \centering
+
+    \input{generated/seq-table-ama0302}
+    \vspace{0.3cm}
+
+    \input{generated/seq-table-ama0601}
+
+    \vspace{0.3cm}
+    \input{generated/seq-table-snb-sf1}
+    \caption{Runtimes for \texttt{BroadcastHashJoin} and \texttt{seq}.
+        Ratio between join times and excluding setup.
+        From top to bottom for dataset: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
+        All times in seconds.
+    }
+    % TODO align and remove headers
+\end{table}
+
 % Spark setup code line
 % define measurements times
 % show DAG's for both algorithms in terms of DAG
