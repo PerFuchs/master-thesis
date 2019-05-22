@@ -110,6 +110,43 @@ paths between two randomly selected, fixed sets of vertices of length 4 - the se
 
 \subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}}
 
+% TODO use uniform spelling for broadcasthashjoin
+In this experiment we compare the runtime of our sequential Leapfrog Triejoin implementation, \texttt{seq}, with the runtime of Spark's \texttt{BroadcastHashjoin}.
+Towards, this goal we ran all queries from~\cref{table:patterns} on our three main datasets: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
+The clique pattern are combined with the less-than filter, \texttt{n-clique-lt}, and the cycle pattern with the distinct filter, \texttt{n-cycle-distinct}.
+These seem to be the most realistic setups because cliques are fully symmetric and one wants to avoid redundant results.
+For cycles the less-than filter is to restrictive because it excludes cycles for which $a < b > c$.
+We show our results in~\cref{table:seq-vs-bhj} and in barcharts (\cref{fig:seq-bar-ama-0302}, \ref{fig:seq-bar-ama-0601} and \ref{fig:seq-bar-snb-sf1}).
+\Cref{sssec:seq-analysis} analyzes the results.
+
+Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and \texttt{seq}.
+For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
+We report setup time and the time it takes to run the join separately for \texttt{seq}.
+Setup time includes the sorting, materialization of the data and copying the results of our join from a Scala \texttt{Array} into the \texttt{UnsafeInternalRow} format
+expected by Spark.  TODO sorting not yet (data is presorted in files)
+This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
+
+\subsubsection{Experiment Rationale}\label{sssec:seq-experiment-rational}
+\textbf{Question:} Why do we compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMergeJoin}?
+\textbf{Answer:} Because even when all data is arranged in a single partition, for simple sequential processing, Spark
+schedules its \texttt{SortMergeJoin} to use a shuffle.
+A shuffle writes and reads data to and from disk.
+Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}. % TODO numbers
+We assume that Spark is able to optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
+
+\textbf{Question:} Why do we exclude setup times from the WCOJ times?
+\textbf{Answer:} Because our final implementation \texttt{dist} is meant to cache the readily sorted and formatted edge tables and reuse it for multiple queries.
+We anticipate that this is necessary to benefit from WCOJ's in general.
+Furthermore, we optimize the setup times in later implementation.
+Hence, the current setup code is much slower than the one we expect to use for later implementations.
+% TODO can I write that this is inline with former research?
+
+\subsubsection{Analysis}\label{sssec:seq-analysis}
+For now, we settle to simply point out the most important observations and postpone deeper analysis, e.g. influence of dataset size and characteristics,
+to experiments run against our later, more interesting, implementations, i.e. \texttt{seq-graph-pattern} and \texttt{dist}.
+
+
+% TODO include filter names in query names
 \begin{figure}
     \centering
     \includesvg{seq-bar-ama0302}
@@ -146,24 +183,17 @@ paths between two randomly selected, fixed sets of vertices of length 4 - the se
         From top to bottom for dataset: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
         All times in seconds.
     }
+    \label{table:seq-vs-bhj}
     % TODO align and remove headers
 \end{table}
 
 % Spark setup code line
 % define measurements times
 % show DAG's for both algorithms in terms of DAG
-% argue why WCOJ times against whole times
-% argue why broadcast merge join and not sortmerge join
 
 % measure if spark actually takes more than 30 minutes on long queries
 
 % measure path queries
-
-
-
-% tabulate results
-% Bar charts such that scaling of axis is readable
-
 
 % measure against none code generated spark, notice in sentence
 % measure against Sortmerge join, notice in sentence
