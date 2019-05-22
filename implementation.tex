@@ -147,21 +147,23 @@ label \ref{myline}
 \end{listing}
 
 \subsubsection{Optimizations}
-A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \textit{BroadcastHashjoin} on any other query than the triangle query.
+A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \texttt{BroadcastHashjoin} on any other query than the triangle query.
 Hence, we spent roughly 2 weeks to optimize our first implementation.
-After, we are able to beat Spark's \textit{BroadcastHashjoin} on nearly all queries and datasets.
+After, we are able to beat Spark's \texttt{BroadcastHashjoin} on nearly all queries and datasets.
 In this section, we discuss the implemented optimization and give a rough estimate of how important each of these is.
 In total, we improved the WCOJ running time from 248.2 seconds to 44.5 seconds on the unfiltered 5-clique query on the
-\textit{Amazon-0602} dataset.
+\texttt{Amazon-0602} dataset.
 We list all optimizations in~\cref{table:optimizations-seq} and label them `very important', `important' and `minor' based on the performance improvement directly after applying it.
+
 It is not helpful to give more detailed information on the effect of single optimization because they are not independent of each other.
-Hence, they might have a hugely different effect when applied in a different order, e.g. we first applied an optimization to the binary search of the arrays and then
-optimized the \textit{LeapfrogJoin.next} method to avoid many of its searches, giving detailed runtime measurements for the binary search optimization would
-overestimate its value.
+Hence, they might have a hugely different effect when applied in a different order, e.g. we first applied an optimization to the binary search and then
+optimized the \textit{LeapfrogJoin.next} method to avoid many searches
+Hence, giving detailed runtime measurements for the binary search optimization would overestimate its value.
 It is out of the scope of this work to study the dependency and order of the optimization to gain correct runtime measurements.
 
-We discuss the optimization in categories in this order: Leapfrog Triejoin specific, binary search specific, Spark related, Scala related and general.
-We conclude the section with one paragraph of optimizations that do not improve performance.
+We discuss the optimization in categories: Leapfrog Triejoin specific, binary search specific, Spark related, Scala related and general.
+We conclude the section with some changes we tried that do not improve performance.
+
 Binary search specific optimizations become a category on its own because the sorted search is the most expensive operation in the Tributary join.
 According to profiler sessions, the join spends more than 70\% of its time in this method. % TODO exact time
 This result is in line with the observation that `in the Tributary join algorithm, the most expensive step is the binary search' from~\cite{myria-detailed}.
@@ -193,23 +195,27 @@ Category                       & Optimization                                   
 \label{table:optimizations-seq}
 \end{table}
 
-We applied to Tributary join specific optimizations one in the class \texttt{leapfrogTriejoin.LeapfrogJoin} (see also~\cref{lst:leapfrog-join}) and one
+We applied two Tributary join specific optimizations.
+The first in the class \texttt{leapfrogTriejoin.LeapfrogJoin} (see also~\cref{lst:leapfrog-join}) and the second
 in the \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl}.
-The \textit{LeapfrogJoin.init} method can be improved by avoiding to sort the \textit{TrieIterators} (line TODO)  % LINE
-- the unoptimized implementation is described as such in the original Leapfrog Triejoin paper~\cite{leapfrog}.
-However, we can start moving the \textit{TrieIterator} without sorting them and have them sorted in $\mathcal{O} \log n$ with $n$ the numbers of iterators.
-This improves over sorting in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection immediately without sorting them first and
-(2) it arrives at a sorted order in fewer steps than sorting.
-For that we find the maximum \textit{key} value in all iterators and store the index of this \textit{TrieIterator} in \textit{p}.
-Then we move the \textit{TrieIterator} at $p + 1$ to the least upper bound of this value (by calling \textit{seek}) and store the result as the new maximum.
-We proceed with this process, with wrapping \textit{p} around when it reaches \textit{iterators.length}, until \textit{p} equals the original maximum index.
-Now, we are either in a state in which all \textit{TrieIterators} point to the same value and we are done - the \textit{LeapfrogJoin} is initialized -
-or we arrived at a state in which the array \textit{iterators} is sorted according to \textit{key} and can proceed as in the original \textit{LeapfrogJoin}.
-To apply this optimization one replaces the call to \textit{sort} in line TODO with the procedure explained above~\footnote{The implementation of Scala's array sort for objects is really
-slow because it copies the array twice and casts them to \textit{Java.object} to use Java's sorting methods. Before we applied the sorting optimization above, we replaced Scala's sort
-method with an optimized insertion sort, which was way faster than Scala's sorting method - the \textit{iterator} array contains normally at most 20 items.}.
 
-Then, we can optimize the \texttt{ArrayTrieIterble.TrieIteratorImpl.next} method.
+The \textit{LeapfrogJoin.init} method is origingally described in~\cite{leapfrog} to sort its \textit{TrieIterators}.
+However, the method can be improved by avoiding to sort the \textit{TrieIterators} (line TODO).  % LINE
+We can start moving the \textit{TrieIterator} without sorting them and arrive at an ordered array in $\mathcal{O} (n)$ steps - $n$ defined as the size of \textit{iterators}.
+This approach improves over the original algorithm in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection immediately without sorting them first and
+(2) orders the array in fewer steps than traditional sorting algorithms.
+
+To implement this we find the maximum \textit{key} value in all iterators and store the index of this \textit{TrieIterator} in \textit{p}.
+Then we move the \textit{TrieIterator} at $p + 1$ to the least upper bound of this \textit{max} (by calling \textit{seek}) and store the result as the new maximum.
+We proceed with this process - wrapping \textit{p} around when it reaches \textit{iterators.length} - until \textit{p} equals the original maximum index.
+Now, we are either in a state in which all \textit{TrieIterators} point to the same value and we are done - the \textit{LeapfrogJoin} is initialized -
+or we arrived at a state in which the \textit{iterators} array is sorted according to \textit{key} and can proceed as in the original \textit{LeapfrogJoin.init} method.
+To apply this optimization one replaces the call to \textit{sort} in line TODO with the procedure explained above\footnote{The implementation of Scala's array sort for objects is slow
+because it copies the array twice and casts the values to \textit{Java.Object} such that it can use Java's sorting methods.
+Before we applied the sorting optimization above, we replaced Scala's sort
+method with an optimized insertion sort, which was faster than Scala's sorting method - the \textit{iterator} array contains normally at most 20 items.}.
+
+The second Leapfrog Triejoin specific optimization is to change the \texttt{ArrayTrieIterble.TrieIteratorImpl.next} method.
 This method moves the iterator to the next value on the same level of the trie.
 Hence, it generally runs in $\mathcal{O} (\log n)$ with $n$ the number of tuples in the relationship because it needs to find the least upper bound of \textit{key + 1}.
 However, under the assumption that all tuples are unique - which is fulfilled for the use-case of an edge relationship for graphs - the last level of the trie
