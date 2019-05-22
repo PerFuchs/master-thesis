@@ -1,6 +1,6 @@
 class LeapfrogTriejoinIdiomatic(trieIterators: Map[Set[String], TrieIterator],
                                 variableOrdering: Seq[String]) {
-  // One LeapfrogJoin per variable with references to all TrieIterators
+  // One LeapfrogJoin per variable with references to all TrieIterators$\label{line:lftjInitStart}$
   // which relationships have an attribute of the same name
   private val leapfrogJoins: Array[LeapfrogJoin]
 
@@ -11,9 +11,9 @@ class LeapfrogTriejoinIdiomatic(trieIterators: Map[Set[String], TrieIterator],
   private var action = DOWN_ACTION // The important line $\label{myline}$
   private var depth = -1
   private var bindings = Array.fill(variableOrdering.size)(-1L)
-  var atEnd: Boolean = trieIterators.values.exists(i => i.atEnd)
+  var atEnd: Boolean = trieIterators.values.exists(i => i.atEnd)//$\label{line:lftjInitEnd}$
 
-  def moveToNextTuple(): Array[Long] = {
+  def moveToNextTuple(): Array[Long] = {//$\label{line:moveToNextTuple}$
     if (action == NEXT_ACTION) action = nextAction()
     do {
       if (action == DOWN_ACTION) {
