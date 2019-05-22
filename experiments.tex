@@ -121,8 +121,8 @@ We show our results in~\cref{table:seq-vs-bhj} and in barcharts (\cref{fig:seq-b
 
 Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and \texttt{seq}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
-We report setup time and the time it takes to run the join separately for \texttt{seq}.
-Setup time includes the sorting, materialization of the data and copying the results of our join from a Scala \texttt{Array} into the \texttt{UnsafeInternalRow} format
+We report setup time and the time, it takes to run the join, separately for \texttt{seq}.
+Setup time includes the sorting, materialization and copying the results of our join from a Scala \texttt{Array} into the \texttt{UnsafeInternalRow} format
 expected by Spark.  TODO sorting not yet (data is presorted in files)
 This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
 
@@ -141,11 +141,30 @@ Furthermore, we optimize the setup times in later implementation.
 Hence, the current setup code is much slower than the one we expect to use for later implementations.
 % TODO can I write that this is inline with former research?
 
+\textbf{Question:} Why is the time to copy results into \texttt{UnsafeInternalRow} format for WCOJ counted as setup time?
+\textbf{Answer:} It is time solely spent into integration with Spark and not Leapfrog Triejoin specific.
+Furthermore, it could be avoided by working directly on the \texttt{UnsafeInternalRow} format within our \texttt{seq} implementation.
+However, this would require us to work with unmanaged memory (the \texttt{UnsafeInternalRow} interface is slower than working on \texttt{Arrays})
+and we deem this an unnecessary engineering overhead.
+
+
 \subsubsection{Analysis}\label{sssec:seq-analysis}
 For now, we settle to simply point out the most important observations and postpone deeper analysis, e.g. influence of dataset size and characteristics,
 to experiments run against our later, more interesting, implementations, i.e. \texttt{seq-graph-pattern} and \texttt{dist}.
 
+We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
+Generally, we see that for \texttt{n-clique} patterns the ratio between Spark and \texttt{seq} decreases.
+This is due to the fact that many binary joins in a \texttt{n-clique} are actually semi-joins which to do not increase but decrease the size of intermediary results,
+e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to a bigger intermediary result.
 
+TODO influece of cycle size
+
+Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
+in the characteristics of the datasets themselves.
+However, it becomes clear that co-purchase datasets and social network datasets must have very different characteristics.
+Although, \texttt{SNB-sf1} is much smaller than \texttt{Amazon-0601} queries on it take a similar or even much more time,
+e.g. \texttt{5-clique-st} takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much smaller on \texttt{SNB-sf1};
+but \texttt{4-cycles-distinct} takes roughly 8 times longer on the small dataset and has a much bigger result set.
 % TODO include filter names in query names
 \begin{figure}
     \centering
@@ -187,13 +206,10 @@ to experiments run against our later, more interesting, implementations, i.e. \t
     % TODO align and remove headers
 \end{table}
 
-% Spark setup code line
-% define measurements times
 % show DAG's for both algorithms in terms of DAG
-
 % measure if spark actually takes more than 30 minutes on long queries
-
 % measure path queries
+
 
 % measure against none code generated spark, notice in sentence
 % measure against Sortmerge join, notice in sentence
