@@ -4,6 +4,27 @@ TODO introduction
 
 \subsection{Setup}
 
+
+We run Spark 2.4.0.
+We use Scala 2.11.12 on Java openJDK 1.8.
+
+So far, we run three different join algorithms.
+Our sequential implementation of Leapfrog Triejoin (see~\cref{ssec:seq}), called \texttt{seq}.
+Spark's two different binary join algorithms: \texttt{BroadcastHashJoin} and \texttt{SortMergeJoin}.
+In the majority of our experiments we use Spark in its standard configuration with enabled code generation.
+We also tune the parameters for driver and executor memory usage (\texttt{spark.driver.memory} and \texttt{spark.executor.memory}) to fit all necessary data into the cache.
+We adjust the \texttt{"spark.sql.autoBroadcastJoinThreshold"} parameter to control if Spark is using a \texttt{BroadcastHashJoin} or a \texttt{SortMergeJoin}.
+
+\subsubsection{Hardware}
+
+We run our experiments on machines of the type \texttt{brick} of the Scilens cluster of the CWI Database Architecture research group.
+These machines feature 32 Intel Xeon E5-2650 processors with a 32 KB 1st level cache, 250 KB 2nd level cache and 20 MB of shared third level cache and run at 2.0 to 2.8 GHz.
+The machines are equipped with 256 GB of RAM DDR-3 memory.
+
+% TODO how many machines? 16, but how many could we use, etc.
+% TODO network
+
+
 \subsubsection{Datasets}
 We run our the majority of our experiments on two datasets from different use-cases, social networks and product purchase.
 We motivate our choice in the next paragraph.
@@ -86,3 +107,37 @@ For a selective path query, we first select two sets of nodes with respect to th
 Then we search for all path of a certain length according to the \textit{edges} parameter, e.g. \textit{4-0.1-path} finds all
 paths between two randomly selected, fixed sets of vertices of length 4 - the sets of nodes contain roughly 10\% of all input nodes and are not guaranteed to be intersection free.
 % TODO do I want them to be intersection free?
+
+\subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}}
+
+\begin{figure}
+    \centering
+    \includesvg{seq}
+    \caption{test}
+    \label{TODO}
+\end{figure}
+% Spark setup code line
+% define measurements times
+% show DAG's for both algorithms in terms of DAG
+% argue why WCOJ times against whole times
+% argue why broadcast merge join and not sortmerge join
+
+% measure if spark actually takes more than 30 minutes on long queries
+
+% measure path queries
+
+
+
+% tabulate results
+% Bar charts such that scaling of axis is readable
+
+
+% measure against none code generated spark, notice in sentence
+% measure against Sortmerge join, notice in sentence
+
+% comparision against other work
+%   Dewitt
+%   Andreas Amler
+%   Old dog
+%   LFTJ
+%   Richard
