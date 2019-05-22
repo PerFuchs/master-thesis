@@ -5,7 +5,11 @@ from diagrams.base import *
 
 DATASET = DATASET_FOLDER + "snb-sf1.csv"
 
-data = pd.read_csv(DATASET).set_index("Query")
+data = pd.read_csv(DATASET)
+
+data = data[data["Query"].str.contains("Clique")]
+
+data = data.set_index("Query")
 fix_count(data)
 
 
