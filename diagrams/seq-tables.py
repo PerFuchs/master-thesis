@@ -20,7 +20,7 @@ def tabulize_data(data_path, output_path):
 
   data.to_latex(buf=open(output_path, "w"),
                 columns=["Query", "Count", "Time", "WCOJTime_wcoj", "setup", "ratio"],
-                header = ["Query", "\\# Result", "\\texttt{BroadcastHashJoin}", "\\texttt{seq}", "setup", "BHJ / WCOJ"],
+                header = ["Query", "\\# Result", "\\texttt{BroadcastHashJoin}", "\\texttt{seq}", "setup", "Speedup"],
                 column_format="lr||r|rr||r",
                 formatters = {
                   "ratio": lambda r: str(round(r, 1)),
