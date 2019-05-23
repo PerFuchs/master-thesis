@@ -19,8 +19,8 @@ class LeapfrogJoinIdiomatic(var iterators: Array[LinearIterator]) {
     leapfrogSearch()
   }
 
-  def leapfrogSeek(key: Long): Unit = {
-    iterators(p).seek(key)
+  def leapfrogLeastUpperBound(key: Long): Unit = {
+    iterators(p).leastUpperBound(key)
     p = (p + 1) % iterators.length
     leapfrogSearch()
   }
@@ -31,7 +31,7 @@ class LeapfrogJoinIdiomatic(var iterators: Array[LinearIterator]) {
       var min = iterators(p).key
 
       while (min != max && !iterators(p).atEnd) {
-        iterators(p).seek(max)
+        iterators(p).leastUpperBound(max)
         max = iterators(p).key
         p = (p + 1) % iterators.length
         min = iterators(p).key

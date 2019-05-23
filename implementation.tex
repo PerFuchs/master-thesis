@@ -2,136 +2,138 @@
 
 \subsection{General sequential version (\textit{seq})}\label{subsec:general-sequential-version}
 We implement the Leapfrog Triejoin~\cite{leapfrog} as our general sequential version of a WCOJ.
-However, instead of using B-Trees as a backing data structure, we use sorted arrays and a binary search
-to for its backing, which has been described in~\cite{myria-detailed} and is called Tributary join in their paper.
-Our Leapfrog Triejoin is implemented in three components, which we explain in this order below: \textit{LeapfrogJoin}, \textit{ArrayTrieIterable} and
+However, instead of using B-Trees as a backing data structure, we use sorted arrays and a binary
+search, which has been described in~\cite{myria-detailed} and is called
+Tributary join in their paper.
+Our Leapfrog Triejoin is implemented in three components which we explain in order below: \textit{LeapfrogJoin}, \textit{ArrayTrieIterable} and
 \textit{LeapfrogTriejoin}.
 
 The Leapfrog join is a variant of the sort-merge join for unary relationships, originally described in~\cite{leapfrog1,leapfrog2}. % TODO see LFTJ paper 4 and 7
 To join $k$ unary relations $A_1(x)$, $A_2(x)$, \dots, $A_k(x)$ it takes one iterator per input relations and offers an iterator
 interface that yields the intersection of all relations.
 It requires that it's input iterators offer a \textit{key} method in $\mathcal{O}(1)$, a \textit{next} method and
-a \textit{least\_upper\_bound(key: Int)} both in $\mathcal{O} (\log n)$ ($n$ defined as the size of the input relationship).
-\textit{least\_upper\_bound} moves the iterator to the first position of the sought \textit{key} or the first position of the
+a \textit{leastUpperBound(key: Int)} both in $\mathcal{O} (\log n)$ ($n$ defined as the size of the input relationship).
+\textit{leastUpperBound} moves the iterator to the first position of the sought \textit{key} or the first position of the
 next higher value.
 An idiotmatic implementation of a Leapfrog join is shown in~\cref{lst:leapfrog-join}, for the optimized implementation see
 \texttt{leapfrogTriejoin.LeapfrogJoin} in our repository.  % CODEREF
 
 \begin{listing}[H]
-    \inputminted{scala}{code/LeapfrogJoin.scala}
+    \inputminted[linenos=true]{scala}{code/LeapfrogJoin.scala}
     \caption{Leapfrog join.}
     \label{lst:leapfrog-join}
 \end{listing}
 
 To support j-arity relations, $A(a_1, a_2, \dots, a_j)$ we add two methods to the iterator interface that represents the input
-relationships: \textit{up} and \textit{down} both are required to work in $\mathcal{O} \log n$.
-We call this new iterator \textit{Trieiteraor} because it represents the relationship as a trie, see~\cref{fig:trie-example}.
+relationships: \textit{up} and \textit{open}; both are required to work in $\mathcal{O} (\log n)$.
+We call this new iterator Trieiterator because it represents the relationship as a trie, see~\cref{fig:trie-example}.
 
-% TODO Trieiterator not in textit
-The implementation of a \textit{Trieiterator} backed by a columnwise representation of the relation using one array
-per column is straight forward, we outline the basic ideas next and refer to the interested reader to
+The implementation of a Trieiterator backed by a columnwise representation of the relation using one array
+per column is straight forward, we outline the basic ideas here and refer the interested reader to
 \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl} in our repository for further details.  % CODEREF
-It helps to think about the \textit{Trieiterator} as consisting out of a linear component, containing the functions
-\textit{key}, \textit{next} and \textit{seek}, and horizontal component, made off the functions \textit{up} and \textit{down},
+It helps to think about the Trieiterator as consisting out of a linear component, containing the functions
+\textit{key}, \textit{next} and \textit{leastUpperBound}, and horizontal component, made off the functions \textit{up} and \textit{open},
 to move the linear component from one trie level to another.
+
 First, we explain the horizontal component.
-They keep track of the current \textit{level} of the \textit{Trieiterator} and the \textit{startPosition} and \textit{endPosition}
-for in the columns,
-e.g. in~\cref{fig:trie-example} when the current \textit{level} is 1 (or x) and the key equals 4 the \textit{startPosition} is 2 and
+They keep track of the current \textit{level} of the Trieiterator and the \textit{startPosition} and \textit{endPosition}
+for in the column, e.g. in~\cref{fig:trie-example} when the current \textit{level} is 1 (or x), the key equals 4, the
+\textit{startPosition} is 2 and
 the \textit{endPosition} is 5 because the value 4 occurs 3 times.
-With these bookkeeping variables, updated by \textit{up} and \textit{down}, one can implement the linear part by
+With these bookkeeping variables, updated by \textit{up} and \textit{open}, one can implement the linear part by
 a binary search over the current column (given by \textit{level}) which is limited to \textit{startPosition} and \textit{endPosition}.
 
 \begin{figure}
     \centering
     \includesvg[height=5cm]{trie}
     \caption{A 3-ary relationship as table (left) and trie (right), to position the iterator at the tuple (1, 1, 5) one
-    calls \textit{down} twice, \textit{key} returns now 5, after a call to \textit{next}, \textit{key} returns 6 and \textit{up}
+    calls \textit{open} twice, \textit{key} returns now 5, after a call to \textit{next}, \textit{key} returns 6 and \textit{up}
     would lead to \textit{key} returning 1.}
     \label{fig:trie-example}
 \end{figure}
 
-The Leapfrog Triejoin combines \textit{Trieiterators} and Leapfrog joins to join $k$ relationships of arbitrary arity.
-Its input is one \textit{Trieiterator} per relationship, from this it builds one Leapfrog join per attribute which
-receives references to all \textit{Trieiterators} of relationships containing this attribute, e.g. for the triangle query
-\textit{R(a, b), S(b, c), T(a, c)} the Leapfrog Triejoin receives three Trieiterators, for \textit{R}, \textit{S} and \textit{T},
-and builds three Leapfrog joins, for $a$, $b$, $c$, which receive references to two TrieIterators each.
+The Leapfrog Triejoin combines TrieIterators and Leapfrog joins to join $k$ relationships of arbitrary arity.
+Its input is one Trieiterator per relationship, with these it builds one Leapfrog join per attribute which
+receives references to all Trieiterator of relationships containing the attribute, e.g. for the triangle query
+\textit{R(a, b), S(b, c), T(a, c)} the Leapfrog Triejoin receives three Trieiterator, for \textit{R}, \textit{S} and
+\textit{T},
+and builds three Leapfrog joins, for $a$, $b$, $c$, which receive references to two Trieiterators each.
 To generate the join result the Leapfrog Triejoin operates the horizontal components of the Trieiterators directly and
 uses the Leapfrog joins to operate the linear component.
 
-% TODO can I reference lines?
-We show an idiomatic implementation in~\cref{lst:leapfrog-triejoin}, a performance oriented implementation can be found in our
-repository in \texttt{leapfrogTriejoin.LeapfrogTriejoin}.
-The listings contains two important functions: the initialization function from line~\ref{line:lftjInitStart} to line~\ref{line:lftjInitEnd} % LINE
+We show an idiomatic implementation of a Leapfrog Triejoin in~\cref{lst:leapfrog-triejoin} and~\ref{lst:leapfrog-triejoin-helpers}, a performance oriented
+implementation can be found in our repository in \texttt{leapfrogTriejoin.LeapfrogTriejoin}.
+These listings contain two important functions: the initialization function from line~\ref{line:lftjInitStart} to
+line~\ref{line:lftjInitEnd} % LINE
 and the \textit{moveToNextTuple} function at line~\ref{line:moveToNextTuple}. % LINE
 We go through these functions in order.
+
 The initializer gets two arguments: a mapping from variables to \textit{TrieIterators} (each \textit{TrieIterator} belongs to
-the list of attributes of its relationship) and the global variable ordering as a list of \textit{Strings}.
-First, it creates one \textit{LeapfrogJoin} per variable (line 2 to 9) which receives references % LINE
-to each \textit{TrieIterator} operating on a relationship with this attribute; and builds a mapping from variables to
-all \textit{TrieIterators} acting on a relationship with an attribute of the same name (line TOOD). % LINE
-Then we initialize \textit{depth}, \textit{bindings} and \textit{atEnd} (line TODO to line TODO). % LINES
+the list of attributes of its relationship) and the global variable ordering as a sequence of \textit{Strings}.
+First, it creates one \textit{LeapfrogJoin} per variable (line 5) which receives references % LINE
+to each \textit{TrieIterator} operating on a relationship with this attribute.
+Then it builds a mapping from variables to all \textit{TrieIterators} acting on a relationship with an attribute of the same name (line
+8). % LINE
+Finally, it initializes \textit{maxDepth}, \textit{action}, \textit{depth}, \textit{bindings} and \textit{atEnd} (line 10 to line 14). % LINES
 \textit{depth} and \textit{bindings} are an internal variable storing the index of the variable to bind currently and the
 current bindings for all variables up to \textit{depth}.
 \textit{atEnd} signals that the join has been completed to the client.
-In line TODO, we move the join to the first tuple if it is not empty (line TODOff). % LINE
-That means to move all \textit{TrieIterators} to their deepest level and storing the current binding for each level
-in \textit{bindings}, so that these bindings are returned on the first call to \textit{next} - the join stores one output
-tuples in bindings and returns it in \textit{next} after moving to the next tuple. % TODO change this in the implementation.
 
-\textit{moveToNextTuple} implements a depth-first traversal of the intersection of the \textit{TrieIterators}.
+\textit{moveToNextTuple} implements a depth-first traversal of the \textit{TrieIterators}.
 This traversal needs to stop each time when a complete tuple has been found to support the iterator interface of the join.
 Therefore, it is implemented as a state-machine which stops each time the deepest level is reached and all variables bound
-(loop condition in line TODO). % LINE
-The next action of the state machine is determined by the outcome of the current action variable.
+(loop condition in line 35). % LINE
+The next action of the state machine is determined by the outcome of the current action.
 Hence, we can characterize the state machine by describing each possible action and its possible outcomes.
 There are three possible actions: \textit{NEXT}, \textit{DOWN}, \textit{UP}.
 We summarize the possible actions, conditions for the next action and
 if the main loop of the state machine yields the next tuple in~\cref{table:lftj-state-machine} and describe each action below.
 
-First, \textit{NEXT} moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable (line TODO). % LINE
-Then if \textit{LeapfrogJoin} reached its end, we continue with the \textit{UP} action (line TODO), % LINE
-otherwise we set the binding and continue by the \textit{NEXT} action, if we are at the deepest level or by moving
-to the next deeper level by the \textit{down} action (line TODO). % LINE
-Second, \textit{DOWN} moves to the next variable in the global variable ordering by opening all related \textit{TrieIterators}
-(line TODO) % LINE
-A \textit{DOWN} can be followed by an \textit{UP} if the \textit{LeapfrogJoin} is \textit{atEnd} (line TODO),
-by a \textit{NEXT} action if the trie join is at its lowest level (line TODO), or
-by another \textit{DOWN} to reach the last level.
-Finally, \textit{UP} can signal the completion of the join if all bindings for the first variable in the global ordering have
-been explored, or in other words, the first \textit{LeapfrogJoin} is \textit{atEnd} (condition \textit{depth == 0 $\wedge$ action ==  UP\_ACTION} line TODO). % LINE
-Otherwise, all \textit{TrieIterators} corresponding to the current variable are moved upwards
-and \textit{depth} and \textit{bindings} updatd (lines TODO, TODO and TODO).  % LINE
-Then, this action is followed by another \textit{UP} or a \textit{NEXT} depending on \textit{atEnd} of the current \textit{LeapfrogJoin} (lines TODO). % LINE
-label \ref{myline}
+\textit{NEXT} moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable
+(line 2 in~\cref{lst:leapfrog-triejoin-helpers}). % LINE
+If the \textit{LeapfrogJoin} reached its end, we continue with the \textit{UP} action (line 4), % LINE
+otherwise we set the binding and continue by another \textit{NEXT} action, if we are at the deepest level or by moving
+to the next deeper level by the \textit{DOWN} action (line 7). % LINE
+
+\textit{DOWN} moves to the next variable in the global variable ordering by opening all related \textit{TrieIterators}
+(line 20) % LINE
+A \textit{DOWN} can be followed by an \textit{UP} if the \textit{LeapfrogJoin} is \textit{atEnd} (line 22),
+by a \textit{NEXT} action if the trie join is at its lowest level (line 25), or by another \textit{DOWN} to reach the last level.
+
+\textit{UP} can signal the completion of the join if all bindings for the first variable in the global ordering have
+been explored, or in other words, the first \textit{LeapfrogJoin} is \textit{atEnd} (condition
+\textit{depth == 0 $\wedge$ action ==  UP\_ACTION} line 28). % LINE
+Otherwise, all \textit{TrieIterators} corresponding to the current variable are moved upwards by calling \textit{triejoinUp} (line 31)
+which also updates \textit{depth} and \textit{bindings}.  % LINE
+Then, this action is followed by another \textit{UP} or a \textit{NEXT} depending on \textit{atEnd} of the current \textit{LeapfrogJoin}
+(lines 32). % LINE
 
 \begin{table}[]
     \centering
     \begin{tabular}{@{}llll@{}}
         \toprule
         Action                & Condition                                  & Next action & Yields \\ \midrule
-        \multirow{3}{*}{NEXT} & lf.atEnd                                   & UP          & no     \\
-        & !lf.atEnd $\wedge$ reachedMaxDepth             & NEXT        & yes    \\
-        & !lf.atEnd $\wedge$ !reachedMaxDepth            & DOWN        & no     \\
+        \multirow{3}{*}{NEXT} & \textit{lf.atEnd}                                   & UP          & no     \\
+        & \textit{$\neg$lf.atEnd} $\wedge$ \textit{reachedMaxDepth}             & NEXT        & yes    \\
+        & \textit{$\neg$lf.atEnd} $\wedge$ \textit{$\neg$reachedMaxDepth}            & DOWN        & no     \\
         & & &\\
-        \multirow{3}{*}{DOWN} & lf.atEnd                                   & UP          & no     \\
-        & !lf.atEnd $\wedge$ reachedMaxDepth             & NEXT        & yes    \\
-        & !lf.atEnd $\wedge$ !reachedMaxDepth            & DOWN        & no     \\
+        \multirow{3}{*}{DOWN} & \textit{lf.atEnd}                                   & UP          & no     \\
+        & \textit{$\neg$lf.atEnd} $\wedge$ \textit{reachedMaxDepth}             & NEXT        & yes    \\
+        & \textit{$\neg$lf.atEnd} $\wedge$ \textit{$\neg$reachedMaxDepth}            & DOWN        & no     \\
         & & &\\
-        \multirow{3}{*}{UP}     & depth == 0, means highest lf.atEnd is true & NA          & yes    \\
-        & lf.atEnd                                   & UP          & no     \\
-        & !lf.atEnd                                  & NEXT        & no     \\ \bottomrule
+        \multirow{3}{*}{UP}     & \textit{depth $\eq$ 0}, means highest \textit{lf.atEnd} is true & -- (done)         & yes    \\
+        & \textit{lf.atEnd}                                   & UP          & no     \\
+        & \textit{$\neg$lf.atEnd}                                  & NEXT        & no     \\ \bottomrule
     \end{tabular}
-    \caption{Summarizes which actions follow from the current action under certain conditions. \textit{lf} abbreviates the
+    \caption{Summarizes which action follows from the current action under which condition. \textit{lf} abbreviates the
     \textit{LeapfrogJoin} of the current variable.
     \textit{reachedMaxDepth} is true if we currently find bindings for the
     last variable in the global order.
     The columns \textit{Yields} details if the main loop of the state machine yields before computing the next action,
-    this is the case, when \textit{bindings} contains a complete tuple.
+    this is the case, when the \textit{bindings} array contains a complete tuple.
     }
     \label{table:lftj-state-machine}
 \end{table}
-% TODO use the word open not down for the trieiterator
 
 \begin{listing}[H]
     \inputminted[mathescape, linenos=true]{scala}{code/LeapfrogTriejoinIdiomatic.scala}
@@ -141,7 +143,7 @@ label \ref{myline}
 \end{listing}
 
 \begin{listing}[H]
-    \inputminted{scala}{code/LeapfrogTriejoinHelpers.scala}
+    \inputminted[linenos=true]{scala}{code/LeapfrogTriejoinHelpers.scala}
     \caption{\textit{LeapfrogTriejoin} helpers.}
     \label{lst:leapfrog-triejoin-helpers}
 \end{listing}
@@ -178,7 +180,10 @@ Category                       & Optimization                                   
 \multirow{2}{*}{\textbf{Binary search}} & linear search for short search spaces                                                  & important      \\
 & avoiding unnecessary conditions                                                        & important      \\
 \hline
-\textbf{Spark}                  & direct use of arrays instead of ColumnVector                                           & important      \\
+\textbf{Spark}                  & direct use of arrays instead of \texttt{ColumnVector}                                           &
+important
+
+\\
 \hline
 \multirow{4}{*}{\textbf{Scala}}         & use \textit{while} instead of \textit{map}, \textit{foreach}, \textit{exists}, etc     & very important \\
 & use \textit{Array} instead of Scala's collections                                      & very important \\
@@ -200,7 +205,7 @@ The first in the class \texttt{leapfrogTriejoin.LeapfrogJoin} (see also~\cref{ls
 in the \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl}.
 
 The \textit{LeapfrogJoin.init} method is origingally described in~\cite{leapfrog} to sort its \textit{TrieIterators}.
-However, the method can be improved by avoiding to sort the \textit{TrieIterators} (line TODO).  % LINE
+However, the method can be improved by avoiding to sort the \textit{TrieIterators} (line 11).  % LINE
 We can start moving the \textit{TrieIterator} without sorting them and arrive at an ordered array in $\mathcal{O} (n)$ steps - $n$ defined as the size of \textit{iterators}.
 This approach improves over the original algorithm in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection immediately without sorting them first and
 (2) orders the array in fewer steps than traditional sorting algorithms.
@@ -210,32 +215,39 @@ Then we move the \textit{TrieIterator} at $p + 1$ to the least upper bound of th
 We proceed with this process - wrapping \textit{p} around when it reaches \textit{iterators.length} - until \textit{p} equals the original maximum index.
 Now, we are either in a state in which all \textit{TrieIterators} point to the same value and we are done - the \textit{LeapfrogJoin} is initialized -
 or we arrived at a state in which the \textit{iterators} array is sorted according to \textit{key} and can proceed as in the original \textit{LeapfrogJoin.init} method.
-To apply this optimization one replaces the call to \textit{sort} in line TODO with the procedure explained above\footnote{The implementation of Scala's array sort for objects is slow
+To apply this optimization one replaces the call to \textit{sort} in line 11 with the procedure explained above\footnote{The
+implementation of Scala's array sort for objects is slow
 because it copies the array twice and casts the values to \textit{Java.Object} such that it can use Java's sorting methods.
 Before we applied the sorting optimization above, we replaced Scala's sort
 method with an optimized insertion sort, which was faster than Scala's sorting method - the \textit{iterator} array contains normally at most 20 items.}.
 
-The second Leapfrog Triejoin specific optimization is to change the \texttt{ArrayTrieIterble.TrieIteratorImpl.next} method.
+The second Leapfrog Triejoin specific optimization is to change the \texttt{ArrayTrieIterable.TrieIteratorImpl.next} method.
 This method moves the iterator to the next value on the same level of the trie.
-Hence, it generally runs in $\mathcal{O} (\log n)$ with $n$ the number of tuples in the relationship because it needs to find the least upper bound of \textit{key + 1}.
-However, under the assumption that all tuples are unique - which is fulfilled for the use-case of an edge relationship for graphs - the last level of the trie
-is unique.
+Hence, it generally runs in $\mathcal{O} (\log n)$, $n$ being the number of tuples in the
+relationship, because it needs to find the least upper bound of \textit{key + 1}.
+However, under the assumption that all tuples are unique - which is fulfilled for the use-case of an edge relationship -
+the last level of the trie is unique.
 Hence, we can move to the next value by simply increasing the position by one, which is an operation in $\mathcal{O} (1)$.
 
 The binary search is the most expensive operation of the Leapfrog Triejoin.
 Hence, special attention needs to be paid while implementing it.
-Our most important optimization is to change to a linear search once we narrowed the search space a certain threshold - currently at 60 values.
+Our most important optimization is to change to a linear search once we narrowed the search space
+to a certain threshold - currently at 60 values.
 We experimented with values from 0 to 400 and found that 60 was optimal but even going as high as 120 values would not change the performance much.
 
-Another important optimization is to avoid unnecessary if-statements in the loop of the binary search, e.g. the implementation of Wikipedia and many other
-example implementations use an if-statement with three branches for smaller, bigger and equal but two branches for greater than and less-or-equal suffice for a least upper bound search.
-A similar optimization can be applied to a linear search on a limited space of a sorted array: intuitively one would use the while-loop condition \textit{array(i) > key $\wedge$ i < end} with
-\textit{key} being the key to find the least upper bound for, \textit{i} the loop invariant and \textit{end} the exclusive end of the search space.
-Anyhow, it is faster to check for \textit{key > vector(end - 1)} once before the loop and return if this is the case because the value cannot be found in the search space.
+Another important optimization is to avoid unnecessary if-statements in the loop of the binary
+search, e.g. the implementation on Wikipedia and many other example implementations use an
+if-statement with three branches for smaller, bigger and equal but two branches for greater than and less-or-equal suffice for a least upper bound search.
+
+A similar optimization can be applied to a linear search on a sorted array: intuitively one would use the while-loop condition
+\textit{array(i) > key $\wedge$ i < end} with \textit{key} being the key to find the least upper bound for, \textit{i} the loop invariant
+and \textit{end} the exclusive end of the search space.
+Anyhow, it is faster to check for \textit{key > array(end - 1)} once before the loop and return if this is the case because the value
+cannot be found in the search space.
 This obviously circumvents the main loop of the linear search;
 additionally, it simplifies the loop condition to \textit{array(i) > key}.
 
-The Spark infrastructure uses the interface \texttt{ColumnVector} to represent columns of relationship.
+The Spark infrastructure uses the interface \texttt{ColumnVector} to represent columns of relationships.
 The implementation \texttt{OnHeapColumnVector} is a simple wrapper around an array of the correct type with support for \textit{null} values and \textit{append} operations.
 First, we used this data structure to represent our columns but we could see a clear increase in performance by replacing it by an implementation that exposes the array
 to allow the binary search to run on the array directly.
@@ -244,24 +256,24 @@ The implementation is straightforward and can be found in our repository in \tex
 
 We found many standard optimizations and Scala specific optimizations to be really useful.
 Most likely these are the optimizations that brought the biggest performance improvements.
-However, they are well-known, so we mention them only in the~\cref{table:seq-optimizations}.
+However, they are well-known, so we mention them only in the~\cref{table:optimizations-seq}.
 For Scala specific optimizations one can find good explanations at~\cite{databricks-scala-guide}.
 
-Apart from the aforementioned very useful optimizations, we investigated multiple other avenues in hope for performance improvements which do not succeed, we list these
-approaches here to save others the work of investigating.
+Apart from the aforementioned very useful optimizations, we investigated multiple other avenues in hope for performance improvements
+which did not succeed, we list these approaches here to save others the work of investigating:
 
 \begin{itemize}
-\item reimplement in Java
-\item use of a Galloping search before binary search
-\item unrolling the while-loop in \textit{LeapfrogTriejoin.moveToNextTuple}
-\item predicating the \textit{action} variable in \textit{LeapfrogTriejoin.moveToNextTuple}
+    \item reimplement in Java
+    \item use of a Galloping search before the binary search
+    \item unrolling the while-loop in \textit{LeapfrogTriejoin.moveToNextTuple}
+    \item predicating the \textit{action} variable in \textit{LeapfrogTriejoin.moveToNextTuple}
 \end{itemize}
 
 
 % TODO future work?
 Finally, we believe that code generation for specific queries that combines the functionality of \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
 and \textit{ArrayTrieIterator} into one query specific function would lead to noticeable performance improvements.
-The reason for this belief is that our implementation takes about 3.46 for a triangle query on the Twitter social circle dataset
+The reason for this belief is that our implementation takes about 3.46 seconds for a triangle query on the Twitter social circle dataset
 while a triangle query specific Julia implementation, of a colleague of ours, needs only half a second.
 The main difference between our implementation and his are: the language used (Julia is a high-performance, compiled language) and the fact
 that his implementation has no query interpretation overhead but cannot handle any other query than the triangle query.
