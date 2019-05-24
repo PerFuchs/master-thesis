@@ -162,11 +162,30 @@ For now, we settle to simply point out the most important observations and postp
 to experiments run against our later implementations, i.e. \texttt{seq-graph-pattern} and \texttt{dist}.
 
 We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
-Generally, we see that for \texttt{n-clique} patterns the speedup over Spark.
+Generally, we see that for \texttt{n-clique} patterns the speedup over Spark decreases for bigger $n$.
 This is due to the fact that many binary joins in a \texttt{n-clique} are actually semi-joins which to do not increase but decrease the size of intermediary results,
 e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to a bigger intermediary result.
 
-TODO influence of cycle size
+The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
+decreasing speedup on \texttt{Amazon-0302}.
+Unfortunately, we are (TODO currently) not able to provide \texttt{n-cycle} results for the \texttt{SNB-sf1} dataset, due to the fact that
+\texttt{BroadcastHashjoin}'s take more than 22 hours for the \texttt{6-cycle} which blocked our experiments.
+\texttt{5-cycle} runs at the moment.
+
+The \texttt{House} and \texttt{5-clique} pattern seem to be quite similiar - the \texttt{House} is a \texttt{5-clique} with two missing
+edges.
+However, as the count of their results indicates these two edges lead to dramatically different outcomes.
+Hence, their different timing and speedup behaviour.
+
+The \texttt{Kite} pattern produces consistently the second highest speedup after the \texttt{3-clique}.
+Most likely due to the fact that a \texttt{Kite} is two triangles back-to-back.
+
+The path query shows very different behaviour on the \texttt{Amazon} and the \texttt{SNB} datasets.
+This might be due to the different selectivity; it is extremely high on the co-purchase datasets and rather low on the social network
+benchmark.
+This different in selectivity is not surprising given that the \texttt{SNB} network fulfills the small world property, while the
+\texttt{Amazon} dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
+We will run the path queries with a different selectivity on the two input vertice sets to confirm this hypothesis.
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
 in the characteristics of the datasets themselves.
