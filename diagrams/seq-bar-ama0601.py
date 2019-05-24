@@ -8,6 +8,7 @@ DATASET = DATASET_FOLDER + "ama0601.csv"
 data = pd.read_csv(DATASET)
 
 data = data[data["Query"] != "Cycle(5)"]
+data = data[data["Query"] != "Cycle(6)"]
 
 data = data.set_index("Query")
 
