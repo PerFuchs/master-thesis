@@ -326,21 +326,78 @@ it a pure engineering task.
 
 
 \subsection{Spark integration}\label{subsec:spark-integration}
+We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
+Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst, this includes a
+\textit{LogicalPlan},
+\textit{Strategy} to convert this logical operator into a \textit{SparkPlan} for the WCOJ, a logical and physical operator to materialize
+a RDD's in sorted fashion into a columnar representation that supports a least upper bound operation in $\mathcal{O} (\log n)$ and
+finally an general implementation of Spark's \textit{zipPartition} operation to support more than 5 children for a single RDD.
+We explain these components below; before we outline some limitations of our integration.
 
-% Logical operator => WCOJ
-%   Attribute creation?
-%   pattern parsing?
-% Strategy => WCOJ2WCOJExec also generating the ToTrieIterableRDDExec children
-% Physical operator => WCOJExec
-%   general zip partitions?
-% Physical operator, ToTrieIterableRDDExec
-%    use ensure childOrdering to enforce sorting
-%    builds a TrieIterableRDD which is an RDD with TrieIterable partitions
-%    building these are a simple matter of adding all rows of each input RDD partition to one array as output partition
-%    from this array I can use TrieIteratorImpl to iterate these arrays in a trie form as explained in ref
+% TODO is that the write place?
+It is not in scope of this work to integrate WCOJ's into the SQL parser of Spark.
+Hence, WCOJ can only be used by Spark's Scala functional interface and not through Spark's SQL queries.
+Although, we build WCOJ's directly into Spark's structured query plans, we do not integrate it into the query optimization components of
+Catalyst, e.g. we did write no rules or cost-based strategies to decide when to use a WCOJ or a binary join.
+It is up to the user to decide when to use a WCOJ or a binary join.
+However, our integration allows the user to intermix these freely.
+The reason for this decision is, that at-time of writing no published paper existed that systematically studies which queries benefit from
+WCOJ's in general, nor, does research exist that studies the combination of WCOJ's and binary joins.
+Only a month after we decided on the our scope for Spark integration Salihoglu et al. published an arXiv paper~\cite{mhedhbi2019} that
+tackled these problems for the first time.
+The lack of currently peer-reviewed papers and the enormous depth of the arXiv paper clearly illustrate that better integration with
+Spark's optimizer are out of scope for this thesis.
 
-% JoinSpecification?  move to leapfrogJoin???
-% patterns?  move to LeapfrogJoin???
+%It is established that WCOJ are amendable to cyclic queries but not how strongly to which kind of cyclic query, e.g. dense (clique) or
+%sparse (cycle).
+%Additionally, no runtime measurements for queries bigger than 4-clique have been published.
+To allow the user to call \textit{findPattern} (as defined in~\cref{ssec:user-interface}) on a \textit{Dataset}, we added a new class
+to the package \texttt{org.apache.spark.sql} called \texttt{WCOJFunctions} and an implicit conversion from \textit{Dataset} to
+\texttt{WCOJFunctions}.
+This function parses the pattern - the necessary code is borrowed from~\cite{graphframe} - into a representation of a WCOJ join,
+\texttt{JoinSpecification}, and creates new \texttt{AttributeReferences} named accordingly to the join variables.
 
+Due to our decission not to build optimizer rules to introduce WCOJ's, we have to implement a new \textit{LogicalPlan} to represent WCOJs.
+This plan has as many children as relationships joined by the WCOJ.
+Its \textit{output} equals the join variables for which \texttt{WCOJFunctions} produced \texttt{AttributeReferences}.
+
+The physical operator for WCOJ, an implementation of the trait \texttt{SparkPlan}, is called \texttt{WCOJExec}.
+It expects as many childrens as the relationships in the join;
+these children have to support a Trieiterator interface as specified in~\cref{subsec:general-sequential-version}.
+The biggest challenge in the implementation of \texttt{WCOJExec} is that Spark does not support to zip the partitions of more than 5 RDDs.
+However, to operate synchronously on the partitions of all children, we need this operation for an arbitrary number of children.
+Fortunately, although, not publicly available, Spark does implement \textit{zipPartitions} in a general manner in
+the abstract class \texttt{ZippedPartitionsBaseRDD}.
+Hence, supporting this functionality is a simple matter of subclassing this class publicly to expose the its generality to our code (see
+\texttt{sparkIntegration.GeneralZippedPartitionsRDD}).
+
+% TODO use 's everywhere for plurals
+To support the Trieiterator interface, we need to materialize the input RDD's for \texttt{WCOJExec}.  % TODO footnote the Spark novice
+This is done by \texttt{ToTrieIterableRDD}, a \texttt{SparkPlan}, with a single child.
+It iterates over the child and stores all tuples in a columnar representation: a \texttt{ColumnarBatch}\footnote{To all but highly
+experienced Spark developers the construct used to allow us to create an RDD which controls how it's partitions are stored might look
+unintuitive.
+Normally, the type parameter of the \texttt{RDD} class is used to refer to the type of its elements, e.g. Sparks Catalyst module uses
+mostly \texttt{RDD[InternalRow]}.
+However, it is possible - and practiced in the Spark project itself - to use this type parameter to give the type of the partitions of an
+RDD.
+This is what we do in the class \texttt{TrieIterableRDD}, which at the same time is a subclass of \texttt{RDD[InternalRow]}, so it can be
+used in Catalyst.}\footnote{Later we noticed the RDD function \texttt{glom} which allows to operate on the partitions of RDD's as array.
+However, by then we had already implemented our own solution and decided to keep it for better control.}.
+Furthermore, our Trieiterator implementation requires the tuples to be sorted.
+Therefore, \texttt{ToTrieIterableRDD} requires its child to be ordered by using the \texttt{requiredChildOrdering} functionality of Spark.
+
+The last component of our Spark integration, is a simple \texttt{Strategy} to translate a \texttt{WCOJ} logical operator into a
+\texttt{WCOJExec} physical operator.
+This is a one-to-one tranlation from \texttt{WCOJ} to \texttt{WCOJExec} as an implementation of Spark's abstract class
+\texttt{SparkStrategy}.
+Additionally, this \texttt{Strategy} also introduces a \texttt{ToTrieIterableRDD} operation before the WCOJ for every child.
+
+% TODO move to acknowledgements
+The Spark integration of this work has been inspired by the IndexedDataframes~\cite{indexed-dataframes} work of Alex Uta and the supervisors
+of this thesis.
+
+% systems integration?
+%  relationship reordering
 
 \subsubsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
