@@ -26,6 +26,11 @@ They use Tributary Join as a local, serial worst-case optimal join algorithm, co
 However, it is not obvious how well Hypercube shuffles scales because it replicates many of its input tuples~\cite{myria-detailed}.
 The combination of Hypercube shuffles and Tributary Join in Myria does not scale well (speedup of 8 on 64 workers compared to the time it takes on 2 nodes) which, although unlikely to be optimal, is not investigated in great detail; we therefore, explain Hypercube shuffles in detail and show that they tend to replicate all data to all nodes for bigger graph patterns~\cref{ssec:hypercube-shuffle}.
 Their approach is directly applicable to Spark.
+% TODO add Graphflow paper: variable ordering studied, combination of bin + wcoj in plans, query planning first known approach, parallel
+% execution?
+% TODO check emptyheaded, it uses WCOJ's
+
+% TODO eventually include binary search papers
 
 %However, it has been shown that one can use multiple rounds of Shares to trade-off more shuffle operations for less replication while maintaining optimal communication costs~\cite{shares-multi-round}.
 %Lately, in 2018, Afrati et al. published a Shares version which can handle skew and implemented it in Hadoop~\cite{sharesSkew,hadoop}.
@@ -37,7 +42,6 @@ The authors take advantage of this fact by using a uniform, non-replicating part
 Then they implement a worst-case optimal join using distributed data flow operators~\cite{naiad}, e.g. min and intersection.
 Similar to us, the authors focus on scalability and efficiency in their work but due to the use of a streaming, in memory shuffles and a fine-grained batched processing scheme their approach is unlikely to be successful in Spark.
 Hence, their and our research share the same goals, however, we aim to achieve it in a more restrictive, but widely used and industrial accepted, system.
-
 
 \subsection{Hypercube shuffle}\label{ssec:hypercube-shuffle}
 We first explain how the Hypercube shuffle algorithm, \texttt{HC}, partitions data.
