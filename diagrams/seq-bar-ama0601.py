@@ -5,10 +5,11 @@ from diagrams.base import *
 
 DATASET = DATASET_FOLDER + "ama0601.csv"
 
-data = pd.read_csv(DATASET)
+data = pd.read_csv(DATASET, sep=",")
 
 data = data[data["Query"] != "Cycle(5)"]
 data = data[data["Query"] != "Cycle(6)"]
+data = data[data["Query"] != "House"]
 
 data = data.set_index("Query")
 
@@ -27,7 +28,7 @@ autolabel(a.patches, "right")
 
 plt.xlabel("")
 plt.ylabel("Time [s]")
-plt.xticks(rotation=0)
+plt.xticks(rotation=45)
 
 axes = plt.gca()
 # axes.set_ylim([0, 50])

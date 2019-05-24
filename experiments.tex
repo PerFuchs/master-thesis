@@ -33,13 +33,13 @@ We motivate our choice in the next paragraph.
 
 \begin{table}[]
     \centering
-    \begin{tabular}{lllll} \toprule
-        Name    & Variant & Vertices & Edges & Source          \\ \midrule
-        \textbf{SNB}     & sf1     &          &       & \cite{snb}      \\
-        \textbf{Amazon}  & 0302    &          &       & \cite{snapnets} \\
-        & 0601    &          &       & \cite{snapnets} \\
-        \textbf{Twitter} & sc-d    &          &       & \cite{snapnets} \\
-        & sc-u    &          &       & \cite{snapnets} \\ \bottomrule
+    \begin{tabular}{llrrl} \toprule
+        Name    & Variant         &  Vertices   & Edges         & Source          \\ \midrule
+        \textbf{SNB}    & sf1     &             & 453.032       & \cite{snb}      \\
+        \textbf{Amazon} & 0302    & 262,111     &  1,234,877    & \cite{snapnets} \\
+                        & 0601    & 403,394     & 3,387,388     & \cite{snapnets} \\
+        \textbf{Twitter}& sc-d    & 81,306      & 1,768,149     & \cite{snapnets} \\  % TODO these numbers are of by a bit
+        & sc-u    &          &                                  & \cite{snapnets} \\ \bottomrule
     \end{tabular}
     \caption{Summary of all datasets mentioned in the thesis.
     Explanation of them and for the variants is given in running text.
@@ -95,7 +95,9 @@ pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
 \begin{table}[]
     \begin{tabular}{@{}lcccp{6cm}@{}}
         \toprule
-        Name     & Parameters                 & Vertices & Edges             & Example Datalog                                                                                                                                        \\ \midrule
+        Name     & Parameters                 & Vertices & Edges             & Example pattern
+
+        \\ \midrule
         \texttt{triangle} & NA                          & $3$        & 3                 & a $\rightarrow$ b; a $\rightarrow$ c; b $\rightarrow$ c                                                                                                \\
         \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ & see above                                                                                                                                              \\
         \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 & a $\rightarrow$ b; b $\rightarrow$ c; c $\rightarrow$ z; z $\rightarrow$ a                                                                             \\

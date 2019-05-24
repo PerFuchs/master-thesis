@@ -7,7 +7,11 @@ DATASET = DATASET_FOLDER + "snb-sf1.csv"
 
 data = pd.read_csv(DATASET)
 
-data = data[data["Query"].str.contains("Clique")]
+data = data[data["Query"] != "Cycle(4)"]
+data = data[data["Query"] != "Cycle(5)"]
+data = data[data["Query"] != "Path-4-0.001"]
+data = data[data["Query"] != "House"]
+data = data[data["Query"] != "Cycle(6)"]
 
 data = data.set_index("Query")
 fix_count(data)
@@ -23,7 +27,7 @@ autolabel(a.patches, "right")
 
 plt.xlabel("")
 plt.ylabel("Time [s]")
-plt.xticks(rotation=0)
+plt.xticks(rotation=45)
 
 axes = plt.gca()
 # axes.set_ylim([0, 50])
@@ -33,3 +37,5 @@ plt.tight_layout()
 
 plt.savefig(FIGURE_PATH + "seq-bar-snb-sf1.svg")
 plt.show()
+
+# TODO sort our legend overlap
