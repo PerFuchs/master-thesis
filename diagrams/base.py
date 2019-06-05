@@ -9,6 +9,8 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
 
+QUERY_ORDER = ["3-0.00-path", "3-clique", "kite", "4-clique", "house", "5-clique", "4-cycle", "5-cycle"]
+
 def fix_count(data):
   data["Count"] = data["Count"].map(lambda x: int(x.replace(".", "")))
 
@@ -30,7 +32,7 @@ def autolabel(rects, xpos='center'):
   ax = plt.gca()
   for rect in rects:
     height = rect.get_height()
-    ax.annotate('{}'.format(height),
+    ax.annotate('%.2f' % height,
                 xy=(rect.get_x() + rect.get_width() / 2, height),
                 xytext=(offset[xpos]*3, 3),  # use 3 points offset
                 textcoords="offset points",  # in both directions

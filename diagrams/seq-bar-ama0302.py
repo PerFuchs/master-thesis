@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 
 from diagrams.base import *
 
-DATASET = DATASET_FOLDER + "ama0302.csv"
+DATASET = DATASET_FOLDER + "ama0302_1.csv"
 
-data = pd.read_csv(DATASET, sep=",")
+data = pd.read_csv(DATASET, sep=",", comment="#")
 
 data = data[data["Query"] != "Cycle(6)"]
 
@@ -13,15 +13,20 @@ data = data.set_index("Query")
 
 fix_count(data)
 
-
 wcojData = data[data["Algorithm"] == "WCOJ"][["WCOJTime"]]
-binData = data[data["Algorithm"] == "sbin"][["Time"]]
+binData = data[data["Algorithm"] == "BinaryJoins"][["Time"]]
 
 displayData = binData.join(wcojData, "Query")
 displayData.rename(columns={"WCOJTime": "\\texttt{seq}", "Time": "\\texttt{BroadcastHashJoin}"}, inplace=True)
 
+grouped = displayData.groupby("Query")
 
-a = displayData.plot.bar()
+median = grouped.median()
+median = median.reindex(QUERY_ORDER)
+errors = grouped.std()
+errors = errors.reindex(QUERY_ORDER)
+
+a = median.plot.bar(yerr=errors, capsize=5)
 autolabel(a.patches, "right")
 
 plt.xlabel("")
@@ -29,7 +34,6 @@ plt.ylabel("Time [s]")
 plt.xticks(rotation=45)
 
 axes = plt.gca()
-# axes.set_ylim([0, 50])
 plt.grid(axis="x")
 
 plt.tight_layout()
