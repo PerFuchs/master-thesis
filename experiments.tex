@@ -9,7 +9,7 @@ We run Spark 2.4.0.
 We use Scala 2.11.12 on Java openJDK 1.8.
 
 So far, we run three different join algorithms.
-Our sequential implementation of Leapfrog Triejoin (see~\cref{ssec:seq}), called \texttt{seq} and Spark's two different binary join
+Our sequential implementation of Leapfrog Triejoin (see~\cref{ssec:seq-implementation}), called \texttt{seq} and Spark's two different binary join
 algorithms: \texttt{BroadcastHashJoin} and \texttt{SortMergeJoin}.
 In the majority of our experiments, we use Spark in its standard configuration with enabled code generation.
 We also tune the parameters for driver and executor memory usage (\texttt{spark.driver.memory} and \texttt{spark.executor.memory}) to fit
@@ -110,7 +110,7 @@ pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
     \caption{Summary of patterns and filters used.}
     \label{table:patterns}
 \end{table}
-
+% TODO add kite query
 For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
 Then we search for all path of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all
 paths between two randomly selected, fixed sets of vertices of length 4 - the sets of nodes contain roughly 10\% of all input nodes and are not guaranteed to be intersection free.
@@ -140,7 +140,9 @@ This section is focused on comparing the runtimes excluding the setup time - rat
 \textbf{Answer:} Because even when all data is arranged in a single partition, for simple sequential processing, Spark
 schedules its \texttt{SortMergeJoin} to use a shuffle.
 A shuffle writes and reads data to and from disk.
-Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}.TODO numbers
+Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}.
+We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{triangle} (8.1 seconds vs 58.9 seconds) and
+\texttt{5-clique} pattern (32.9 seconds vs 850.9 seconds).
 We assume that Spark is able to optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
 \textbf{Question:} Why do we exclude setup times from the WCOJ times?\\
@@ -156,6 +158,9 @@ Furthermore, it could be avoided by working directly on the \texttt{UnsafeIntern
 However, this would require us to work with unmanaged memory (the \texttt{UnsafeInternalRow} interface is slower than working on \texttt{Arrays})
 and we deem this as an unnecessary engineering overhead.
 
+\textbf{Question:} Is Spark's code generation a huge advantage for the \texttt{BroadcastHashjoin}?
+\textbf{Answer:} Yes, we ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for \texttt{triangle} and
+\texttt{5-clique}: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16.
 
 \subsubsection{Analysis}\label{sssec:seq-analysis}
 For now, we settle to simply point out the most important observations and postpone deeper analysis, e.g. influence of dataset size and characteristics,

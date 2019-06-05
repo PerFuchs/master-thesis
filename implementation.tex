@@ -1,6 +1,6 @@
 \section{Implementation}\label{sec:implementation}
 
-\subsection{General sequential version (\textit{seq})}\label{subsec:general-sequential-version}
+\subsection{General sequential version (\textit{seq})}\label{ssec:seq-implementation}
 We implement the Leapfrog Triejoin~\cite{leapfrog} as our general sequential version of a WCOJ.
 However, instead of using B-Trees as a backing data structure, we use sorted arrays and a binary
 search, which has been described in~\cite{myria-detailed} and is called
@@ -292,7 +292,7 @@ We are looking forward to seeing their results.
 
 %  variable ordering
 
-\subsection{User interface}\label{subsec:user-interface}
+\subsection{User interface}\label{ssec:user-interface}
 \begin{listing}[H]
 \inputminted{scala}{code/usage-example.scala}
 \caption{Example usage of a WCOJ to find triangles in graph.}
@@ -301,7 +301,7 @@ We are looking forward to seeing their results.
 
 As one can see in line 16 % LINE
 of~\cref{lst:usage-example}, we support a clean and precise DSL to match patterns in graphs.
-This DSL is inspired by GraphFrames~\cite{graph-frames}.
+This DSL is inspired by GraphFrames~\cite{graphframe}.
 The user can define a pattern by its edges, each edge is written as \textit{(a) - [] -> (b)} where \textit{a} is the
 source vertice and \textit{b} is the destination, multiple edges are separated by a semicolon.
 A connected pattern is expressed by defining multiple edges with the same source or destination.
@@ -364,7 +364,7 @@ Its \textit{output} are the \texttt{AttributeReferences} produced by \texttt{fin
 
 The physical operator for WCOJ's, \texttt{WCOJExec}, is an implementation of the trait \texttt{SparkPlan}.
 It expects as many children as the relationships in the join;
-these children have to support a Trieiterator interface as specified in~\cref{subsec:general-sequential-version}.
+these children have to support a Trieiterator interface as specified in~\cref{ssec:seq-implementation}.
 The biggest challenge in the implementation of \texttt{WCOJExec} is that Spark does not support to zip the partitions of more than 5 RDD's.
 However, to operate synchronously on the partitions of all children, we need this operation for an arbitrary number of children.
 Fortunately, although, not publicly available, Spark does implement \textit{zipPartitions} in a general manner in
