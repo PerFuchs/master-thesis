@@ -1,13 +1,18 @@
 import pandas as pd
+import copy
 
 from diagrams.base import *
 
 DATASET = DATASET_FOLDER + "ama0302_1.csv"
 
 data = pd.read_csv(DATASET, sep=",", comment="#")
+
+data = data[data["Query"] != "3-0.00-path"]
+
 data = data.set_index("Query")
 
 fix_count(data)
+
 # data = data[["WCOJTime"]]
 
 graphWCOJData = data[data["Algorithm"] == "GraphWCOJ"][["WCOJTime"]]
@@ -18,9 +23,11 @@ joined.rename(columns={"WCOJTime_seq": "\\texttt{seq}", "WCOJTime": "\\texttt{se
 joined = joined.groupby("Query")
 
 means = joined.median().round(2)
-means = means.reindex(QUERY_ORDER)
+qo = copy.copy(QUERY_ORDER)
+qo.remove("3-0.00-path")
+means = means.reindex(qo)
 errors = joined.std()
-errors = errors.reindex(QUERY_ORDER)
+errors = errors.reindex(qo)
 
 a = means.plot.bar(yerr=errors, capsize=5)
 autolabel(a.patches, "right")
@@ -34,5 +41,5 @@ plt.grid(axis="x")
 
 plt.tight_layout()
 
-plt.savefig(FIGURE_PATH + "seq-graph-bar-ama0302.svg")
+plt.savefig(FIGURE_PATH + "seq-graph-bar-ama0302.png")
 plt.show()
