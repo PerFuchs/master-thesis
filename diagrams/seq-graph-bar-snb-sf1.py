@@ -3,11 +3,12 @@ import copy
 
 from diagrams.base import *
 
-DATASET = DATASET_FOLDER + "ama0302_1.csv"
+DATASET = DATASET_FOLDER + "snb-sf1-graph-wcoj_1.csv"
 
 data = pd.read_csv(DATASET, sep=",", comment="#")
 
-data = data[data["Query"] != "3-0.00-path"]
+# data = data[data["Query"] != "4-cycle"]
+# data = data[data["Query"] != "house"]
 
 data = data.set_index("Query")
 
@@ -25,6 +26,9 @@ joined = joined.groupby("Query")
 means = joined.median().round(2)
 qo = copy.copy(QUERY_ORDER)
 qo.remove("3-0.00-path")
+# qo.remove("4-cycle")
+qo.remove("5-cycle")
+# qo.remove("house")
 means = means.reindex(qo)
 errors = joined.std()
 errors = errors.reindex(qo)
@@ -41,5 +45,5 @@ plt.grid(axis="x")
 
 plt.tight_layout()
 
-plt.savefig(FIGURE_PATH + "seq-graph-bar-ama0302.svg")
+plt.savefig(FIGURE_PATH + "seq-graph-bar-snb-sf1_bigs.png")
 plt.show()
