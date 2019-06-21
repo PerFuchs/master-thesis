@@ -7,8 +7,10 @@ DATASET = DATASET_FOLDER + "snb-sf1-mat.csv"
 
 data = pd.read_csv(DATASET, sep=",", comment="#")
 
-data = data[data["Query"] != "4-cycle"]
-data = data[data["Query"] != "house"]
+data = data[data["Query"] != "kite"]
+data = data[data["Query"] != "3-clique"]
+data = data[data["Query"] != "4-clique"]
+data = data[data["Query"] != "5-clique"]
 
 data = data.set_index("Query")
 
@@ -25,10 +27,14 @@ joined = joined.groupby("Query")
 
 means = joined.median().round(2)
 qo = copy.copy(QUERY_ORDER)
-qo.remove("3-0.00-path")
-qo.remove("4-cycle")
+qo.remove("4-clique")
+qo.remove("3-clique")
+qo.remove("kite")
+# qo.remove("4-cycle")
 qo.remove("5-cycle")
-qo.remove("house")
+qo.remove("3-0.00-path")  # TODO rename path query to 3-0.01-path
+qo.remove("5-clique")
+# qo.remove("house")
 means = means.reindex(qo)
 errors = joined.std()
 errors = errors.reindex(qo)
@@ -45,5 +51,5 @@ plt.grid(axis="x")
 
 plt.tight_layout()
 
-plt.savefig(FIGURE_PATH + "mat-graph-bar-snb-sf1.svg")
+plt.savefig(FIGURE_PATH + "mat-graph-bar-snb-sf1-long.svg")
 plt.show()
