@@ -6,7 +6,7 @@ from os import listdir
 
 from diagrams.base import *
 
-DATASETS = DATASET_FOLDER + "shares-simulation/"
+DATASETS = DATASET_FOLDER + "shares-simulation-same-hash/"
 SAMPLESIZE = 10000
 
 def loadDatasets(folder):
@@ -40,13 +40,17 @@ data = data.set_index("query")
 workers128 = data[data["workers"] == 128][["count"]]
 workers64 = data[data["workers"] == 64][["count"]]
 
-joined = workers64.join(workers128, "query", lsuffix="_64")
+# joined = workers64.join(workers128, "query", lsuffix="_64")
+joined = workers64
 grouped = joined.groupby("query")
 means = grouped.mean().round(2)
-means = means.sort_values("count_64")
+ma = grouped.max().round(2)
+mi = grouped.min().round(2)
+
+# means = means.sort_values("count_64")
 
 means.rename(columns={"count_64": "64 workers", "count": "128 workers"}, inplace=True)
-a = means.plot.bar()
+a = means.plot.bar(yerr=mi)
 autolabel(a.patches, "right")
 #
 plt.xlabel("")
