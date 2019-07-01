@@ -1,12 +1,11 @@
 from html.parser import HTMLParser
 import requests
-import operator as op
+import diagrams.base
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 DATATYPE_SIZE = 32
-
 
 class GraphData:
   def __init__(self, vertices, edges):
@@ -161,14 +160,15 @@ def main():
   print("Maximum: ", max(graph_sizes))
 
   bins = list(range(1, 100, 5)) + list(range(100, 650, 50))
-  n, bins, patches = plt.hist(graph_sizes, bins=bins, facecolor='g', histtype="bar", alpha=0.75)
+  n, bins, patches = plt.hist(graph_sizes, bins=bins, histtype="bar")
 
-  plt.xlabel('Size in GB')
-  plt.ylabel('#Graphs')
-  plt.title('Size of graphs')
+  plt.xlabel('Size [GB]')
+  plt.ylabel('\\# Graphs')
   # plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
   # plt.axis([40, 160, 0, 0.03])
   plt.grid(True)
+  plt.tight_layout()
+  plt.savefig("../graph-sizes.svg")
   plt.show()
 
 
