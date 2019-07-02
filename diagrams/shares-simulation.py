@@ -52,8 +52,12 @@ mi = grouped.min().round(2)
 
 means = means.sort_values("count_64")
 
-means.rename(columns={"count_64": "64 workers", "count": "128 workers"}, inplace=True)
+means = means.drop(columns="count")
+
+# means.rename(columns={"count_64": "64 workers", "count": "128 workers"}, inplace=True)
+means.rename(columns={"count_64": "64 workers"}, inplace=True)
 a = means.plot.bar(yerr=mi)
+a.legend().remove()
 autolabel(a.patches, "right", True)
 #
 plt.xlabel("")
