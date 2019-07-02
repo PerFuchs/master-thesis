@@ -31,10 +31,10 @@ joined = joined.drop(columns="Time")
 joined = joined.drop(columns="WCOJTime")
 joined = joined.drop(columns="WCOJTime_graph")
 
-diff = joined
-
-diff["difference"] = diff["speedup_wcoj_graph"] - diff["speedup_wcoj"]
-print("Difference max", diff["difference"].max())
+# diff = joined
+#
+# diff["difference"] = diff["speedup_wcoj_graph"] - diff["speedup_wcoj"]
+# print("Difference max", diff["difference"].max())
 
 
 joined.rename(columns={"speedup_spark": "\\texttt{Spark}", "speedup_wcoj": "\\texttt{WCOJ}", "speedup_wcoj_graph": "\\texttt{GraphWCOJ}"},
@@ -65,5 +65,5 @@ plt.grid(axis="x")
 
 plt.tight_layout()
 
-plt.savefig(FIGURE_PATH + "results-1.svg")
+plt.savefig(FIGURE_PATH + "results-1-speedup.svg")
 plt.show()
