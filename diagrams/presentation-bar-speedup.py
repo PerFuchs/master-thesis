@@ -1,6 +1,6 @@
 import pandas as pd
 import copy
-
+import matplotlib as mp
 from diagrams.base import *
 
 DATASET = DATASET_FOLDER + "snb-sf1-presentation.csv"
@@ -57,7 +57,9 @@ a = means.plot.bar(capsize=5)
 
 plt.xlabel("")
 # plt.ylim(0, 40)
-plt.ylabel("Speedup")
+plt.ylabel("Speedup", size=25)
+plt.xticks(size=25)
+plt.yticks(size=25)
 plt.xticks(rotation=45)
 
 axes = plt.gca()
