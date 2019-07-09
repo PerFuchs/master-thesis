@@ -4,18 +4,18 @@ TODO introduction
 
 \subsection{Compressed sparse row representation}\label{subsec:compressed-sparse-row-representation}
 Compressed sparse row representation (short CSR) is a well known, low-memory representation for static graphs~\cite{csr,csr-first}.
-To ease its explanation, we assume that the graph's vertices are indentified by the numbers from 0 to $|V| - 1$.
-However, our implementation allows to use arbritrary vertice identifiers in $\mathcal{N}$ by storing the translation in an additional
+To ease its explanation, we assume that the graph's vertices are identified by the numbers from 0 to $|V| - 1$.
+However, our implementation allows the use of arbitrary vertice identifiers in $\mathcal{N}$ by storing the translation in an additional
 array of size \textit{|V|}.
 
 CSR uses two arrays to represent the edge relationship of the graph: one of size \textit{|E|} which is a projection of the edge relationship
 onto the \textit{dst} attribute and a second of size \texttt{|V + 1|} which stores indices into the first array.
 To find all destinations directly reachable from a source \textit{src $\in$ V}, one accesses the second array at \textit{src} for the
 correct index to find the first destination in the first array.
-See~\cref{fig:csr-example} for an example of an edge relationship represented as table and CSR.
+% TODO maybe example figure?
 
 The CSR format has two beneficial properties in the context of this thesis.
-First, it allows to access all destinations for a source node in constant time.
-Second, the representation is only, roughly half as big than a simple columnar represenation.
+First, it allows accessing all destinations for a source node in constant time.
+Second, the representation is only, roughly half as big than a simple columnar representation.
 A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only $|V| + 1 + |E|$, note that for most real-world graph |V|
-<< |E| holds (see \cref{graph-background}).
+<< |E| holds (see~\cref{graph-background}).
