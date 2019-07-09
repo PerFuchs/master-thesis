@@ -402,4 +402,30 @@ of this thesis.
 % systems integration?
 %  relationship reordering
 
-\subsubsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
+\subsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
+
+\subsubsection{Exploiting low average outdeegrees}
+Most real-world graphs have a small, average outdeegree.
+In our study of real world graphs, we show that the average outdeegree of all graphs involved is TODO and
+the maximum average outdeegree is TODO at TODO.
+We can exploit this fact by materializing the intersections, which are constructed by the \textit{Leapfrog joins}, directly
+in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
+orignal paper~\cite{lftj}.
+This is beneficial because it makes better use of datalocality; we elaborate this statement in a later
+paragraph.
+This is a graph specific optimization because it would not be advisable to materialize the intersections
+if they were big.
+This is because then the overhead of copying data into a buffer would outweight the performance gains from
+locality.
+We structure the remainder of this section as follows.
+First, we analysis the size intersection as well as the input list lengths and the correlation between
+these values.
+With this analysis, we establish that the small average outdeegree indeed leads to intersections
+small enough to materialize.
+Furthermore, we gain insight in the workload for the intersection algorithm to choose characterized
+by the size of input relationships.
+Second, we explain the algorithm we chose based on the analysis.
+Third, we point out differences to the original Leapfrog Triejoin.
+Finally, we present a short experiment showing the performance gain of this optimization.
+
+
