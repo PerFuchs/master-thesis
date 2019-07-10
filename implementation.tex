@@ -418,11 +418,21 @@ This is a graph specific optimization because it would not be advisable to mater
 Then the overhead of copying data into a buffer would outweight the performance gains from
 locality.
 We structure the remainder of this section as follows.
-First, we analysis the intersection workload in terms of input sizes and size after intersection to confirm our hypothesis
+First, we shortly reiterate the most important facts about \textit{Leapfrog joins} for this chapter (TODO just organize both sections
+behind each other?).
+Second, we analysis the intersection workload in terms of input sizes and size after intersection to confirm our hypothesis
 and gain valuable insights to choose the best intersection algorithm.
-Second, we explain the algorithm we chose based on the analysis.
-Third, we point out differences to the original Leapfrog Triejoin.
+Third, we explain the algorithm we chose based on the analysis.
+Fourth, we point out differences to the original Leapfrog Triejoin.
 Finally, we present a short experiment showing the performance gains of this optimization.
+
+% TODO synchronize with new Leapfrog section
+\textit{Leapfrog joins} build the intersection between multiple adjacency lists.
+This is done in an iterator-like fashion in their \textit{leapfrog\_next} method by repeatedly finding the upper-bound for the largest
+value in the lowest iterator.
+This algorithm clearly performs asymptopically well to build the n-way intersection.
+However, we claim that it is (1) to complex for small intersections and (2) should be generate all values at once instead of one-by-one to
+improve performance on real-world adjacency lists.
 
 To determine the best algorithms to build the n-way intersection in the \textit{Leapfrog joins},
 we run some experiments to characterize the workload.

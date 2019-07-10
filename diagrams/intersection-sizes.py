@@ -44,3 +44,5 @@ plt.xlabel("Size")
 plt.tight_layout()
 plt.savefig(FIGURE_PATH + "/intersections/smallest-biggest.png")
 plt.show()
+
+# TODO cleanup graph generation output places
