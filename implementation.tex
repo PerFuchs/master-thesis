@@ -408,19 +408,17 @@ of this thesis.
 In our study of real world graphs (\cref{sec:graph-study}), we show that most real-world graphs have a small, average outdegree.
 The outdegree over all graphs is TODO and the maximum average outdeegree of a single graph
 is TODO at TODO.
-This result allows to hypothesize that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
+These results lead to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 We can exploit this fact by materializing the intersections in the \textit{Leapfrog joins} directly
 in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
 orignal paper~\cite{lftj}.
 This is beneficial because it makes better use of datalocality; we elaborate this statement in a later
 paragraph.
-This is a graph specific optimization because it would not be advisable to materialize the huge intersections .
-Then the overhead of copying data into a buffer would outweight the performance gains from
-locality.
+
 We structure the remainder of this section as follows.
 First, we shortly reiterate the most important facts about \textit{Leapfrog joins} for this chapter (TODO just organize both sections
 behind each other?).
-Second, we analysis the intersection workload in terms of input sizes and size after intersection to confirm our hypothesis
+Second, we analysis the intersection workload in terms of input sizes and result size to confirm our hypothesis
 and gain valuable insights to choose the best intersection algorithm.
 Third, we explain the algorithm we chose based on the analysis.
 Fourth, we point out differences to the original Leapfrog Triejoin.
@@ -430,7 +428,7 @@ Finally, we present a short experiment showing the performance gains of this opt
 \textit{Leapfrog joins} build the intersection between multiple adjacency lists.
 This is done in an iterator-like fashion in their \textit{leapfrog\_next} method by repeatedly finding the upper-bound for the largest
 value in the lowest iterator.
-This algorithm clearly performs asymptopically well to build the n-way intersection.
+This algorithm is asymtopical optimal for the problem of n-way intersections.
 However, we claim that it is (1) to complex for small intersections and (2) should be generate all values at once instead of one-by-one to
 improve performance on real-world adjacency lists.
 
@@ -438,45 +436,46 @@ To determine the best algorithms to build the n-way intersection in the \textit{
 we run some experiments to characterize the workload.
 Towards this goal, we log the size of the full intersection, the size of the smallest iterator participating
 % TODO multiple queries
-and the size of largest intersection between the smallest iterator and any other iterator on multiple queries on \texttt{SNB-sf-1}.
+and the size of largest intersection between the smallest iterator and any other iterator on 5-clique queries on \texttt{SNB-sf-1}.
 \Cref{fig:intersection-workload} depicts these metrics as cumulative histograms.
 In the next paragraphs, we point out the most important observations in each of these graphs.
 
 \Cref{fig:intersection-workload-smallest} shows the size distribution of the smallest iterator, as to be expected for a social network
-graph, the outdeegree lays between 0 and 200.
-We do not see the long-tail distribution of a power-law graph because we choose the smallest iterator out of multiple and even though
-there are vertices with a much higher outdeegree the chance of encountering only these nodes in an intersection is small.
-We note that in 80\% of all cases the smallest iterator has a size lower than 80 and after we getting a long-tail distribution up to 200.
+graph, the outdeegree is between 1 and 200.
+% TODO background power-law graph
+We do not see the long-tail distribution typical for power-law graphs because we choose the smallest iterator out of 5 and even
+though, there are vertices with a much higher outdeegree, the chance of encountering 5 of these in a single intersection is small.
+We note that in 80\% of all cases the smallest iterator has a size lower than 80 and above that the distribution slowly increases to 100\%
 % NUMBER
 
 \Cref{fig:intersection-workload-smallest-biggest} illustrates the size distribution of intersecting the smallest iterator with any other
 iterator, such that the intersection is maximal.
 We choose this specific metric to motivate one of our design choices later on.
 As for the smallest iterator, some of these intersections are as big as ~200 but most of them are much smaller.
-However, unlike for the smallest iterator metric, in 80\% of all cases the size of the intersection after taking into account the smallest
-iterator is 21 or less and the frequency increases to 100\% in a step curve.
-This last observation is even more true for the size of the total intersection (\cref{fig:intersection-workload-total}):
-the size is less than 5 in 80\% of all intersections build and increases similiarly steep to 100\%.
+However, unlike for the smallest iterator metric, 80\% of the intersections contain less than 21  elements and the frequency increases to
+100\% in a steep curve.
+This last observation is even stronger for the size of the total intersection (\cref{fig:intersection-workload-total}):
+the size is less than 5 in 80\% of all intersections and increases similarly steep to 100\%.
 The maximum is a little lower than 200.
 
-These observations confirm our hypothesis that the size of the intersections build is relatively small and do not show the same long-tail
+These observations confirm our hypothesis that the size of the intersections is small (below 5) and do not show the same long-tail
 distribution as the whole social network graph.
-Hence, we can materialize them without being afraid of building big intermediary results.
-Furthermore, the graphs show that optimizing by taking iterator sizes into account is worthwhile but only for the smallest iterator because
+Hence, we can materialize them without running at risk of building big intermediary results.
+Furthermore, the experiment shows that optimizing by taking iterator sizes into account is worthwhile but only for the smallest iterator
+because
 once we start with the smallest iterator the further intersections are small (below 21) in the vast majority of all instances.
 
 
-\begin{figure}[!tbp]
+\begin{figure}[H]
   \centering
-  \subfloat[Total intersection]{\includegraphics[width=0.3\textwidth]{intersections/total.png}
-   \hfill
-   \subfloat[Largest intersection including smallest iterator]{\includegraphics[width=0.3\textwidth]{intersections/smallest-biggest.png}
-   \hfill
-   \subfloat[Smallest iterator]{\includegraphics[width=0.3\textwidth]{intersections/smallest.png}
-   \caption{Cumulative histograms of total intersection sizes, largest intersection of the smallest iterator and any other and size of the
-smallest
-      iterator participating in multiple queries on \texttt{SNB-sf-1}.}
-   \label{fig:intersection-workload}
+  \subfloat[Total intersection\label{fig:intersection-workload-total}]{\includegraphics[width=0.3\textwidth]{intersections/total.png}}
+  \hfill
+  \subfloat[Largest intersection including smallest iterator\label{fig:intersection-workload-smallest-biggest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest-biggest.png}}
+  \hfill
+  \subfloat[Smallest iterator\label{fig:intersection-workload-smallest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest.png}}
+  \caption{Cumulative histograms of total intersection sizes, largest intersection with the smallest iterator and any other, and size of the
+    smallest iterator participating in \texttt{5-clique} on \texttt{SNB-sf-1}.}
+  \label{fig:intersection-workload}
 \end{figure}
 
 % TODO flowy handover from paragraph to paragraph
@@ -495,7 +494,7 @@ However, we do not take the sizes of any other iterators into account because th
 sorting the iterators by size would not pay off.
 
 Second, we use two different tactics to build the pairwise intersections.
-The first intersection between two iterators we build by in-tandem intersection where we seek
+The first intersection between two iterators is built by in-tandem intersection where we seek
 the upper-bound of the  higher value in the smaller iterator.
 This algorithm guarantees to find the intersection between two iterators in the asymtopical fastest
 way.
@@ -521,13 +520,14 @@ First, although, the original algorithm uses an asymtopical better n-way interse
 binary intersections are preferable with the rather small adjacency lists of graph workloads.
 In particular, in our situation where the size of the first binary intersection is already
 very close to the size of the final intersection.
-Second, the \textit{Leapfrog join} generates a single value, then yields control to other parts
-of the algorithm and later touches the same adjacency lists again to generate the next value.
-Our approach touches the adjacency lists exactly once per \textit{Leapfrog} initialization and
-condenses the result into a much smaller array that is more likely to stay cached while the other
-parts of the join do their work.
 
-\Cref{fig:mat-vs-nomat} shows that a materialized \textit{Leapfrog join} performance better than
+Second, the \textit{Leapfrog join} generates a single value, then yields control to other parts
+of the \textit{LeapfrogTriejoin} algorithm and later touches the same adjacency lists again to generate the next value.
+Our approach touches the adjacency lists exactly once per \textit{Leapfrog} initialization and
+condenses the intersection into a much smaller array.
+This array is more likely to stay cached while the other parts of the \textit{LeapfrogTriejoin} do their work.
+
+\Cref{fig:mat-vs-nomat} shows that a materialized \textit{Leapfrog join} out-performance better than
 the original algorithm.
 As expected, the optimization is more powerful for bigger queries because they work with more
 adjacency lists per \textit{Leapfrog join}, e.g. for a trianlge each \textit{Leapfrog join} intersects
@@ -537,13 +537,13 @@ better cache use.
 We refer the reader to our experiment section (\ref{sec:experiments}) for further experiments on
 our graph specialized \textsc{wcoj} and detailed descriptions of the datasets and queries used.
 
-\begin{figure}
+\begin{figure}[H]
   \centering
 % TODO more queries
 % TODO add amazon graph
 % TODO rename dataset to materialization and no materialization or such
   \includesvg{mat-graph-bar-snb-sf1}
   \caption{Barchart showing \texttt{GraphWCOJ} with and without \textit{Leapfrog join} materialization
-           enabled for different queries on \texttt{SNB-sf1}}
+           enabled for different queries on \texttt{SNB-sf1}.}
   \label{fig:mat-vs-nomat}
 \end{figure}

@@ -20,7 +20,7 @@ graphWCOJData = data[data["Algorithm"] == "GraphWCOJ"][["WCOJTime"]]
 noMat = data[data["Algorithm"] == "NoMat"][["WCOJTime"]]
 
 joined = noMat.join(graphWCOJData, "Query", lsuffix="_seq")
-joined.rename(columns={"WCOJTime_seq": "\\texttt{No Mat}", "WCOJTime": "\\texttt{mat}"}, inplace=True)
+joined.rename(columns={"WCOJTime_seq": "Leapfrog join", "WCOJTime": "Materializing LF"}, inplace=True)
 joined = joined.groupby("Query")
 
 means = joined.median().round(2)
@@ -29,6 +29,7 @@ qo.remove("3-0.00-path")
 qo.remove("4-cycle")
 qo.remove("5-cycle")
 qo.remove("house")
+qo.remove("diamond")
 means = means.reindex(qo)
 errors = joined.std()
 errors = errors.reindex(qo)
