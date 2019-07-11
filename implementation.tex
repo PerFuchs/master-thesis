@@ -404,6 +404,62 @@ of this thesis.
 
 \subsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
 
+\subsection{Combining \textsc{LFTJ} with \textsc{CSR}}
+For our graph pattern matching \textit{LeapfrogTriejoin} version we choose \textsc{CSR} (see \cref{ssec:csr-background}) as backing
+data structure.
+This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
+The integration of \textsc{LFJT} and \textsc{CSR} requires us to implement a \textsc{CSR} based \textit{TrieIterator}.
+In this section, we shortly describe the implementation of this \textit{TrieIterator}, point out the differences between this new
+\textit{TrieIterator} and a column based \textit{TrieIterator} (as described in~\cref{sec:trie-iterator}) and finally include a short
+experiment that demonstrates the power of this optimization.
+
+The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward.
+We use the variables \textit{depth}, \textit{srcPosition} and \textit{dstPosition} to store if we are operating on source or destination
+level and the positions of the iterator on the respective level.
+We now outline how to implement each of the \textit{TrieIterator} methods, under the assumption that each vertice has outgoing edges.
+Then, we drop this assumption and explain the changes to the algorithm.
+
+We call the two arrays of the \textsc{CSR} datastructure \textit{dst} for the array storing all edge destinations and \textit{dstIndices}
+for the array storing indices into \textit{dst} (refer to \cref{ssec:csr-background} for the definition of these arrays).
+The \textit{open} function does nothing if we open the first level and sets \textit{dstPosition} to \textit{dstIndices(srcPosition)} if
+we open the second level.
+Additionally, it updates \textit{depth}.
+The \textit{up} function only updates \textit{depth}.
+The \textit{next} method increases \textit{srcPosition} or \textit{dstPosition} by one depending on \textit{depth}.
+The \textit{seek(key)} method sets \textit{srcPosition} to \textit{key} or uses binary search to find \textit{key} in
+\textit{dst[dstPosition:dstIndices[srcPosition + 1]]}.
+The \textit{key} function returns \textit{srcPosition} on the first level and \textit{dst\[dstPosition\]} if \textit{depth} equals 1.
+The \textit{atEnd} function is \textit{if (depth == 0) srcPosition == dstIndices.length - 1 else dstPosition == dstIndices(srcPosition +
+1)}.
+
+To resolve the assumption of no empty outgoing adjacency lists, we adapt \textit{open}, \textit{next} and \textit{seek} to skip source
+positions without outgoing edges.
+This is easy to detect because then \textit{dstIndices(x) == dstIndices(x + 1)}.
+We can skip these cases by simple linear search until we find a valid position.
+This solution is sufficient because there are only a few of such vertices in real-world graphs. % TODO add to graph analysis chapter?
+
+The \textit{TrieIterator} implementation based on \textsc{CSR} is much faster than the column based iterator; mainly due to the fact
+that the \textit{seek} method on the first level can be implemented in $\mathcal{O}(1)$, instead of $\mathcal{O}(log n)$.
+The potential of this optimization cannot be overstated because this searches are the most costly operations for a column based
+\textit{TrieIterator}.
+Note that searches on the second level are extremely fast, due to the fact that most graphs have a low outdegree (see
+\cref{sec:graphAnalysis}).
+Additionally to this advantage, \textsc{CSR} based \textit{TrieIterator} do less bookkeeping because they support only 2 levels and spent
+nearly no time on processing \textit{atEnd} for the second level (column bases \textit{TrieIterator} need to calculate the number of
+outgoing edges for the source vertice in their \textit{open} method).
+
+We conclude that \textsc{CSR} bases \textit{TrieIterator}'s are a promising match for \textsc{LFTJ} and graph patter matching.
+The outcomes can be seen in \cref{fig:wcoj-vs-graphWCOJ} which demonstrates a up to 2.6 over a column based \textsc{LFTJ}.  % NUMBER
+We also see that the optimization has a stronger impact on queries with more edges and vertices, e.g. \texttt{5-clique}.
+For a more thorough evaluation refer to the experiment section \ref{sec:experiments}.
+
+\begin{figure}
+    \includegraphics[widht=\textwidth]{wcoj-vs-graph-wcoj.png}
+    \caption{Barchart comparing join time of \texttt{WCOJ} and \texttt{GraphWCOJ} on multiple queries on \texttt{SNB-sf1}}
+    \label{fig:wcoj-vs-graphWCOJ}
+\end{figure}
+
+
 \subsubsection{Exploiting low average outdegrees}
 % TODO study in background
 
