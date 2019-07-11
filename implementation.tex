@@ -409,8 +409,8 @@ For our graph pattern matching specialized \textit{LeapfrogTriejoin} version we 
 backing data structure.
 This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
 In this section, we shortly describe the implementation of a \textsc{CSR} based \textit{TrieIterator}, point out the differences between
-this new version and a column based \textit{TrieIterator} (as described in~\cref{sec:trie-iterator}) and conclude with
-introducing a small experiment that demonstrates the power of this optimization.
+this new version and a column based \textit{TrieIterator} (as described in~\cref{sec:trie-iterator}) and conclude with an experiment
+demonstrating the power of this optimization.
 
 The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward.
 We use the variables \textit{depth}, \textit{srcPosition} and \textit{dstPosition} to store if we are operating on the source or destination
@@ -431,6 +431,24 @@ The \textit{key} function returns \textit{srcPosition} on the first level and \t
 The \textit{atEnd} function is: \textit{if (depth == 0) srcPosition == dstIndices.length - 1 else dstPosition == dstIndices(srcPosition +
 1)}.
 
+<Alternative representation of the \textit{TrieIterator} implementation as table. Let me know what you prefer. I think the text is better
+after seeing both.>
+\begin{table}[H]
+\begin{tabular}{@{}lll@{}}
+\toprule
+Method    & 1st level                           & 2nd level                                                                                       \\ \midrule
+open      & update depth                        & dstPosition $\leftarrow$ dstIndices{[}srcPosition{]}; update depth                              \\
+up        & update depth                        & update depth                                                                                    \\
+next      & srcPosition++                       & dstPosition++                                                                                   \\
+seek(k) & srcPosition $\leftarrow$ k            & dstPosition $\leftarrow$ lub(k, dst[dstPosition:dstIndices[srcPosition +1]] \\
+key       & srcPosition                         & dst{[}dstPosition{]}                                                                            \\
+atEnd     & srcPosition = dstIndices.length - 1 & dstPosition = dstIndices(srcPosition + 1)\\
+\bottomrule
+\end{tabular}
+\caption{Tabular summary of \textit{TrieIterator} implementation based on \textsc{CSR}. \textit{lub} is \textit{leastUpperBound}.
+\textit{dst[<start>:<end>]} slices the array.}
+\end{table}
+
 To resolve the assumption of no empty outgoing adjacency lists, we adapt \textit{open}, \textit{next} and \textit{seek} to skip source
 positions without outgoing edges.
 This is easy to detect because then \textit{dstIndices(x) == dstIndices(x + 1)}.
@@ -450,15 +468,15 @@ number of outgoing edges for each source vertice in its \textit{open} method, to
 
 We conclude that \textsc{CSR} based \textit{TrieIterator}'s are a promising match for \textsc{LFTJ} and graph pattern matching.
 The improvements of this optimization can be seen in \cref{fig:wcoj-vs-graphWCOJ}.
-It demonstrates a up to 2.6 over a column based \textsc{LFTJ}. % NUMBER
+It demonstrates an up to 2.6 speedup over a column based \textsc{LFTJ}. % NUMBER
 We also see that the optimization has a stronger impact on queries with more edges and vertices, e.g. \texttt{5-clique}.
 For a more thorough evaluation refer to the experiment section \ref{sec:experiments}.
 
 \begin{figure}
-    \centering
-    \includegraphics[width=0.5\textwidth]{wcoj-vs-graph-wcoj.png}
-    \caption{Barchart comparing join time of \texttt{WCOJ} and \texttt{GraphWCOJ} on multiple queries on \texttt{SNB-sf1}}
-    \label{fig:wcoj-vs-graphWCOJ}
+\centering
+\includegraphics[width=0.5\textwidth]{wcoj-vs-graph-wcoj.png}
+\caption{Barchart comparing join time of \texttt{WCOJ} and \texttt{GraphWCOJ} on multiple queries on \texttt{SNB-sf1}}
+\label{fig:wcoj-vs-graphWCOJ}
 \end{figure}
 
 
