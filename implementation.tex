@@ -399,25 +399,37 @@ Additionally, this \texttt{Strategy} also introduces a \texttt{ToTrieIterableRDD
 The Spark integration of this work has been inspired by the IndexedDataframes~\cite{indexed-dataframes} work of Alex Uta and the supervisors
 of this thesis.
 
+\subsection{Operator to create a CSR from a DataFrame}\label{subsec:csr-spark}
+To be defined and written.
+
 % systems integration?
 %  relationship reordering
 
 \subsection{Graph pattern sequential version (\textit{graph-pattern-seq})}
 
-\subsection{Combining \textsc{LFTJ} with \textsc{CSR}}
-For our graph pattern matching specialized \textit{LeapfrogTriejoin} version we choose \textsc{CSR} (see \cref{ssec:csr-background}) as
+\subsubsection{Combining \textsc{LFTJ} with \textsc{CSR}}
+For our graph pattern matching specialized \textit{LeapfrogTriejoin} version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
 This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
 In this section, we shortly describe the implementation of a \textsc{CSR} based \textit{TrieIterator}, point out the differences between
-this new version and a column based \textit{TrieIterator} (as described in~\cref{sec:trie-iterator}) and conclude with an experiment
-demonstrating the power of this optimization.
+this new version and a column based \textit{TrieIterator} (as described in~\cref{ssec:seq-implementation}\footnote{To be rewritten and
+integrated}) and conclude with an experiment demonstrating the power of this optimization.
+% TODO rewrite and integrate with LFTJ chapter
 
-The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward.
-We use the variables \textit{depth}, \textit{srcPosition} and \textit{dstPosition} to store if we are operating on the source or destination
-level and the positions of the iterator on the respective level.
+The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward except for one design change: instead of using
+the vertice identifier from the graph directly, we use their indices in the \textsc{CSR} representation.
+This change is rather minor because it can be contained at any level by using a hash map for translation, e.g. in the
+\textit{TrieIterator} itself, in the \textit{LeapfrogTriejoin} or at the end of the query by an additional mapping operation.
+In the current system, the translation is performed by the \textsc{LFTJ} implementation to allow easy integration into other projects.
+However, it is possible to work on the indices throughout the whole system to safe the translation costs.
 We now outline how to implement each of the \textit{TrieIterator} methods, under the assumption that all vertices have outgoing edges.
 Then, we drop this assumption and explain the necessary changes.
+The creation of the \textsc{CSR} data structure itself is described in~\cref{subsec:csr-spark}\footnote{To be
+written.}.
+% TODO CSR creation
 
+We use the variables \textit{depth}, \textit{srcPosition} and \textit{dstPosition} to store if we are operating on the source or destination
+level and the positions of the iterator on the respective level.
 We call the two arrays of the \textsc{CSR} datastructure \textit{dst} for the array storing all edge destinations and \textit{dstIndices}
 for the array storing indices into \textit{dst} (refer to \cref{ssec:csr-background} for a complete explanation of these arrays).
 The \textit{open} function does nothing if we open the first level; if we open the second level, it sets \textit{dstPosition} to
@@ -461,7 +473,7 @@ that the \textit{seek} method on the first level can be implemented in $\mathcal
 This optimization has huge potential because these searches are the most costly operations for a column based
 \textit{TrieIterator}~\cite{myria-detailed}.
 Note that searches on the second level are fast, due to the fact that most graphs have a low outdegree (see
-\cref{sec:graphAnalysis}).
+\cref{subsec:graph-analysis}).
 Additionally to this advantage, \textsc{CSR} based \textit{TrieIterator} do less bookkeeping because they support only 2 levels and spent
 nearly no time on processing \textit{atEnd} for the second level, while a column based \textit{TrieIterator} needs to calculate the
 number of outgoing edges for each source vertice in its \textit{open} method, to allow a fast \textit{atEnd} method).
@@ -483,13 +495,14 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 \subsubsection{Exploiting low average outdegrees}
 % TODO study in background
 
-In our study of real-world graphs (\cref{sec:graph-study}), we show that most real-world graphs have a small, average outdegree.
+In our study of real-world graphs (\cref{sec:graph-analysis}), we show that most real-world graphs have a small, average outdegree.
 The outdegree over all graphs is TODO and the maximum average outdegree of a single graph
 is TODO at TODO.
 These results lead to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 We can exploit this fact by materializing the intersections in the \textit{Leapfrog joins} directly
 in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
-original paper~\cite{lftj}.
+original paper~\cite{leapfrog}.
+% TODO rename reference to leapfrog-triejoin
 This is beneficial because it makes better use of data locality; we elaborate this statement in a later
 paragraph.
 
