@@ -14,7 +14,6 @@
 *.cb2
 .*.lb
 *.pdf_tex
-*.pdf
 
 ## Intermediate documents:
 *.dvi
@@ -248,6 +247,4 @@ TSWLatexianTemp*
 
 # generated if using elsarticle.cls
 *.spl
-
-/main.pdf
 /generated/

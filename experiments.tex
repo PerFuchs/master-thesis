@@ -241,6 +241,34 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
     % TODO align and remove headers
 \end{table}
 
+
+\subsection{Scaling of \textit{Graph\textsc{WCOJ}}}
+
+In this section, we aim to analyse and compare the scaling of \textit{Graph\textsc{WCOJ}} using different
+partitioning schemes.
+Towards this goal, we run \textit{Graph\textsc{WCOJ}} on datasets of different size namely \textit{Twitter},
+\textit{LiveJournal} and \textit{Orkut}.
+We compare three partitioning schemes: \textit{Shares}, \textit{SingleVariable(0)} and \textit{Workstealing}.
+These are the three most promising schemed identified in \cref{ssec:partitionings}.
+The experiment is performed on \textit{3-clique} and \textit{5-clique}.
+\textit{3-clique} is the smallest of our queries.
+Therefore, it is most difficult to scale.
+\textit{5-clique} takes much longer than \textit{3-clique}.
+Hence, it shows how query size influences the scaling.
+Also, it increases the job size for the \textit{Workstealing} partitioning scheme.
+
+% TODO paragraph about section structure
+
+compare schemes
+compare dataset sizes
+compare query scaling
+\subsubsection{Results}
+
+
+
+\subsubsection{Analysis}
+
+
 % show DAG's for both algorithms in terms of DAG
 % measure if spark actually takes more than 30 minutes on long queries
 % measure path queries
