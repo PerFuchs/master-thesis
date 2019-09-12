@@ -1,0 +1,53 @@
+\section{Worst-case optimal join parallelization}  % TODO header
+
+Based on the fact that Shares is an optimal partitioning scheme for n-ary joins in MapReduce like systems~\cite{shares} and
+our analysis that Shares converges to a full broadcast of the graph edges (see \cref{shares-proof}), we decided
+to forego physical partitioning of the graph.
+We cache the graph in memory such that each Spark task can access the whole graph.
+Then, we experiment with multiple \textit{logical} partitioning schemes which ensure that each task processes
+only some parts of the graph.
+
+This design allows us to implement a new flavour of the Shares partitioning in which we filter the vertices of the
+graph on-the-fly while processing it with our \textit{Graph\textsc{WCOJ}} algorithm.
+We describe this contribution in \cref{ssec:shares-logical}.
+
+Furthermore, we consider a work-stealing based partitioning which does not replicate any work and produces less
+skew than Shares. % TODO is that always correct.
+This comes at the price of implementing work-stealing on Spark.
+The design of work-stealing in Spark is described in \cref{ssec:work-stealing}
+
+\subsection{Logical Shares} \label{ssec:shares-logical}
+Shares has been developed as a optimal shuffle for n-ary joins on MapReduce like systems.
+So, it is used to physical partition the tables participating in the join over all workers of the system.
+Then, each worker works only on the tuples it holds in its partition.
+This has been implemented in Myria for \textsc{WCOJ}~\cite{myria-detailed} and for Haddoop~\cite{TODO}.
+We describe the Shares and Myria in more detail in~\cref{ssec:myria} and assume that the reader is familiar
+with this section.
+
+The idea of Shares can also be used for a \textit{logical} partitioning scheme.
+Instead, of partitioning the graph before computing the join, we determine if a tuple should be considered by the
+join on-the-fly.
+We implement and measure this idea for multiple reasons.
+First, as a baseline for further partitioning schemes.
+We argue that it is a good baseline because it has been proven to be an optimal physical partitioning scheme and
+has been used by systems similar to us.
+Second, to practically show our point that Shares is not scaling due to the high amount of duplicated work.
+Third, to investigate the possibility of combining the Shares algorithm and the \textsc{LFTJ} algorithm in
+a way that improves scaling.
+
+% TODO list of points
+Variables can be filtered independently from each other, e.g. once a tuple does not match the coordinate for one variable it is out. Hence, I can filter the TrieIterator levels independently from each other - exclude on the first level and then again on the lower level.
+Push as deep as possible
+
+Pushing the filter into the binary search does not help. The binarys search consists out of a binary search followed by a linear search - we analyse them in this order. Let’s assume we never search for an element which should not be considered in the first place. Then each none-to-consider element will be touched to find the direction of the search to continue, it does not matter if it’s to consider at all.
+If the element is not found by the binary search until the search space becomes small, it is searched by a linear search. If any none-to-consider element is smaller than the key, it has been read before we can know it was not to consider, we are fastest by just continuing. If the any none-to-consider element is bigger, the search ends anyway. It only changes which upper bound it will return. It will be slightly faster to return a to-consider upper bound directly because otherwise the search needs to be started again and again until a to-consider upper bound is found. I should support a filtered upper bound search or filter that out by a special case.
+To conclude my day, I have a first, not yet correct version of a logical Shares partitioning scheme. The main problem is that it is damn slow. With filtering the algorithm takes way longer than without. This seems to be mostly caused by my jumping over filtered vertices one-by-one. However, it is also partly caused by the implemenation as decorator, only leading all calls through a nop-decorator already looses 1 second to an none-decorated TrieIterator execution.
+
+Idea: filter for shares after the Leapfrogjoin. Why should that be faster? The Leapfrogjoin is a filter in itself. If its selectivity is much higher than Shares, it would be faster to filter for Shares afterwards. Also, Leapfrogjoin employs binary search to jump over huge sets of vertices, probably we should spent the work of Shares fitlering after this.
+
+
+Shares configuration computation: on master, same algorithm as in Myria, sometimes quite long TODO number, not optimized,
+discussed in great detail in the myria paper, 06.08
+
+
+\subsection{Work-stealing} \label{ssec:work-stealing}

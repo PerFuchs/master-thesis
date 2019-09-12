@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from diagrams.base import *
 
-DATASET = DATASET_FOLDER + "final/liveJ-scaling.csv"
+DATASET = DATASET_FOLDER + "final/orkut-scaling-clique3.csv"
 
 data = pd.read_csv(DATASET, sep=",", comment="#")
 
@@ -14,7 +14,6 @@ data["total_time"] = data["End"] - data["Start"]
 
 grouped = data.groupby(["partitioning_base", "Query", "Parallelism"])
 queries = list(set(data["Query"]))
-queries.remove("5-clique")
 partitionings = list(set(data["partitioning_base"]))
 parallelism_levels = list(set(data["Parallelism"]))
 parallelism_levels.sort()
