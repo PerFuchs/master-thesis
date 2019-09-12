@@ -4,27 +4,34 @@ TODO introduction
 
 \subsection{Setup}
 
+\subsubsection{Hardware and Software}
 
-We run Spark 2.4.0.
-We use Scala 2.11.12 on Java openJDK 1.8.
+We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster owned by the CWI Database Architecture research
+group.
+These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (96 threads)
+Each core has 32 KB of 1st level cache, 32KB 2nd level cache.
+The 3rd level cache are 30 MB shared between 12 cores.
+The main memory consists of 1 TB of RAM DDR-3 memory.
 
-So far, we run three different join algorithms.
-Our sequential implementation of Leapfrog Triejoin (see~\cref{ssec:seq-implementation}), called \texttt{seq} and Spark's two different binary join
-algorithms: \texttt{BroadcastHashJoin} and \texttt{SortMergeJoin}.
+The machines run a Fedora version 30 Linux system with the 5.0.17-300.fc30.x86\_64 kernel.
+We use Spark 2.4.0 with Scala 2.11.12 on Java openJDK 1.8.
 In the majority of our experiments, we use Spark in its standard configuration with enabled code generation.
 We also tune the parameters for driver and executor memory usage (\texttt{spark.driver.memory} and \texttt{spark.executor.memory}) to fit
 all necessary data into main memory.
+
+\subsubsection{Algorithms}
+
+In our experiments we use 4 different join algorithms.
+Two of them are worst-case optimal joins.
+That is our Leapfrog Triejoin implementation, \textit{LFTJ}, and a graph-pattern matching
+specialized Leapfrog Triejoin developed in this thesis: \textit{Graph\textsc{WCOJ}}.
+\textit{LFTJ} is only run as sequential algorithm as a baseline against \textit{GraphWCOJ}.
+We compare these to algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
+
+The other two algorithms are Spark's versions of \textit{BroadcastHashJoin} and \textit{SortmergeJoin}.
+We compare them against the sequential version of \textit{LFTJ} and \textit{GraphWCOJ} in \cref{subsec:seq-vs-spar}
+and their scaling with \textit{GraphWCOJ} in \cref{subsec:graphWCOJ-vs-spark}.
 We adjust the \texttt{"spark.sql.autoBroadcastJoinThreshold"} parameter to control if Spark is using a \texttt{BroadcastHashJoin} or a \texttt{SortMergeJoin}.
-
-\subsubsection{Hardware}
-
-We run our experiments on machines of the type \texttt{brick} of the Scilens cluster owned by the CWI Database Architecture research group.
-These machines feature 32 Intel Xeon E5-2650 processors with a 32 KB 1st level cache, 250 KB 2nd level cache and 20 MB of shared third level cache and run at 2.0 to 2.8 GHz.
-The main memory consists of 256 GB of RAM DDR-3 memory.
-
-% TODO how many machines? 16, but how many could we use, etc.
-% TODO network
-
 
 \subsubsection{Datasets}
 We run the majority of our experiments on two datasets from different use-cases, social networks and product co-purchase.
@@ -34,20 +41,22 @@ We motivate our choice in the next paragraph.
 \begin{table}[]
     \centering
     \begin{tabular}{llrrl} \toprule
-        Name    & Variant         &  Vertices   & Edges         & Source          \\ \midrule
-        \textbf{SNB}    & sf1     &             & 453.032       & \cite{snb}      \\
-        \textbf{Amazon} & 0302    & 262,111     &  1,234,877    & \cite{snapnets} \\
-                        & 0601    & 403,394     & 3,387,388     & \cite{snapnets} \\
-        \textbf{Twitter}& sc-d    & 81,306      & 1,768,149     & \cite{snapnets} \\  % TODO these numbers are of by a bit
-        & sc-u    &          &                                  & \cite{snapnets} \\ \bottomrule
+        Name    & Variant         &  Vertices   & Edges          & Source          \\ \midrule
+        \textbf{SNB}         & sf1     &             &  453.032       & \cite{snb}      \\
+        \textbf{Amazon}      & 0302    & 262,111     &  1,234,877     & \cite{snapnets} \\
+                             & 0601    & 403,394     &  3,387,388     & \cite{snapnets} \\
+        \textbf{Twitter}     & sc-d    & 81,306      &  1,768,135     & \cite{snapnets} \\
+                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
+        \textbf{LiveJournal} &         & 4,847,571   & 68,993,773     & \cite{snapnets} \\
+        \textbf{Orkut}       &         & 3,072,441   & 117,185,083    & \cite{snapnets} \\ \bottomrule
     \end{tabular}
-    \caption{Summary of all datasets mentioned in the thesis.
+    \caption{A summary of all datasets mentioned in the thesis.
     Explanation of them and for the variants is given in running text.
     }
     \label{table:datasets}
 \end{table}
 
-% TODO add Vertices and edges numbers
+ TODO add Vertices and edges numbers
 
 The SNB benchmark~\cite{snb} generates data emulating the posts, messages and friendships in a social network.
 For our experiments, we only use the friendships relationship (\texttt{person\_knows\_person.csv}) which is an undirected relationship.
@@ -74,6 +83,8 @@ This dataset includes the follower relationship of one thousand Twitter users; e
 relationships between these are included.
 The graph is originally directed but for some experiments, we add reversed edges to make the graph undirected - again for comparison with former work.
 We call this graph \texttt{Twitter-sc-d} and \texttt{Twitter-sc-u} for the directed respectively undirected variant.
+
+The \textit{LiveJournal} graph represents the friendship relationship of a medium sized social network.
 
 \subsubsection{Graph patterns}
 
@@ -248,8 +259,8 @@ In this section, we aim to analyse and compare the scaling of \textit{Graph\text
 partitioning schemes.
 Towards this goal, we run \textit{Graph\textsc{WCOJ}} on datasets of different size namely \textit{Twitter},
 \textit{LiveJournal} and \textit{Orkut}.
-We compare three partitioning schemes: \textit{Shares}, \textit{SingleVariable(0)} and \textit{Workstealing}.
-These are the three most promising schemed identified in \cref{ssec:partitionings}.
+We compare three partitioning schemes: \textit{Shares} and \textit{Workstealing}.
+These are the two most promising schemed identified in \cref{ssec:partitionings}.
 The experiment is performed on \textit{3-clique} and \textit{5-clique}.
 \textit{3-clique} is the smallest of our queries.
 Therefore, it is most difficult to scale.
@@ -264,6 +275,14 @@ compare dataset sizes
 compare query scaling
 \subsubsection{Results}
 
+
+
+\begin{table}
+    \centering
+    \input{generated/twitter-scaling.tex}
+    \caption{g}    \label{t}
+    % TODO align and remove headers
+\end{table}
 
 
 \subsubsection{Analysis}
