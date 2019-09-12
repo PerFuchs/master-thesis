@@ -42,3 +42,27 @@ def autolabel(rects, xpos='center', ints=False):
 def write_to_file(file_path, string):
   with open(file_path, "w") as f:
     f.write(string)
+
+
+def fix_shares(file_path, new_path):
+  lines = list()
+  with open(file_path, "r") as f:
+    for l in f:
+      low = l.find("Shares(")
+      new_line = l
+      if low != -1:
+        high = l.find(")", low)
+        innerLow = l.find("(", low, high)
+        replacement = l[innerLow: high].replace(",", ";")
+        new_line = l[0:innerLow] + replacement + l[high:]
+      lines.append(new_line)
+  with open(new_path, "w") as f:
+    for l in lines:
+      f.write(l)
+
+
+def split_partitioning(data):
+  def split(p):
+    return p.split("(")[0]
+  data["partitioning_base"] = list(map(split, data["Partitioning"]))
+

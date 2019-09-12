@@ -3,19 +3,20 @@ import matplotlib.pyplot as plt
 
 from diagrams.base import *
 
-DATASET = DATASET_FOLDER + "ama0302.csv"
+DATASET = DATASET_FOLDER + "twitter-scaling.csv"
 
 def tabulize_data(data_path, output_path):
   data = pd.read_csv(data_path)
 
   fix_count(data)
-  fix_neg(data, "copy")
-
-  data["total_time"] = data["End"] - data["Start"]
-
-  grouped = data.groupby(["partitioning_base", "Query", "Parallelism"])
+  split_partitioning(data)
 
 
+  wcojData = data[data["Algorithm"] == "WCOJ"]
+  binData = data[data["Algorithm"] == "sbin"]
+  data = binData.merge(wcojData, on=["Query"], suffixes=("", "_wcoj"))
+  data["ratio"] = data["Time"] / data["WCOJTime_wcoj"]
+  data["setup"] = data["mat_wcoj"] + data["copy_wcoj"]  # TODO misses sorting
 
   data.to_latex(buf=open(output_path, "w"),
                 columns=["Query", "Count", "Time", "WCOJTime_wcoj", "setup", "ratio"],
