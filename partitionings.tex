@@ -6,9 +6,13 @@ to forego physical partitioning of the graph.
 We cache the graph in memory such that each Spark task can access the whole graph.
 Then, we experiment with multiple \textit{logical} partitioning schemes which ensure that each task processes
 only some parts of the graph.
+This design has a big advantage over physical partitionings.
+Each worker holds the full edge relationship, therefore, it can answer any possible query without needing to shuffle data or
+materializing new datastructures for the \textit{LeapfrogTriejoin}, e.g. sorted arrays or CSR representations.
+Arranging the data into suitable data structures and shuffling data is a one-off action on system startup.
 
 This design allows us to implement a new flavour of the Shares partitioning in which we filter the vertices of the
-graph on-the-fly while processing it with our \textit{Graph\textsc{WCOJ}} algorithm.
+graph on-the-fly while processing it with our \textit{GraphWCOJ} algorithm.
 We describe this contribution in \cref{ssec:shares-logical}.
 
 Furthermore, we consider a work-stealing based partitioning which does not replicate any work and produces less
@@ -20,29 +24,33 @@ The design of work-stealing in Spark is described in \cref{ssec:work-stealing}
 Shares has been developed as an optimal shuffle for n-ary joins on MapReduce like systems.
 So, it is used to physical partition the tables participating in the join over all workers of the system.
 Then, each worker works only on the tuples it holds in its partition.
-This has been implemented in Myria for \textsc{WCOJ}~\cite{myria-detailed} and for Haddoop~\cite{TODO}.
+This has been implemented in Myria to be used with a \textsc{WCOJ}~\cite{myria-detailed} and for Haddoop~\cite{TODO}.
 We describe the Shares and Myria in more detail in~\cref{ssec:myria} and assume that the reader is familiar
 with this section.
 
 The idea of Shares can also be used for a \textit{logical} partitioning scheme.
 Instead, of partitioning the graph before computing the join, we determine if a tuple should be considered by the
 join on-the-fly.
-We do so by assigning a coordinate of a hypercube to each worker as in the original Shares.
-Then each worker is responsible for the tuples which match its coordinate.
-However, in the \textsc{LFTJ} we do not consider whole tuples but only single attributes of a tuple at the time,
-e.g. a \textit{LeapfrogJoin} only considers one attribute and cannot determine the whole tuple to which this attribute
-belongs.
-Fortunately, a tuple matches a coordinate if all hashes match the coordinate.
-Hence, we can filter out a tuple if any of its attributes do not match.
+We do so by assigning a coordinate of a hypercube to each worker.
+Then each worker is responsible for the tuples which match its coordinate as in the original Shares.
+However, a huge different to a physical Shares partitioning exists: while physical Shares keeps one prefiltered, materialized
+partition of the edge relationship per relationship of the join in memory, we keep only a single copy of the graph edge relationship in
+memory which can be used by all \textit{TrieIterator} for all edge table aliases.
+Once, the edge relationship is broadcasted and cached, we do not need to materialize prefiltered partitions of it before every
+query.
+
+Filtering tuples on-the-fly in the \textsc{LFTJ} comes with a challenge: in the \textit{LeapfrogTriejoin} we do not consider whole tuples
+but only single attributes of a tuple at the time,
+e.g. a \textit{LeapfrogJoin} only considers one attribute and cannot determine the whole tuple to which this attribute belongs.
+Fortunately, a tuple matches only if all attributes match the coordinate of the worker.
+Hence, we can filter out a tuple if any of its attribute does not match.
 For example, we can exclude a value in a \textit{LeapfrogJoin} without knowing the whole tuple.
 
 Integrating Shares and \textsc{LFTJ} comes with two important design decisions.
-First, the \textit{LeapfrogTriejoin} operates on all tuples.
+First, the \textit{LeapfrogTriejoin} operates on a complete copy of the edge relationship.
 Hence, we need to filter out the values that do not match the coordinate of the worker.
-Second, where to compute the optimal Hypercube configuration.
+Second, we need to compute the optimal Hypercube configuration.
 We describe our solutions below.
-
-% TODO main difference between precomputed filtered relationship and one shared on-the-fly filtered relationship.
 
 The first design decision is where to filter the values.
 The \textit{LeapfrogTriejoin} consists out of multiple components which are composed as layers upon each other.
@@ -52,7 +60,7 @@ Our first instinct is to push the filter as deep as possible into these layers.
 
 We built a \textit{TrieIterator} that never returns a value which hash does not match the coordinate.
 This is implemented by changing the \textit{next} and \textit{seek} methods such that they linearly
-consider further values until they find a matching value.
+consider further values until they find a matching value if the return value of the original function does not match.
 However, the resulting \textsc{LFTJ} was so slow that we abandoned this idea immediately.
 We hypothesize that this is the case because the original \textit{next} and \textit{seek} method is now followed
 by a linear search for a matching value.
@@ -64,12 +72,12 @@ It does not make sense to push a less selective filter below a more selective fi
 With this idea in mind, we build a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
 method.
 This is implemented as a decorator pattern around the original \textit{LeapfrogJoin}.
-The use of the decorator pattern allows us to easily integrate Shares while at the same time allows for
-other partitioning schemes later on.
+The use of the decorator pattern allows us to easily integrate Shares with the \textsc{LFTJ} while keeping it decoupled enough
+to use other partitioning schemes.
 
 % TODO to negative?
 The second design decision is how and where to compute the best hypercube configuration.
-The how has been discussed extensively in former literature~\cite{shares,myria-detailed}
+The how has been discussed extensively in former literature~\cite{shares,myria-detailed}.
 % TODO there are one or two more papers, see myriad-detailed
 We implement the exhaustive search algorithm used in the Myria system~\cite{myria-detailed}.
 %In their paper they conclude that this is a `practical and efficient' solution.
@@ -84,15 +92,19 @@ Due to time constraints, we leave this to future work and keep our focus on the 
 
 To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and report our results in \cref{ssec:graphWCOJ-scaling}.
 We cannot improve on the main weakness of Shares that it duplicates a lot of work.
-Indeed, our design filters out tuples only after the \textit{LeapfrogJoin}.
-Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search.
-However, we can share the same CSR data structure for all \textit{TrieIterator} and do not
-need to materialize a prefiltered data structure for each \textit{TrieIterator} which saves time and memory.
+Indeed, our design filters tuples only after the \textit{LeapfrogJoin}.
+Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search of the first variable.
+This does not influece scaling much because only the correct logical partition of values for the first variable
+are used as bindings in the \textit{LeapfrogTriejoin}.
+This means they are still filtered early enough before most of the work happens.
+We improve over a physical Shares by using the same CSR data structure for all \textit{TrieIterator}.
+Therefore, we do not need to materialize a prefiltered data structure for each \textit{TrieIterator} and query which saves time and memory
+if the partitions become large for bigger queries.
 
 \subsubsection{RangeShares}
 In the last section, we raised the point that our Shares implementation only filters out value after the
 \textit{LeapfrogJoins}.
-This is because the hash-based filter of Shares filters values one-by-one.
+This is because a hash-bashed filter needs to consider single values one-by-one.
 In this section, we explore the possibility to use range based filters which can be pushed into the \textit{TrieIterators}.
 However, we warn the reader that this is a negative result.
 It leads to high skew which hinders good scaling of this idea.
@@ -100,12 +112,11 @@ It leads to high skew which hinders good scaling of this idea.
 We observe that the general idea behind Shares is to introduce a mapping per attribute from the value space into the space of possible
 hypercube coordinates, e.g. so far all Shares variants use a hash function per attribute to map the values onto the hypercube.
 We investigate the possibility to use ranges as mapping function, e.g. in a three-dimensional hypercube with three workers per dimension,
-we could divide the value space into three ranges then the a value matches a coordinate if it is in the correct range.
-In contrast to hash-based mappings, we can push a range based mapping into the \textit{TrieIterators}.
-They can check after each call to \textit{seek} and \textit{next} if they are still in their range.
+we could divide the value space into three ranges and a value matches a coordinate if it is in the correct range.
 Contrary, to hash-based mappings which are checked value by value until one matches, a range check is a single conditional after each
-function call.
-Furthermore, this conditional is predictable for the processor: for all but one call, the value is in range and returned.
+\textit{seek} and \textit{next} function call.
+Furthermore, this conditional is predictable for the processor because for all but one call, the value is in range and returned.
+So, contrary to hash-based filter we can push a range based filter into the \textit{TrieIterators}.
 
 We implement this idea by dividing the vertice ids per attribute into as many ranges as the size of the corresponding hypercube dimension.
 For example, assume we have edge ids from 0 to 899, three attributes and the hypercube dimension have the size 3, 2 and 2.
@@ -124,7 +135,7 @@ much longer than all other workers.
 To mitigate this problem, we break down the vertice ids into more ranges than there are workers in the hypercube dimension corresponding to
 the attributes.
 Then, we assign multiple ranges to each \textit{TrieIterator} in such a way that the overlap on the first two attributes equals the overlap
-of a hash-based implementation for the first two attributes and assign the ranges of the later attributes randomly.
+of a hash-based implementation and assign the ranges of the later attributes randomly such that all combinations are covered.
 However, experiments still show a high skew: some workers find many more instances of the searched pattern in their ranges than others.
 For the triangle query on \textit{LiveJournal}, we find that the fastest worker outputs only 0.4 times the triangles than the slowest worker.
 We conclude that the pattern instances are unevenly distributed over the ranges of vertice ids which leads to high skew in
