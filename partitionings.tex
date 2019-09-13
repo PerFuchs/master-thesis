@@ -97,7 +97,41 @@ In this section, we explore the possibility to use range based filters which can
 However, we warn the reader that this is a negative result.
 It leads to high skew which hinders good scaling of this idea.
 
+We observe that the general idea behind Shares is to introduce a mapping per attribute from the value space into the space of possible
+hypercube coordinates, e.g. so far all Shares variants use a hash function per attribute to map the values onto the hypercube.
+We investigate the possibility to use ranges as mapping function, e.g. in a three dimensional hypercube with three workers per dimesion,
+we could divide the value space into three ranges then the a value matches a coordinate if its in the correct range.
+In contrast to hash based mappings, we can push a range based mapping into the \textit{TrieIterators}.
+They can check after each call to \textit{seek} and \textit{next} if they are still in their range.
+Contrary, to hash based mappings which are checked value by value until one matches, a range check is a single conditional after each
+function call.
+Furthermore, this conditional is predictable for the processor: for all but one call the value is in range and returned.
 
+We implement this idea by dividing the vertice ids per attribute into as many ranges as the size of the corresponding hypercube dimension.
+For example, assume we have edge ids from 0 to 899, three attributes and the hypercube dimension have the size 3, 2 and 2.
+Then, we choose the ranges \[0,300), \[300,600) and \[600,900) for the first attribute and the ranges \[0,450) and \[450,900) for the other
+two attributes.
+The worker with the coordinate (0, 0, 0) is then assigned the ranges \[0,300), \[0,450) and \[0,450).
+It configures its \textit{TrieIterators} accordingly such that they are limited to these ranges.
+
+We run first experiments to evaluate this idea.
+We expect it to scale better than a hash based Shares because it saves intersection work in the \textit{LeapfrogJoins}.
+However, we find that high skew between the workers leads to much worse performance than a hash based Shares.
+% TODO present data?
+The explanation is that if a worker is assigned the same range multiple times and this range turns out to take long to compute, it takes
+much longer than all other workers.
+
+To mitigate this problem, we break down the vertice ids into more ranges than there are workers in the hypercube dimesion corresponding to
+the attributes.
+Then, we assign multiple ranges to each \textit{TrieIterator} in such a way that the overlap on the first two attributes equals the overlap
+of a hash based implementation for the first two attributes and assign the ranges of the later attributes randomly.
+However, experiments still show a high skew: some workers find many more instances of the searched pattern in their ranges than others.
+For the triangle query on \textit{LiveJournal} we find that the fastest worker outputs only 0.4 times the triangles than the slowest worker.
+We conclude that the number of pattern instances are unevenly distributed over the ranges of vertice ids which leads to high skew in
+a range based solution.
+We stopped our investigation into this direction.
+
+% TODO source code for clarification?
 
 
 \subsection{Work-stealing} \label{ssec:work-stealing}
