@@ -27,27 +27,77 @@ with this section.
 The idea of Shares can also be used for a \textit{logical} partitioning scheme.
 Instead, of partitioning the graph before computing the join, we determine if a tuple should be considered by the
 join on-the-fly.
-We implement and measure this idea for multiple reasons.
-First, as a baseline for further partitioning schemes.
-We argue that it is a good baseline because it has been proven to be an optimal physical partitioning scheme and
-has been used by systems similar to us.
-Second, to practically show our point that Shares is not scaling due to the high amount of duplicated work.
-Third, to investigate the possibility of combining the Shares algorithm and the \textsc{LFTJ} algorithm in
-a way that improves scaling.
+We do so by assigning a coordinate of a hypercube to each worker as in the original Shares.
+Then each worker is responsible for the tuples which match its coordinate.
+However, in the \textsc{LFTJ} we do not consider whole tuples but only single attributes of a tuple at the time,
+e.g. a \textit{LeapfrogJoin} only considers one attribute and cannot determine the whole tuple to which this attribute
+belongs.
+Fortunately, a tuple matches a coordinate if all hashes match the coordinate.
+Hence, we can filter out a tuple if any of its attributes does not match.
+For example, we can exclude a value in a \textit{LeapfrogJoin} without knowing the whole tuple.
 
-% TODO list of points
-Variables can be filtered independently from each other, e.g. once a tuple does not match the coordinate for one variable it is out. Hence, I can filter the TrieIterator levels independently from each other - exclude on the first level and then again on the lower level.
-Push as deep as possible
+Integrating Shares and \textsc{LFTJ} with each other comes with two important design decisions.
+First, the \textit{LeapfrogTriejoin} operates on all tuples.
+Hence, we need to filter out the values that do not match the coordinate of the worker.
+Second, where to compute the optimal Hypercube configuration.
+We describe our solutions below.
 
-Pushing the filter into the binary search does not help. The binarys search consists out of a binary search followed by a linear search - we analyse them in this order. Let’s assume we never search for an element which should not be considered in the first place. Then each none-to-consider element will be touched to find the direction of the search to continue, it does not matter if it’s to consider at all.
-If the element is not found by the binary search until the search space becomes small, it is searched by a linear search. If any none-to-consider element is smaller than the key, it has been read before we can know it was not to consider, we are fastest by just continuing. If the any none-to-consider element is bigger, the search ends anyway. It only changes which upper bound it will return. It will be slightly faster to return a to-consider upper bound directly because otherwise the search needs to be started again and again until a to-consider upper bound is found. I should support a filtered upper bound search or filter that out by a special case.
-To conclude my day, I have a first, not yet correct version of a logical Shares partitioning scheme. The main problem is that it is damn slow. With filtering the algorithm takes way longer than without. This seems to be mostly caused by my jumping over filtered vertices one-by-one. However, it is also partly caused by the implemenation as decorator, only leading all calls through a nop-decorator already looses 1 second to an none-decorated TrieIterator execution.
+% TODO main difference between precomputed filtered relationship and one shared on-the-fly filtered relationship.
 
-Idea: filter for shares after the Leapfrogjoin. Why should that be faster? The Leapfrogjoin is a filter in itself. If its selectivity is much higher than Shares, it would be faster to filter for Shares afterwards. Also, Leapfrogjoin employs binary search to jump over huge sets of vertices, probably we should spent the work of Shares fitlering after this.
+The first design decision is where to filter the values.
+The \textit{LeapfrogTriejoin} consists out of multiple components which are composed as layers upon each other.
+On top we have the \textit{LeapfrogTriejoin} which operates on one \textit{LeapfrogJoin} per attribute.
+The \textit{LeapfrogJoins} uses multiple \textit{TrieIterators}.
+Our first instinct is to push the filter as deep as possible into these layers.
+
+We built a \textit{TrieIterator} that never returns a value which hash does not match the coordinate.
+This is implemented by changing the \textit{next} and \textit{seek} methods such that they linearly
+consider further values until the they find a matching value.
+However, the resulting \textsc{LFTJ} was so slow that we abundant this idea immediately.
+We hypothize that this is the case because the original \textit{next} and \textit{seek} method is now followed
+by a linear search for a matching value.
+Furthermore, many of these values are later dropped in the intersection of the \textit{LeapfrogJoin} which
+can also be seen as a filter over the values of the \textit{TrieIterators}.
+As we know from~\cref{ssec:leapfrog-materialization}, the \textit{LeapfrogJoin} is a rather selective filter.
+It does not make sense to push a less selective filter below a more selective filter.
+
+With this idea in mind, we build a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
+method.
+This is implemented as decorator pattern around the original \textit{LeapfrogJoin}.
+The use of the decorator pattern allows us to easily integrate Shares while at the same time allows for
+other partitioning schemes later on.
+
+% TODO to negative?
+The second design decision is how and where to compute the best hypercube configuration.
+The how has been discussed extensively in former literature~\cite{shares,myria-detailed}
+% TODO there's one or two more papers, see myria-detailed
+We implement the exhaustive search algorithm used in the Myria system~\cite{myria-detailed}.
+%In their paper they conclude that this is a `practical and efficient' solution.
+%Given that the computation of the hypercube configuration can cost up to 45s for 96 workers, this is only
+%the case for quite long running queries.
+
+In interest of a simple solution, we compute the best configuration on the master before starting the Spark
+tasks for the join.
+We note that the exhaustive algorithm could be optimized easily and it would be worthwhile to introduce
+a cache for common configurations.
+Due to time constraints, we leave this to future work and keep our focus on the scaling behaviour of Shares.
+
+To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and report our results in \cref{ssec:graphWCOJ-scaling}.
+We cannot improve on the main weakness of Shares that it duplicates a lot of work.
+Indeed, our design filters out tuples only after the \textit{LeapfrogJoin}.
+Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search.
+However, we are able to share the same CSR data structure for all \textit{TrieIterator} and do not
+need to materialize a prefiltered data structure for each \textit{TrieIterator} which saves time and memory.
+
+\subsubsection{RangeShares}
+In the last section, we raised the point that our Shares implementation only filters out value after the
+\textit{LeapfrogJoins}.
+This is due to the fact that the hash based filter of Shares filters values one-by-one.
+In this section, we explore the possibility to use range based filters which can be pushed into the \textit{TrieIterators}.
+However, we warn the reader that this is a negative result.
+It leads to high skew which hinders good scaling of this idea.
 
 
-Shares configuration computation: on master, same algorithm as in Myria, sometimes quite long TODO number, not optimized,
-discussed in great detail in the myria paper, 06.08
 
 
 \subsection{Work-stealing} \label{ssec:work-stealing}
