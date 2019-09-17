@@ -317,7 +317,7 @@ expected to reach the same performance as two cores.
 
 To conclude, we expect sub-linear speedup for Shares and better but still sub-linear speedup for \textit{work-stealing}.
 Anyhow, it super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
-% TODO sign the internet source from Monday.
+% TODO cite the internet source from Monday.
 
 We describe our observations per dataset; starting with Twitter.
 As expected, both partitioning schemes scale better when we increase the query size.
@@ -327,6 +327,7 @@ The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highe
 with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
 The best observed speedup is 21.3 for 5-clique and 96 workers.
+% TODO run on 48 cores
 
 The experiment on LiveJournal confirms our hypothesis that bigger datasets lead to better
 speedups;
@@ -342,6 +343,7 @@ On clique-5 with 96 workers, we see a speedup of 29.8 for \textit{work-stealing}
 for Shares.
 % TODO run 5-clique with one worker?
 
+% TODO spark overhead
 Additionally, we see two strange scaling behaviours for LiveJournal.
 First, super-linear scaling for 3-clique and \textit{work-stealing}.
 We hypothize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
@@ -353,6 +355,9 @@ In this experiment, we measure speedup of 8.6, 16.6 and 32.9 for 8, 16 and 32 wo
 This is significantly lower than the speedup measurements without \textit{taskset}.
 We conclude that this confirms our hypothesis and believe that the slight super-linear
 scaling that remains arises from the bigger amount of L1 and L2 cache in the system.
+% TODO run with perf counter
+% TODO footnote taskset
+% TODO note why do we have locallity in data accesses?
 
 Second, Shares exhibits lower speedup of 12.1 for 64 workers which is
 lower than for 32 workers (14.7) and 14.8 for 96 workers.

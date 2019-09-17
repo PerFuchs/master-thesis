@@ -149,6 +149,7 @@ Then, this action is followed by another \textit{UP} or a \textit{NEXT} dependin
 \end{listing}
 
 \subsubsection{Optimizations}
+% TODO micro benchmark linear search
 A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \texttt{BroadcastHashjoin} on any other query than the triangle query.
 Hence, we spent roughly 2 weeks to optimize our first implementation.
 After, we are able to beat Spark's \texttt{BroadcastHashjoin} on nearly all queries and datasets.
