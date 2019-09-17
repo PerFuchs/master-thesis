@@ -289,6 +289,8 @@ compare query scaling
     \label{fig:graphWCOJ-scaling}
 \end{figure}
 
+% TODO indicate missing 5 clique numbers
+
 We first describe our expectations of the experiment outcome.
 We assume that scaling improves with the dataset size.
 Hence, we should see the highest speedups for Orkut, then LiveJournal and the lowest speedups for Twitter.
@@ -393,26 +395,7 @@ not for 5-clique and Shares exhibits less speedup for 64 workers than for 32 and
 
 
 
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-twitter.tex}
-    \caption{Scaling table}    \label{t}
-    % TODO align and remove headers
-\end{table}
 
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-livej.tex}
-    \caption{Scaling table LiveJ}    \label{t}
-    % TODO align and remove headers
-\end{table}
-
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-orkut.tex}
-    \caption{Scaling table Orkut}    \label{t}
-    % TODO align and remove headers
-\end{table}
 
 
 

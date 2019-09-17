@@ -7,6 +7,11 @@ GENERATED_PATH= "../generated/"
 WORKSTEALING = "FirstVariablePartitioningWithWorkstealing"
 SHARES = "Shares"
 
+partitioning_names = {
+  WORKSTEALING: "work-stealing",
+  SHARES: "Shares"
+}
+
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=16)
 

@@ -5,7 +5,7 @@ from collections import defaultdict, OrderedDict
 from diagrams.base import *
 
 
-def output_table_and_graph(dataset_path, clique_5, base_clique_5, output_path):
+def output_table_and_graph(dataset_path, clique_5, base_clique_5, parallelism_levels_5_clique, output_path):
   data = pd.read_csv(dataset_path, sep=",", comment="#")
 
   fix_count(data)
@@ -41,7 +41,6 @@ def output_table_and_graph(dataset_path, clique_5, base_clique_5, output_path):
           elif base_scaling_level < p:
             scaling[(pa, q)].append(median["total_time"][pa if base_scaling_level != 1 else "AllTuples"][q][base_scaling_level]
                                     / median["total_time"][pa][q][p] * base_scaling_level)
-  pprint.pprint(scaling, indent=2)
   colors = {"Shares": "C0", "FirstVariablePartitioningWithWorkstealing": "C1"}
   markers = {"3-clique": "o", "5-clique": "x"}
   plots = {}
@@ -49,7 +48,7 @@ def output_table_and_graph(dataset_path, clique_5, base_clique_5, output_path):
     if p != "AllTuples":
       for q in queries:
         plots[(p, q)] = plt.scatter(
-          parallelism_levels[len(parallelism_levels) - len(scaling[(p, q)]):],
+          parallelism_levels_5_clique if q == "5-clique" else parallelism_levels,
           scaling[(p, q)],
           color=colors[p],
           marker=markers[q]
@@ -84,10 +83,13 @@ def output_table_and_graph(dataset_path, clique_5, base_clique_5, output_path):
     pa = k[0]
     q = k[1]
     for i, s in enumerate(v):
-      rows.append([pa, q, parallelism_levels[i], 0.0, s])
+      p = parallelism_levels_5_clique[i] if q == "5-clique" else parallelism_levels[i]
+      time = median["total_time"][pa if p != 1 else "AllTuples"][q][p] / 60000
+      rows.append([partitioning_names[pa], q, p, time, s])
 
-  table = pd.DataFrame(rows, columns=("Partitioning", "Query", "Parallelism", "Time", "Scaling"))
+  table = pd.DataFrame(rows, columns=("Partitioning", "Query", "Parallelism", "Time", "Speedup"))
   table = table.sort_values(["Partitioning", "Query", "Parallelism"])
+  table = table.round(1)
 
   tabulize_data(table, GENERATED_PATH + output_path.replace(".svg", ".tex"))
 
@@ -96,9 +98,9 @@ def tabulize_data(data, output_path):
   data.to_latex(buf=open(output_path, "w"),
                 # columns=["Par", "Count", "Time", "WCOJTime_wcoj", "setup", "ratio"],
                 # header = ["Query", "\\# Result", "\\texttt{BroadcastHashJoin}", "\\texttt{seq}", "setup", "Speedup"],
-                column_format="lr||r|rr||r",
+                column_format="llr|rr",
                 # formatters = {
-                #   "ratio": lambda r: str(round(r, 1)),
+                  # "ratio": lambda r: str(round(r, 1)),
                 #   "Count": lambda c: "{:,}".format(c),
                 # },
                 escape=True,
@@ -110,6 +112,6 @@ DATASET_ORKUT = DATASET_FOLDER + "final/graphWCOJ-scaling/orkut-scaling.csv"
 DATASET_LIVEJ = DATASET_FOLDER + "final/graphWCOJ-scaling/liveJ-scaling.csv"
 DATASET_TWITTER = DATASET_FOLDER + "final/graphWCOJ-scaling/twitter-scaling.csv"
 
-output_table_and_graph(DATASET_ORKUT, True, 16, "graphWCOJ-scaling-orkut.svg")
-output_table_and_graph(DATASET_LIVEJ, True, 16, "graphWCOJ-scaling-livej.svg")
-output_table_and_graph(DATASET_TWITTER, True, 1, "graphWCOJ-scaling-twitter.svg")
+output_table_and_graph(DATASET_ORKUT, True, 16, [16, 32, 64, 96], "graphWCOJ-scaling-orkut.svg")
+output_table_and_graph(DATASET_LIVEJ, True, 16, [16, 32, 64, 96], "graphWCOJ-scaling-livej.svg")
+output_table_and_graph(DATASET_TWITTER, True, 1, [1, 2, 4, 8, 16, 32, 64, 96], "graphWCOJ-scaling-twitter.svg")
