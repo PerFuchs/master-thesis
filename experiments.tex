@@ -354,6 +354,30 @@ scaling that remains arises from the bigger amount of L1 and L2 cache in the sys
 
 Second, Shares exhibits lower speedup of 12.1 for 64 workers which is
 lower than for 32 workers (14.7) and 14.8 for 96 workers.
+This can be explained by the chosen Shares configuration.
+For 32 workers, the best configuration is given by the hypercube of the sizes 4, 4, 2.
+For 64 workers, we get the hypercube with 4 workers on each axis.
+Hence, although we are doubling the number of workers, we use the new workers only to partition
+work along the last axis, in the case of 3-clique along the C attribute axis.
+Partitioning work along the last axis leads to a high amount of duplicated work on the first
+two axis.
+Additionally, with 64 workers at least 12 of these workers are not exclusive cores but cores shared by
+two hyperthreads.
+In total, we get a lower speedup.
+This changes slightly for 96 workers because the optimal hypercube configuration here is 6, 4, 4 which
+adds more workers along the first axis.
+However, the scaling only increases marginally by 0.1 from 32 workers which is quite disappointing given
+that the number of threads increased by a threefold.
+
+% TODO should be in partitionings instead.
+One could argue that we should use a different definition of \textit{best} hypercube configuration.
+As we see, it is not necessarily efficient to distribute the computation along the last axis.
+We implemented version of the configuration finder that considers only the first \textit{i} axes and
+call this partitioning scheme \textit{i-prefixShares}.
+TODO report results
+However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
+in our further experiments.
+
 % TODO why?
 
 The Orkut and LiveJournal datasets lead to highly similiar scaling results:
