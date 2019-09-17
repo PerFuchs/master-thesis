@@ -83,13 +83,13 @@ def output_table_and_graph(dataset_path, clique_5, base_clique_5, output_path):
   for (k, v) in scaling.items():
     pa = k[0]
     q = k[1]
-  for i, s in enumerate(v):
-    rows.append([pa, q, parallelism_levels[i], 0.0, s])
+    for i, s in enumerate(v):
+      rows.append([pa, q, parallelism_levels[i], 0.0, s])
 
   table = pd.DataFrame(rows, columns=("Partitioning", "Query", "Parallelism", "Time", "Scaling"))
   table = table.sort_values(["Partitioning", "Query", "Parallelism"])
 
-  tabulize_data(table, GENERATED_PATH + "twitter-scaling.tex")
+  tabulize_data(table, GENERATED_PATH + output_path.replace(".svg", ".tex"))
 
 
 def tabulize_data(data, output_path):

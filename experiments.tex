@@ -8,7 +8,7 @@ TODO introduction
 
 We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster owned by the CWI Database Architecture research
 group.
-These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (96 threads)
+These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (48 cores / 96 threads)
 Each core has 32 KB of 1st level cache, 32KB 2nd level cache.
 The 3rd level cache are 30 MB shared between 12 cores.
 The main memory consists of 1 TB of RAM DDR-3 memory.
@@ -257,16 +257,16 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
 
 In this section, we aim to analyse and compare the scaling of \textit{Graph\textsc{WCOJ}} using different
 partitioning schemes.
-Towards this goal, we run \textit{Graph\textsc{WCOJ}} on datasets of different size namely \textit{Twitter},
-\textit{LiveJournal} and \textit{Orkut}.
-We compare three partitioning schemes: \textit{Shares} and \textit{Workstealing}.
+Towards this goal, we run \textit{Graph\textsc{WCOJ}} on datasets of different size namely Twitter,
+LiveJournal and Orkut.
+We compare two partitioning schemes: Shares and \textit{work-stealing}.
 These are the two most promising schemed identified in \cref{ssec:partitionings}.
-The experiment is performed on \textit{3-clique} and \textit{5-clique}.
-\textit{3-clique} is the smallest of our queries.
+The experiment is performed on 3-clique and 5-clique.
+3-clique is the smallest of our queries.
 Therefore, it is most difficult to scale.
-\textit{5-clique} takes much longer than \textit{3-clique}.
+5-clique takes much longer than 3-clique.
 Hence, it shows how query size influences the scaling.
-Also, it increases the job size for the \textit{Workstealing} partitioning scheme.
+Also, it increases the job size for the \textit{work-stealing} partitioning scheme.
 
 % TODO paragraph about section structure
 
@@ -275,14 +275,121 @@ compare dataset sizes
 compare query scaling
 \subsubsection{Results}
 
+\begin{figure}
+    \centering
+    \subfloat[Twitter dataset\label{fig:graphWCOJ-scaling-twitter}]
+      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-twitter}}
+    \subfloat[LiveJournal dataset\label{fig:graphWCOJ-scaling-livej}]
+      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-livej}}
+    \newline
+    \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
+      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-orkut}}
+    \caption{Scaling behaviour of Shares and work-stealing on three different datasets
+      and two different queries.}
+    \label{fig:graphWCOJ-scaling}
+\end{figure}
+
+We first describe our expectations of the experiment outcome.
+We assume that scaling improves with the dataset size.
+Hence, we should see the highest speedups for Orkut, then LiveJournal and the lowest speedups for Twitter.
+Also, we expect the scaling to improve with the query size.
+Both hypothesis are grounded in the fact that more work to distribute often leads to stronger scaling.
+Additionally, we believe that \textit{work-stealing} shows better scaling than Shares because it does not duplicate work.
+Finally, we have no clear cut expectations to the scaling behaviour of \textit{work-stealing}.
+Theoretically, we could expect linear scaling for it because no work is duplicated, synchronization overhead is minimal and
+work balance should be given by the scheme.
+However, we measure on a quite complex hardware platform which complicates scaling behaviour.
+
+First of all, we work on a machine with 4 sockets.
+This can influence scaling positively and negatively.
+Positively because adding more sockets means to add significantly more L3 cache (30 MB shared per socket).
+If we do not use all cores on a socket, each used core can use a bigger share of this cache.
+Negatively because each socket is in a different NUMA zone and the graph is not guarantued to be chached in all
+NUMA zone.
+Indeed, Spark shares the broadcasts for all tasks on a single executor.
+So there is only one copy in memory. % TODO double check
+
+Additionally, we run on an Intel processor with hyperthreading.
+Hence, we can not expect linear speedup above 48 workers because after multiple threads will share resources and cannot be
+expected to reach the same performance as two cores.
+
+To conclude, we expect sub-linear speedup for Shares and better but still sub-linear speedup for \textit{work-stealing}.
+Anyhow, it super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
+% TODO sign the internet source from Monday.
+
+We describe our observations per dataset; starting with Twitter.
+As expected, both partitioning schemes scale better when we increase the query size.
+For 5-clique, \textit{work-stealing} exhibits near linear scaling up to 32 workers, while
+clique-3 gives a speedup of 6.22 for 8 workers.
+The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highest speedup
+with 13.2 on 64 workers.
+Shares lacks behind in scaling for both queries and all levels of parallelism.
+The best observed speedup is 21.3 for 5-clique and 96 workers.
+
+The experiment on LiveJournal confirms our hypothesis that bigger datasets lead to better
+speedups;
+the highest observed speedup is 61.2 for \textit{work-stealing} on 3-clique and
+36.81 for Shares on 5-clique each with 96 workers.
+Also, we can confirm that Shares scales better on 5-clique than on 3-clique.
+However, this is not the case for \textit{work-stealing}.
+\textit{work-stealing} shows better speedups on clique-3 than on clique-5.
+% TODO analyse, higher skew rigth, at least name reason, is skew higher because of 0th vertice?
+Furthermore, we observe one exception to our hypothesis that \textit{work-stealing}
+is preferable to Shares.
+On clique-5 with 96 workers, we see a speedup of 29.8 for \textit{work-stealing} and 36.8
+for Shares.
+% TODO run 5-clique with one worker?
+
+Additionally, we see two strange scaling behaviours for LiveJournal.
+First, super-linear scaling for 3-clique and \textit{work-stealing}.
+We hypothize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
+120 MB of L3 cache while a single process can use only 30 MB of L3 cache.
+To confirm this we rerun the experiment with 1, 8, 16 and 32 workers while using \textit{taskset} to bind the application
+to the first 8, 16 or 32 cores.
+This rules out the use of more than 1, 2 or 3 sockets respectively.
+In this experiment, we measure speedup of 8.6, 16.6 and 32.9 for 8, 16 and 32 workers.
+This is significantly lower than the speedup measurements without \textit{taskset}.
+We conclude that this confirms our hypothesis and believe that the slight super-linear
+scaling that remains arises from the bigger amount of L1 and L2 cache in the system.
+
+Second, Shares exhibits lower speedup of 12.1 for 64 workers which is
+lower than for 32 workers (14.7) and 14.8 for 96 workers.
+% TODO why?
+
+The Orkut and LiveJournal datasets lead to highly similiar scaling results:
+strong linear scaling for \textit{work-stealing} up to 32 workers,
+\textit{work-stealing} scales significantly better than Shares for 3-clique but
+not for 5-clique and Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
+
+
+% TODO most important open question 1: Shares faster than workstealing? clique 5 bad scaling workstealing?
+% TODO most important open question 2: workstealing slower on bigger queries?
+
+
+
 
 
 \begin{table}
     \centering
-    \input{generated/twitter-scaling.tex}
-    \caption{g}    \label{t}
+    \input{generated/graphWCOJ-scaling-twitter.tex}
+    \caption{Scaling table}    \label{t}
     % TODO align and remove headers
 \end{table}
+
+\begin{table}
+    \centering
+    \input{generated/graphWCOJ-scaling-livej.tex}
+    \caption{Scaling table LiveJ}    \label{t}
+    % TODO align and remove headers
+\end{table}
+
+\begin{table}
+    \centering
+    \input{generated/graphWCOJ-scaling-orkut.tex}
+    \caption{Scaling table Orkut}    \label{t}
+    % TODO align and remove headers
+\end{table}
+
 
 
 \subsubsection{Analysis}
