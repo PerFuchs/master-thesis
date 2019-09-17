@@ -4,10 +4,11 @@ DATASET_FOLDER = "../data/"
 FIGURE_PATH = "../"
 GENERATED_PATH= "../generated/"
 
-plt.style.use("fivethirtyeight")
+WORKSTEALING = "FirstVariablePartitioningWithWorkstealing"
+SHARES = "Shares"
+
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
-
 
 QUERY_ORDER = ["3-0.00-path", "3-clique", "kite", "4-clique", "house", "5-clique", "4-cycle", "diamond", "5-cycle"]
 
@@ -65,4 +66,20 @@ def split_partitioning(data):
   def split(p):
     return p.split("(")[0]
   data["partitioning_base"] = list(map(split, data["Partitioning"]))
+
+
+def get_values(row, column_names):
+  values = list(map(lambda n: row[n], column_names))
+  return values
+
+
+def add_wcoj_time(data):
+  column_names = data.columns.values
+  scheduled_columns = list(filter(lambda s: s.startswith("Scheduled"), column_names))
+  ends_columns = list(filter(lambda s: s.startswith("AlgoEnd"), column_names))
+
+  data["wcoj_time"] = data.apply(lambda r: max(get_values(r, ends_columns)) -
+                                           min(list(filter(lambda  v: 0 < v, get_values(r, scheduled_columns)))),
+                                                                                       axis=1)
+  return data
 
