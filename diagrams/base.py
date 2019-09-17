@@ -8,7 +8,7 @@ WORKSTEALING = "FirstVariablePartitioningWithWorkstealing"
 SHARES = "Shares"
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
+plt.rc('font', family='serif', size=16)
 
 QUERY_ORDER = ["3-0.00-path", "3-clique", "kite", "4-clique", "house", "5-clique", "4-cycle", "diamond", "5-cycle"]
 
