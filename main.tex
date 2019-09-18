@@ -29,14 +29,26 @@
 \setlength{\parindent}{0em}
 \setlength{\parskip}{0.7em}
 
+\newpage
+\tableofcontents
+\newpage
+
 \input{introduction.tex}
 \input{background.tex}
 \input{related-work.tex}
 \input{partitionings.tex}
+\input{graphWCOJ.tex}
 \input{implementation.tex}
 \input{experiments.tex}
+\input{conclusions.tex}
+\clearpage
+
+\addcontentsline{toc}{section}{References}
+\printbibliography
+\clearpage
+
 \input{appendix.tex}
 
-\printbibliography
+
 
 \end{document}
