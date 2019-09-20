@@ -3,10 +3,13 @@
 TODO introduction
 \subsection{Spark}
 Spark is the probably most widely used and industry accepted cluster computing model.
-It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop or Haloop~\cite{haloop}, by allowing to cache results in memory between multiple queries, using so-called resilient distributed datasets~\cite{rdd}. % TODO sources for hadoop and haloop
-However, although Spark implements most operations in memory, shuffles are an exception which still writes and reads the whole intermediary dataset to and from disk.
+It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop or Haloop~\cite{haloop},
+by allowing to cache results in memory between multiple queries, using so-called resilient distributed datasets~\cite{rdd}. % TODO sources for hadoop and haloop
+However, although Spark implements most operations in memory, shuffles are an exception which still writes and reads
+the whole intermediary dataset to and from disk.
 Consequently, shuffling remains to be a highly expensive operation which is the bottleneck of many workflows.
-Still, Spark provides the user with a general distributed data processing model with strong fault- and struggler tolerance on commodity shared-nothing clusters.
+Still, Spark provides the user with a general distributed data processing model with strong fault- and struggler tolerance
+on commodity, shared-nothing clusters.
 
 
 % TODO local mode vs cluster mode and decision to handle only local mode
@@ -14,6 +17,61 @@ Still, Spark provides the user with a general distributed data processing model 
 % TODO tasks, executor, worker, JVM instances, master, worker
 \subsubsection{Catalyst}
 % TODO Catalyst chapter
+Catalyst~\cite{catalyst} is Spark's query optimizer.
+From a given query, e.g. an SQL query or one constructed using the DataFrame API, it constructs
+in multiple stages an executable \textit{physical plan}.
+\begin{figure}
+    \includegraphics{figures/catalyst-stages.png}
+    \caption{Input and stages of the Catalyst optimizer.}
+    \label{fig:catalyst-stages}
+\end{figure}
+Its inputs and stages are shown in~\cref{fig:catalyst-stages}.
+Below we explain these in order.
+
+The input of Catalyst is a query in the form of a DataFrame or SQL string.
+From the optimizer builds a \textit{unresolved logical plan}.
+This plan can include unresolved attributes, e.g. attribute names which are not matched to a specific
+data source yet or which have no known type.
+To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describes the
+available data sources.
+This phase is referred to as \textit{Analysis} and results in a \textit{logical plan}.
+
+The \texit{logical plan} represents \textit{what} should be done for the query but not exactly \textit{how},
+e.g. it might contain a Join operator but not a Sort-merge join.
+The logical optimization phase applies batches of rewriting rules until a fixpoint is reached.
+A simple example of a logical optimization would be rewriting $2 + 2$ into $4$.
+
+From the \textit{optimized logical plan} the optimizer generates one or multiple \textit{physical plans} by
+applying so called \textit{Strategies}.
+They translate a logical operator in one or multiple physical operators.
+\textit{Strategies} are also allowed to return multiple physical plans for a single \textit{logical plan}.
+In this case, the optimizer selects the best one according to a \textit{cost model}.
+
+During the \textit{code generation} phase, Catalyst compiles Java byte code for some of the \textit{physical
+operators}.
+This code executes often magnitudes faster than interpreted versions~\cite{catalyst} of the same operator because
+it can be specialized towards this particular query, e.g. if a join operates only on integers, code
+generation can prune all code paths dealing with strings.
+% TODO cite paper or website?
+Indeed, the code generation phase is part of another Spark project called \textit{Tungsten}~\cite{tungsten}.
+In this thesis, we do not build any code generated physical operators.
+Hence, we do not treat this topic in depth.
+It is enough to know that all freshly generated Java code is wrapped into physical operators of the type \textit{WholeStageCodeGen}
+which allows seamless integration with interpreted operators.
+
+Finally, Catalyst arrives at an optimized physical plan which implements the query.
+The execution of this plan is called
+\textit{structured query execution}~\cite{spark-internals-structured-query-execution}.
+% TODO cite https://jaceklaskowski.gitbooks.io/mastering-spark-sql/spark-sql-QueryExecution.html
+It translates the plan into RDD operations implemented by Spark cores.
+Hence, the result of Catalysts query compilation is an RDD representing the query.
+One should note that \textit{structured query execution} does not actually execute the query: theresult is an RDD which is a none materialized representation of the operations necessary to generate the
+result.
+In this thesis, we are not concerned with the internals of RDD's.
+We do not need to introduce any new RDD operations or even touch Spark's core functionality.
+Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one \textit{logical operator}, multiple
+\texti{physical operators} and a \textit{Strategy} to translate the \texit{logical operator} in
+its physical implementation.
 
 \subsection{Worst-case optimal join algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
@@ -90,7 +148,7 @@ Second, the number of replicated tuples increases with a growing hypercube becau
         Pattern  & Edges  & workload [64]/[128] \\ \midrule
         Triangle & 3                 & 0.18 / 0.12    \\
         4-clique & 6                 & 0.59 / 0.44    \\
-        5-clique & 10                & 0.9  / 0.82    \\
+        5-clique & 10                & 0.9  /d 0.82    \\
         House    & 5                 & 0.42 / 0.32    \\
         Diamond  & 8                 & 0.76 / 0.67    \\
         \bottomrule
