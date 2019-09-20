@@ -8,7 +8,7 @@ Then, we experiment with multiple \textit{logical} partitioning schemes which en
 only some parts of the graph.
 This design has a big advantage over physical partitionings.
 Each worker holds the full edge relationship, therefore, it can answer any possible query without needing to shuffle data or
-materializing new datastructures for the \textit{LeapfrogTriejoin}, e.g. sorted arrays or CSR representations.
+materializing new data structures for the \textit{LeapfrogTriejoin}, e.g. sorted arrays or CSR representations.
 Arranging the data into suitable data structures and shuffling data is a one-off action on system startup.
 
 This design allows us to implement a new flavour of the Shares partitioning in which we filter the vertices of the
@@ -22,7 +22,7 @@ The design of work-stealing in Spark is described in \cref{ssec:work-stealing}
 
 \subsection{Logical Shares} \label{ssec:shares-logical}
 Shares has been developed as an optimal shuffle for n-ary joins on MapReduce like systems.
-So, it is used to physical partition the tables participating in the join over all workers of the system.
+So, it is used to physical partition the tables participating in the join overall workers of the system.
 Then, each worker works only on the tuples it holds in its partition.
 This has been implemented in Myria to be used with a \textsc{WCOJ}~\cite{myria-detailed} and for Haddoop~\cite{TODO}.
 We describe the Shares and Myria in more detail in~\cref{ssec:myria} and assume that the reader is familiar
@@ -33,7 +33,7 @@ Instead, of partitioning the graph before computing the join, we determine if a 
 join on-the-fly.
 We do so by assigning a coordinate of a hypercube to each worker.
 Then each worker is responsible for the tuples which match its coordinate as in the original Shares.
-However, a huge different to a physical Shares partitioning exists: while physical Shares keeps one prefiltered, materialized
+However, a huge difference to a physical Shares partitioning exists: while physical Shares keeps one prefiltered, materialized
 partition of the edge relationship per relationship of the join in memory, we keep only a single copy of the graph edge relationship in
 memory which can be used by all \textit{TrieIterator} for all edge table aliases.
 Once, the edge relationship is broadcasted and cached, we do not need to materialize prefiltered partitions of it before every
@@ -43,7 +43,7 @@ Filtering tuples on-the-fly in the \textsc{LFTJ} comes with a challenge: in the 
 but only single attributes of a tuple at the time,
 e.g. a \textit{LeapfrogJoin} only considers one attribute and cannot determine the whole tuple to which this attribute belongs.
 Fortunately, a tuple matches only if all attributes match the coordinate of the worker.
-Hence, we can filter out a tuple if any of its attribute does not match.
+Hence, we can filter out a tuple if any of its attributes do not match.
 For example, we can exclude a value in a \textit{LeapfrogJoin} without knowing the whole tuple.
 
 Integrating Shares and \textsc{LFTJ} comes with two important design decisions.
@@ -94,7 +94,7 @@ To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and
 We cannot improve on the main weakness of Shares that it duplicates a lot of work.
 Indeed, our design filters tuples only after the \textit{LeapfrogJoin}.
 Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search of the first variable.
-This does not influece scaling much because only the correct logical partition of values for the first variable
+This does not influence scaling much because only the correct logical partition of values for the first variable
 are used as bindings in the \textit{LeapfrogTriejoin}.
 This means they are still filtered early enough before most of the work happens.
 We improve over a physical Shares by using the same CSR data structure for all \textit{TrieIterator}.
@@ -112,10 +112,10 @@ It leads to high skew which hinders good scaling of this idea.
 We observe that the general idea behind Shares is to introduce a mapping per attribute from the value space into the space of possible
 hypercube coordinates, e.g. so far all Shares variants use a hash function per attribute to map the values onto the hypercube.
 We investigate the possibility to use ranges as mapping function, e.g. in a three-dimensional hypercube with three workers per dimension,
-we could divide the value space into three ranges and a value matches a coordinate if it is in the correct range.
+we could divide the value space into three ranges; a value matches a coordinate if it is in the correct range.
 Contrary, to hash-based mappings which are checked value by value until one matches, a range check is a single conditional after each
 \textit{seek} and \textit{next} function call.
-Furthermore, this conditional is predictable for the processor because for all but one call, the value is in range and returned.
+Furthermore, this conditional is predictable for the processor because, for all but one call, the value is in range and returned.
 So, contrary to hash-based filter we can push a range based filter into the \textit{TrieIterators}.
 
 We implement this idea by dividing the vertice ids per attribute into as many ranges as the size of the corresponding hypercube dimension.
@@ -144,5 +144,97 @@ We stopped our investigation in this direction.
 
 % TODO source code for clarification?
 
+% TODO story of duplicated work vs skew?
 
 \subsection{Work-stealing} \label{ssec:work-stealing}
+Normally, Spark uses static, physical partitioning of the data.
+As we learned the last section can lead to a trade-off between the ability to handle skew and duplicated work.
+A standard approach to handle skew and the arising unbalanced workloads is work-stealing.
+In work-stealing, the work is not necessarily statically partitioned before-hand but organized in many smaller tasks which can be
+solved by all workers.
+Workers either assigned an equal split of tasks and steal tasks from other workers when they are out of work or all tasks are arranged in a
+queue accessible for all workers so that workers can poll tasks from it whenever they are out of work.
+In either way, this results in a situation where no task is guaranteed to be solved by a single worker and each worker only finishes
+when no free tasks are left in the system.
+Hence, the maximum amount of skew roughly the size of the smallest task.
+There is no duplicated work because different tasks should not overlap and each task exists only once in the whole system.
+
+This leaves us with two design decisions.
+First, how to organize the workload of a \textit{LeapfrogTriejoin} into tasks.
+Second, how do workers get their tasks?
+We address these questions in order by first describing our preferred solution and then their integration with Spark.
+We conclude the section with an evaluation of the limitations of this integration.
+
+Before getting into the design, we remember that we built our solution for the Spark \textit{local-mode}.
+That means that the Spark master and all workers are threads within the same JVM process.
+This is important because it allows us to share data structures between multiple Spark tasks as normal JVM objects.
+We refer the reader to our future work section (\ref{ssec:future-work}) and/or to our related work section about Fractal
+(\ref{ssec:fractal}) for a discussion on how to built work-stealing for Spark in \textit{cluster-mode}.
+
+The first design decision is the definition of a work-stealing task.
+It is not necessary to define the tasks such that they have all the same size.
+However, it is important to choose the task size small enough to avoid skew.
+Furthermore, the tasks should not overlap so that work is not duplicated.
+We choose the define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
+This is none overlapping.
+The task size can vary widely and is query dependent.
+However, given the huge amount of tasks (as many as vertices in the graph), we believe this to be small enough.
+We plan to evaluate this during our experiments.
+
+The second design choice in work-stealing is to find a way of how workers get their tasks.
+For simplicity, we choose to use a shared, thread-safe queue that holds all tasks.
+The main drawback of this solution is that the access to the queue has to be synchronized between all workers.
+If there are too many workers contending for the critical section of polling a job of the queue, they can slow each other down.
+However, the critical section is small because it includes only the call to the poll method of the queue.
+Additionally, we decide to implement a batching scheme such that a single poll can assign multiple tasks to a worker.
+This allows us to fine-tune how often a worker needs to return to the queue for new tasks.
+% TODO batch size experiment?
+
+It turns out that the work-stealing scheme as described above is straightforward to integrate into Spark.
+We choose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
+Java. Most importantly they are shared between all threads of the same JVM.} to hold a dictionary associate an ID for each
+query with a thread-safe queue instance.
+This allows accessing this queue from each task in Spark.
+Due to the association between query and queue, it is possible to run multiple queries in parallel without interference.
+
+The queue for a query is filled by the first Spark task that accesses it.
+This can be implemented by a short synchronized code section at the beginning of all tasks.
+It checks if the queue is empty and if so pushes one task per possible binding (all graph vertices) or batch of possible bindings.
+The synchronized section is fast running and only encountered once when the task starts.
+Hence, it comes to neglectable performance costs.
+
+Once the queue is filled, we run our normal \textit{LeapfrogTriejoin} with filtered \textit{Leapfrog join} for the first attribute.
+This filter is implemented as a decorator around the original \textit{Leapfrog join}.
+The \textit{leapfrogNext} method of this decorator returns only values that are polled by the work-stealing task queue by this worker.
+
+Our integration of work-stealing in Spark comes with some limitations.
+We see it more as a proof-of-concept that work-stealing is a good choice for the parallelization of worst-case optimal joins in Spark than
+as a solid implementation of work-stealing in Spark.
+This is not possible within the time-frame of this thesis.
+In the following, we discuss the constraints of our integration.
+
+Work-stealing leads to an unforeseeable partitioning of the results: it is not possible to foresee which bindings end up in a certain
+partition nor can we guarantee a specific partition size.
+If the user relies on any specific partitioning, he needs to repartition the results after manually.
+We do not see this limitation as a huge issue because most Spark joins do not guarantee a specific partitioning.
+However, they mostly repeatably construct the same partitions for the same query.
+This cannot be guaranteed for any work-stealing approach.
+If the user on a stable partitioning per query, he should cache the query after the worst-case optimal join execution.
+
+We do not integrate our work-stealing scheme into the Spark scheduler but we provide a best-effort implementation given that we use all
+resources assigned to us as soon as they are assigned to us.
+We can handle all scheduler decisions.
+The first worker assigned fills the queue.
+The worker who takes the last element from the queue sets a boolean that this query has been fulfilled.
+Hence, tasks that are started after the query has been computed, do not recompute the query.
+
+We do not provide a fault-tolerant system.
+We see two possibilities to integrate fault-tolerance in our system.
+First, one can stop all tasks if a single task fails and restart the computation with the last cached results before the worst-case
+optimal join.
+Second, one could extend the critical section of polling a queue value by the \textit{LeapfrogJoin} by two more operations: we peek
+at the value from the queue without removing it, log the value in a set of values per task and then poll it and remove it from the queue.
+With these operations, it is guaranteed that the master can reconstruct all values that a failed worker thread considered.
+So, after a task failure, the master can add these values to the work queue again such that other tasks will redo the computations.
+
+%   - TODO read Fractal on fault tolerance?
