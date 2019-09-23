@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 
 DATASET_FOLDER = "../data/"
 FIGURE_PATH = "../"
@@ -88,3 +89,33 @@ def add_wcoj_time(data):
                                                                                        axis=1)
   return data
 
+def fix_missing_columns(input_file_path, output_file_path, parallelism):
+  data = pd.read_csv(input_file_path, sep=",", comment="#")
+  existing_columns = data.columns.values
+
+  parallelism_dependend_column_prefixes = ["WCOJTime-", "Scheduled-", "AlgoEnd-"]
+
+  new_columns = []
+  for column_prefix in parallelism_dependend_column_prefixes:
+    for p in range(0, parallelism):
+      column_name = column_prefix + str(p)
+      print(column_name)
+      if not column_name in existing_columns:
+        print("Filling")
+        default_value = 0
+        if column_prefix == "WCOJTime-":
+          default_value = 0.0
+        data[column_name] = default_value
+        new_columns.append(column_name)
+
+  new_column_order = []
+  for i, column_name in enumerate(existing_columns):
+    new_column_order.append(column_name)
+    for column_prefix in parallelism_dependend_column_prefixes:
+      if column_name.startswith(column_prefix) and \
+        (i + 1 == len(existing_columns) or not existing_columns[i + 1].startswith(column_prefix)):
+        for new_column in new_columns:
+          if new_column.startswith(column_prefix):
+            new_column_order.append(new_column)
+
+  data.to_csv(output_file_path, sep=",", columns=new_column_order, index=False)
