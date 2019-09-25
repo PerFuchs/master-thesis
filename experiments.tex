@@ -322,13 +322,14 @@ Anyhow, it super-linear scaling in MapReduce like systems is not unheard of and 
 We describe our observations per dataset;
 starting with Twitter.
 As expected, both partitioning schemes scale better when we increase the query size.
-For 5-clique, \textit{work-stealing} exhibits near linear scaling up to 32 workers, while
-clique-3 gives a speedup of 6.22 for 8 workers.
+For 5-clique, \textit{work-stealing} exhibits near linear scaling up to 48 workers, while
+clique-3 reaches the maximum speedup of 6.22 for 8 workers.
 The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highest speedup
 with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
 The best observed speedup is 21.3 for 5-clique and 96 workers.
 % TODO spark overhead
+% TODO bad scaling for hyperthreading
 
 The experiment on LiveJournal confirms our hypothesis that bigger datasets lead to better
 speedups;
@@ -339,7 +340,7 @@ However, this is not the case for \textit{work-stealing}.
 \textit{work-stealing} shows better speedups on clique-3 than on clique-5.
 Nevertheless, \textit{work-stealing} beats Shares on both queries and all levels of parallelism.
 % TODO analyse, higher skew rigth, at least name reason, is skew higher because of 0th vertice?
-
+% TODO effect of dataset size leads to 5-clique scaling the same or worse
 
 Additionally, we see two strange scaling behaviours for LiveJournal.
 First, super-linear scaling for 3-clique and \textit{work-stealing}.
