@@ -270,9 +270,6 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
 
 % TODO paragraph about section structure
 
-compare schemes
-compare dataset sizes
-compare query scaling
 \subsubsection{Results}
 
 \begin{figure}
@@ -319,7 +316,8 @@ To conclude, we expect sub-linear speedup for Shares and better but still sub-li
 Anyhow, it super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
 % TODO cite the internet source from Monday.
 
-We describe our observations per dataset; starting with Twitter.
+We describe our observations per dataset;
+starting with Twitter.
 As expected, both partitioning schemes scale better when we increase the query size.
 For 5-clique, \textit{work-stealing} exhibits near linear scaling up to 32 workers, while
 clique-3 gives a speedup of 6.22 for 8 workers.
@@ -327,23 +325,19 @@ The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highe
 with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
 The best observed speedup is 21.3 for 5-clique and 96 workers.
-% TODO run on 48 cores
+% TODO spark overhead
 
 The experiment on LiveJournal confirms our hypothesis that bigger datasets lead to better
 speedups;
 the highest observed speedup is 61.2 for \textit{work-stealing} on 3-clique and
 36.81 for Shares on 5-clique each with 96 workers.
-Also, we can confirm that Shares scales better on 5-clique than on 3-clique.
+Also, we can confirm that Shares scales better on 5-clique than on 3-clique; with the exception of 32 workers.
 However, this is not the case for \textit{work-stealing}.
 \textit{work-stealing} shows better speedups on clique-3 than on clique-5.
+Nevertheless, \textit{work-stealing} beats Shares on both queries and all levels of parallelism.
 % TODO analyse, higher skew rigth, at least name reason, is skew higher because of 0th vertice?
-Furthermore, we observe one exception to our hypothesis that \textit{work-stealing}
-is preferable to Shares.
-On clique-5 with 96 workers, we see a speedup of 29.8 for \textit{work-stealing} and 36.8
-for Shares.
-% TODO run 5-clique with one worker?
 
-% TODO spark overhead
+
 Additionally, we see two strange scaling behaviours for LiveJournal.
 First, super-linear scaling for 3-clique and \textit{work-stealing}.
 We hypothize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
@@ -384,16 +378,14 @@ call this partitioning scheme \textit{i-prefixShares}.
 TODO report results
 However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
 in our further experiments.
-
 % TODO why?
-
-% TODO high skew of work-stealing on LiveJournal
 
 The Orkut and LiveJournal datasets lead to highly similiar scaling results:
 strong linear scaling for \textit{work-stealing} up to 32 workers,
 \textit{work-stealing} scales significantly better than Shares for 3-clique but
 not for 5-clique and Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
-
+% TODO run on 48 cores,
+% TODO reevaluate similarity with LiveJournal
 
 % TODO most important open question 1: Shares faster than workstealing? clique 5 bad scaling workstealing?
 % TODO most important open question 2: workstealing slower on bigger queries?
