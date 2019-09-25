@@ -282,11 +282,14 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
     \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
       {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-orkut}}
     \caption{Scaling behaviour of Shares and work-stealing on three different datasets
-      and two different queries.}
+      and two different queries.
+      The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
+      50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
+      Measurements for 5-clique for low levels of parallelism are missing for LiveJournal and Orkut due to the time it would take
+      to collect the results.
+    }
     \label{fig:graphWCOJ-scaling}
 \end{figure}
-
-% TODO indicate missing 5 clique numbers
 
 We first describe our expectations of the experiment outcome.
 We assume that scaling improves with the dataset size.
