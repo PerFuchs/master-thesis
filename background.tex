@@ -83,13 +83,8 @@ be computed in independently from each other.
 Second, by task parallelism due to the fact that some parts of the DAG can be computed without dependence of the others.
 Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
 
-%We show the lineage graph of a triangle count query in Spark in \cref{fig:lineage-triangle}.
-%
-
-
-
-
-
+% Parallelism in Spark
+% ====================
 %We give examples for both kind of parallelism in the triangle count query
 %(\cref{fig:lineage-triangle}).
 %Lets assume that the CSV file is partitioned in 10 equal parts and each part is read
@@ -165,7 +160,10 @@ From a given query, e.g. an SQL query or one constructed using the DataFrame API
 in multiple stages an executable \textit{physical plan}.
 \begin{figure}
     \includegraphics{figures/catalyst-stages.png}
-    \caption{Input and stages of the Catalyst optimizer.}
+    \caption{
+      Input and stages of the Catalyst optimizer.
+      Source: Databricks Blog\footnote{https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html}
+    }
     \label{fig:catalyst-stages}
 \end{figure}
 Its inputs and stages are shown in~\cref{fig:catalyst-stages}.
