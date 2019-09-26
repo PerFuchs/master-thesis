@@ -84,18 +84,8 @@ Second, by task parallelism due to the fact that some parts of the DAG can be co
 Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
 
 %We show the lineage graph of a triangle count query in Spark in \cref{fig:lineage-triangle}.
-%The triangle query is given by the datalog rule
-%$COUNT(triangle(A, B, C)) \leftarrow R(A, B), S(B, C), T(A, C), A < B < C $.
-%We explain the figure from top to bottom.
-%Each vertice in the graph represents a transformation.
-%The sources of the DAG are persistent data sources.
-%In this case, the edge relationship of the graph given by a CSV file.
-%All source vertices are filtered to fulfill $A < B < C$, while being written from disk.
-%The two left most source vertices are the lineage parents of the join between \textit{R}
-%and \textit{S} via \textit{B}.
-%The result of this join and the last relationship \textit{T} are input to the second
-%join.
-%Finally, we see the count action which aggregates the result of the last join.
+%
+
 
 
 
@@ -147,7 +137,7 @@ Indeed, it is possible to compute all parts of an RDD in parallel which are not 
 %task of summing up all partitions of its parent.
 
 
-\subsection{Broadcast variables}
+\subsubsection{Broadcast variables} \label{subsubsec:broadcast-variables}
 From the programmer point of view, \textit{broadcast variables} are normal readonly variables.
 They are initialized once by the driver program and should not be changed after initialization.
 Every serializable type can be used for a broadcast variable.
@@ -180,6 +170,8 @@ in multiple stages an executable \textit{physical plan}.
 \end{figure}
 Its inputs and stages are shown in~\cref{fig:catalyst-stages}.
 Below we explain these in order.
+We use the triangle given by the datalog rule $COUNT(triangle(A, B, C)) \leftarrow R(A, B), S(B, C), T(A, C), A < B < C $ as
+a running example.
 
 The input of Catalyst is a query in the form of a DataFrame or SQL string.
 From the optimizer builds a \textit{unresolved logical plan}.
@@ -188,11 +180,24 @@ data source yet or which have no known type.
 To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describes the
 available data sources.
 This phase is referred to as \textit{Analysis} and results in a \textit{logical plan}.
-
 The \textit{logical plan} represents \textit{what} should be done for the query but not exactly \textit{how},
 e.g. it might contain a Join operator but not a Sort-merge join.
-The logical optimization phase applies batches of rewriting rules until a fixpoint is reached.
+We show the logical plan for the triangle query in~\cref{fig:triangle-logical-plan}.
+% TODO make figure
+
+We explain the figure from top to bottom.
+As we see, the query is represented as an operator tree where the vertices are operations and the edge indicate dataflow from
+one operator to another.
+The leaves of the tree are three aliases to the edge relationship
+The two left most source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
+The result of this join and the leave relationship \textit{T} are input to the second join.
+The tuples produced by this join are filtered to fulfill $A < B < C$.
+Finally, at the root of the tree there is an aggregation to count all results and report the sum.
+
+The \textit{logical optimization phase} applies batches of rewriting rules until a fixpoint is reached.
 A simple example of a logical optimization would be rewriting $2 + 2$ into $4$.
+In our example, this phase pushes the three filters before the root into the two joins and even down to the scans of the input
+relationships.
 
 From the \textit{optimized logical plan} the optimizer generates one or multiple \textit{physical plans} by
 applying so called \textit{Strategies}.
@@ -200,8 +205,21 @@ They translate a logical operator in one or multiple physical operators.
 \textit{Strategies} are also allowed to return multiple physical plans for a single \textit{logical plan}.
 In this case, the optimizer selects the best one according to a \textit{cost model}.
 
-During the \textit{code generation} phase, Catalyst compiles Java byte code for some of the \textit{physical
-operators}.
+% TODO make figure
+The physical plan for the triangle query is shown in~\cref{fig:triangle-physical-plan}.
+The logical join operators from~\cref{fig:triangle-logical-plan} have been translated to broadcast hash joins and are now preceded by a
+broadcast exchange operator.
+The exchange operator builds a hashtable from its input operator and makes it available as broadcast variable to all executors of
+the cluster; we explain broadcast variables in depth in~\cref{subsubsec:broadcast-variables}.
+When an executor is tasked to execute the hash join operator, it aquires the broadcasted hashtable and executes a local hash join
+of its assigned partitions.
+This is a good example of strategy that translates a single logical operator into two physical operators.
+The other change to the logical plan is that the count aggregation has been broken up into an partial aggregation directly after the
+last join, an exchange reorganizing all partial counts into a single partition and a second aggregation over that partiton to caculate
+the whole count.
+
+After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it compiles Java byte code for
+some of the physical operators.
 This code executes often magnitudes faster than interpreted versions~\cite{catalyst} of the same operator because
 it can be specialized towards this particular query, e.g. if a join operates only on integers, code
 generation can prune all code paths dealing with strings.
@@ -209,8 +227,8 @@ generation can prune all code paths dealing with strings.
 Indeed, the code generation phase is part of another Spark project called \textit{Tungsten}~\cite{tungsten}.
 In this thesis, we do not build any code generated physical operators.
 Hence, we do not treat this topic in depth.
-It is enough to know that all freshly generated Java code is wrapped into physical operators of the type \textit{WholeStageCodeGen}
-which allows seamless integration with interpreted operators.
+It is enough to know that all freshly generated Java code is wrapped into a single physical operator.
+Therefore, it integrates seamlessly with interpreted operators.
 
 Finally, Catalyst arrives at an optimized physical plan which implements the query.
 The execution of this plan is called
@@ -219,15 +237,14 @@ The execution of this plan is called
 It translates the plan into RDD operations implemented by Spark core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
 One should note that \textit{structured query execution} does not actually execute the query: the result is an RDD which is a none
-materialized representation of the operations necessary to generate the
-result.
+materialized representation of the operations necessary to generate the result.
 In this thesis, we are not concerned with the internals of RDD's.
 We do not need to introduce any new RDD operations or even touch Spark's core functionality.
 Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one \textit{logical operator}, multiple
 \textit{physical operators} and a \textit{Strategy} to translate the \textit{logical operator} in
 its physical implementation.
 
-\subsection{Worst-case optimal join algorithm}
+\subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
 In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}.
 In the same year, Veldhuizen proved that the algorithm ``Leapfrog Triejoin'' used in LogicBlox, a database system developed by his company, is also worst-case optimal with regards to the
