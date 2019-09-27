@@ -144,7 +144,6 @@ They translate a logical operator in one or multiple physical operators.
 \textit{Strategies} are also allowed to return multiple physical plans for a single \textit{logical plan}.
 In this case, the optimizer selects the best one according to a \textit{cost model}.
 
-% TODO make figure
 The physical plan for the triangle query is shown in~\cref{fig:triangle-physical-plan}.
 The logical join operators from~\cref{fig:triangle-logical-plan} have been translated to broadcast hash joins and are now preceded by a
 broadcast exchange operator.
@@ -339,7 +338,6 @@ A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only 
 %Synchronization happens via exchange operators which allow to reorganize the paritioning of the RDD's.
 %In the following, we explain how Spark exploits parallelism in its execution model.
 
-% TODO turn reasoning around? Stages to tasks?
 %Spark uses a scheduler to assign \textit{tasks} to \textit{slots}.
 %\textit{Tasks} are the smallest unit of work in Spark.
 %They are created by dividing the RDD lineage graph into pipelinable \textit{stages}.
