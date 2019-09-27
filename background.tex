@@ -1,13 +1,59 @@
 \section{Background}\label{sec:background}
 
 TODO introduction
-\subsection{Spark}
+\subsection{Spark}\label{subsec:spark}
 Spark is the probably most widely used and industry accepted cluster computing model.
 It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{Hadoop} or Haloop~\cite{haloop},
 by allowing to cache results in memory between multiple queries, using so-called resilient
 distributed datasets~\cite{rdd}; often abbreviated to RDD. % TODO sources for hadoop and haloop
 
-\subsubsection{Spark architecture}
+This section introduces Spark and is organized in four subsections.
+\Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark the RDD's.
+In~\cref{subsubsec:spark-architecture} we explain the different components and processes in a Spark cluster.
+The query optimizer of Spark, Catalyst, is the component of Spark we integrate our \textsc{WCOJ} with; it's structure is explained
+in~\cref{subsubsec:catalyst}.
+Finally, in~\cref{subsubsec:broadcast-variables} we highlight important details about \textit{Broadcast variables} which are used
+to implement our parallel worst-case optimal join.
+
+\subsubsection{Resilient distributed datasets} \label{subsubsec:resilient-distributed-datasets}
+RDD's form the core of Spark.
+However, for this thesis it is not necessary to understand them in great detail.
+In the next paragraph, we give a short introduction into the relevant aspects of RDD's.
+For the interested reader, a more in depth description is given in the original paper~\cite{RDD}.
+
+Resilient distributed datasets describe a distributed collection of data items of a single type.
+In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
+operations to manipulate single data items but coarse grained operation that are applied
+to all data items, e.g. \textit{map} to apply a function to each data item.
+These operations are called transformations.
+An RDD is built starting from a persistent data source and multiple transformation to
+apply to this datasource.
+One can store the transformations applied to the input data source as in directed acyclic graph, the so called \textit{lineage graph}.
+This graph fully describes the dataset without materializing it because the transformations are deterministic.
+Hence, the dataset can be computed and recomputed on demand, e.g. when the user asks for the count
+of all items in the set.
+Operations which require that the data in the RDD is actually computed are called \textit{actions}.
+
+RDD's are distributed by organizing their data items into partitions.
+The partitioning can be chosen by the user or the Spark query optimizer such that it allows to run transformations on all partitions
+in parallel.
+For example, one might chose a round robin paritioning to generate splits of equal size when reading data items from disk or one
+groups items by hashing a specific key to support parallelizable aggregation on that key per partition.
+The process of repartitioning a RDD is called a \textit{shuffle}.
+It is a expensive operations because it involves writing and reading the whole RDD to disk.
+
+Describing datasets as RDD's comes with two main benefits.
+First, it is resilient because if the dataset of some partitons of it get lost, it is possible to recompute them from persistent storage
+using lineage graph information.
+Second, it allows Spark to compute RDD's in parallel.
+
+Spark can parallelize the computation of RDD in two ways.
+First, by data-parallelism due to the fact that different partitions of a RDD can
+be computed in independently from each other.
+Second, by task parallelism due to the fact that some parts of the DAG can be computed without dependence of the others.
+Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
+
+\subsubsection{Spark architecture} \label{subsubsec:spark-architecture}
 Spark allows the user to run his program on a single machine or on hundreds of machines organized in a cluster.
 In this section, we explain the architecture that allows this flexibility.
 \Cref{fig:spark-cluster} shows a schematic Spark cluster setup.
@@ -15,8 +61,8 @@ In this section, we explain the architecture that allows this flexibility.
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/spark-cluster.png}
     \caption{
-      Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.
-      Source: Apache Spark Documentation~\footnote{https://spark.apache.org/docs/latest/cluster-overview.html}
+    Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.
+    Source: Apache Spark Documentation~\footnote{https://spark.apache.org/docs/latest/cluster-overview.html}
     }
 \end{figure}
 
@@ -47,116 +93,9 @@ Finally, one can run Spark in \textit{local mode} on a single machine using mult
 In local mode, the driver program and a single executor with as many threads as cores to use share a single JVM.
 For our experiments, we run Spark purely in local mode.
 
-\subsubsection{Resilient distributed datasets}
-RDD's form the core of Spark.
-However, for this thesis it is not necessary to understand them in great detail.
-In the next paragraph, we give a short introduction into the relevant aspects of RDD's.
-For the interested reader, a more in depth description is given in the original paper~\cite{RDD}.
-
-Resilient distributed datasets describe a distributed collection of data items of a single type.
-In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
-operations to manipulate single data items but coarse grained operation that are applied
-to all data items, e.g. \textit{map} to apply a function to each data item.
-These operations are called transformations.
-An RDD is built starting from a persistent data source and multiple transformation to
-apply to this datasource.
-One can store the transformations applied to the input data source as in directed acyclic graph, the so called \textit{lineage graph}.
-This graph fully describes the dataset without materializing it because the transformations are deterministic.
-Hence, the dataset can be computed and recomputed on demand, e.g. when the user asks for the count
-of all items in the set.
-Operations which require that the data in the RDD is actually computed are called \textit{actions}.
-
-RDD's are distributed by organizing their data items into partitions.
-The partitioning can be chosen by the user or the Spark query optimizer such that it allows to run transformations on all partitions
-in parallel.
-For example, one might chose a round robin paritioning to generate splits of equal size when reading data items from disk or one
-groups items by hashing a specific key to support parallelizable aggregation on that key per partition.
-
-Describing datasets as RDD's comes with two main benefits.
-First, it is resilient because if the dataset of some partitons of it get lost, it is possible to recompute them from persistent storage
-using lineage graph information.
-Second, it allows Spark to compute RDD's in parallel.
-
-Spark can parallelize the computation of RDD in two ways.
-First, by data-parallelism due to the fact that different partitions of a RDD can
-be computed in independently from each other.
-Second, by task parallelism due to the fact that some parts of the DAG can be computed without dependence of the others.
-Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
-
-% Parallelism in Spark
-% ====================
-%We give examples for both kind of parallelism in the triangle count query
-%(\cref{fig:lineage-triangle}).
-%Lets assume that the CSV file is partitioned in 10 equal parts and each part is read
-%by one out of 10 workers.
-%Then the resulting RDD has 10 partitions.
-%The following filter can be applied to all 10 partitions in parallel.
-%This computation is also task parallel because all three filters can be applied to the
-%input set directly after reading it from disk.
-
-%If we go one step further into the example of the triangle query and look at the first
-%join, we see limitations to Spark's parallelism.
-%Let's assume that we want to use a Hashjoin implementation.
-%In this case, we have to build a hash table of either side of the join.
-%Hence, the computation of the join needs to wait until this hash table has been build.
-%This is clearly not task parallel and it's also not data parallel on the build site
-%because we need the data from all partitions to construct a full hash table.
-%The result is that we see an exchange operator in the DAG of \cref{fig:triangle-lineage}.
-%This operator allows to reorganize the partitions of a RDD.
-%In the case of a hash join, it would reorganize items from all partitions into a hash
-%table and make copies of this hash table available to the tasks that compute the
-%partitions of the join.
-
-%In the last paragraphs, we covered that Spark uses data parallelism arising from the partitioning of the RDD's
-%and task parallelism arising from the lineage-graph representation of the RDD's.
-%Synchronization happens via exchange operators which allow to reorganize the paritioning of the RDD's.
-%In the following, we explain how Spark exploits parallelism in its execution model.
-
-% TODO turn reasoning around? Stages to tasks?
-%Spark uses a scheduler to assign \textit{tasks} to \textit{slots}.
-%\textit{Tasks} are the smallest unit of work in Spark.
-%They are created by dividing the RDD lineage graph into pipelinable \textit{stages}.
-%Normally, a stage consists out of all transformations between two exchange operators.
-%Each stage consists out of as many tasks as it has partitions.
-
-%The stages of the triangle query are shown in \cref{fig:triangle-lineage}.
-%We have four stages.
-%Two to build the hash table for our hash join which start with reading the CSV from disk and end with the exchange operator before
-%the join.
-%The longest stage also reads the CSV from disk, includes the two streaming sites of the hash joins and finally aggregates all
-%results per partition for the count.
-%It ends with an exchange to aggregate the counts of all partitions; this aggregation is the last out of for \textit{stages}.
-%
-%These four stages lead to 31 tasks if we assume that each stage starts with reading the CSV into 10 partitions.
-%This is because the first 3 stages have 10 tasks each and the last stage accumulating all counts after the last task is only as single
-%task of summing up all partitions of its parent.
-
-
-\subsubsection{Broadcast variables} \label{subsubsec:broadcast-variables}
-From the programmer point of view, \textit{broadcast variables} are normal readonly variables.
-They are initialized once by the driver program and should not be changed after initialization.
-Every serializable type can be used for a broadcast variable.
-After intitialization they can be accessed by every task.
-When they are not cached the task aquires the value of the variable from the driver program or other workers, deserializes it and
-adds it to the cache shared by all tasks on the machine.
-Spark guarantees that the each broadcast variable is sent only once to each executor and allows it to be spilled to disk if its not
-possible to keep the whole value in memory.
-Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
-costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources: \texttt{org
-.apache.spark.broadcast.TorrentBroadcast}}.
-% TODO cite https://spark.apache.org/docs/2.2.0/rdd-programming-guide.html
-
-
-% Shuffles in Spark...
-However, although Spark implements most operations in memory, shuffles are an exception which still writes and reads
-the whole intermediary dataset to and from disk.
-Consequently, shuffling remains to be a highly expensive operation which is the bottleneck of many workflows.
-Still, Spark provides the user with a general distributed data processing model with strong fault- and struggler tolerance
-on commodity, shared-nothing clusters.
-
-\subsubsection{Catalyst}
+\subsubsection{Catalyst} \label{subsubsec:catalyst}
 Catalyst~\cite{catalyst} is Spark's query optimizer.
-From a given query, e.g. an SQL query or one constructed using the DataFrame API, it constructs
+From a given query, e.g. an SQL query or one described using the DataFrame API, it constructs
 in multiple stages an executable \textit{physical plan}.
 \begin{figure}
     \includegraphics{figures/catalyst-stages.png}
@@ -241,6 +180,20 @@ We do not need to introduce any new RDD operations or even touch Spark's core fu
 Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one \textit{logical operator}, multiple
 \textit{physical operators} and a \textit{Strategy} to translate the \textit{logical operator} in
 its physical implementation.
+
+\subsubsection{Broadcast variables} \label{subsubsec:broadcast-variables}
+From the programmer point of view, \textit{broadcast variables} are normal readonly variables.
+They are initialized once by the driver program and should not be changed after initialization.
+Every serializable type can be used for a broadcast variable.
+After intitialization they can be accessed by every task.
+When they are not cached the task aquires the value of the variable from the driver program or other workers, deserializes it and
+adds it to the cache shared by all tasks on the machine.
+Spark guarantees that the each broadcast variable is sent only once to each executor and allows it to be spilled to disk if its not
+possible to keep the whole value in memory.
+Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
+costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources: \texttt{org
+.apache.spark.broadcast.TorrentBroadcast}}.
+% TODO cite https://spark.apache.org/docs/2.2.0/rdd-programming-guide.html
 
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
@@ -354,3 +307,53 @@ hence, in constant time.
 Second, the representation is only, roughly, half as big than a simple columnar representation.
 A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only $|V| + 1 + |E|$, note that for most real-world graph |V|
 << |E| holds (see~\cref{subsec:graph-analysis}).
+
+
+
+% Parallelism in Spark
+% ====================
+%We give examples for both kind of parallelism in the triangle count query
+%(\cref{fig:lineage-triangle}).
+%Lets assume that the CSV file is partitioned in 10 equal parts and each part is read
+%by one out of 10 workers.
+%Then the resulting RDD has 10 partitions.
+%The following filter can be applied to all 10 partitions in parallel.
+%This computation is also task parallel because all three filters can be applied to the
+%input set directly after reading it from disk.
+
+%If we go one step further into the example of the triangle query and look at the first
+%join, we see limitations to Spark's parallelism.
+%Let's assume that we want to use a Hashjoin implementation.
+%In this case, we have to build a hash table of either side of the join.
+%Hence, the computation of the join needs to wait until this hash table has been build.
+%This is clearly not task parallel and it's also not data parallel on the build site
+%because we need the data from all partitions to construct a full hash table.
+%The result is that we see an exchange operator in the DAG of \cref{fig:triangle-lineage}.
+%This operator allows to reorganize the partitions of a RDD.
+%In the case of a hash join, it would reorganize items from all partitions into a hash
+%table and make copies of this hash table available to the tasks that compute the
+%partitions of the join.
+
+%In the last paragraphs, we covered that Spark uses data parallelism arising from the partitioning of the RDD's
+%and task parallelism arising from the lineage-graph representation of the RDD's.
+%Synchronization happens via exchange operators which allow to reorganize the paritioning of the RDD's.
+%In the following, we explain how Spark exploits parallelism in its execution model.
+
+% TODO turn reasoning around? Stages to tasks?
+%Spark uses a scheduler to assign \textit{tasks} to \textit{slots}.
+%\textit{Tasks} are the smallest unit of work in Spark.
+%They are created by dividing the RDD lineage graph into pipelinable \textit{stages}.
+%Normally, a stage consists out of all transformations between two exchange operators.
+%Each stage consists out of as many tasks as it has partitions.
+
+%The stages of the triangle query are shown in \cref{fig:triangle-lineage}.
+%We have four stages.
+%Two to build the hash table for our hash join which start with reading the CSV from disk and end with the exchange operator before
+%the join.
+%The longest stage also reads the CSV from disk, includes the two streaming sites of the hash joins and finally aggregates all
+%results per partition for the count.
+%It ends with an exchange to aggregate the counts of all partitions; this aggregation is the last out of for \textit{stages}.
+%
+%These four stages lead to 31 tasks if we assume that each stage starts with reading the CSV into 10 partitions.
+%This is because the first 3 stages have 10 tasks each and the last stage accumulating all counts after the last task is only as single
+%task of summing up all partitions of its parent.
