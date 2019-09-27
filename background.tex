@@ -3,9 +3,9 @@
 TODO introduction
 \subsection{Spark}\label{subsec:spark}
 Spark is the probably most widely used and industry accepted cluster computing model.
-It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{Hadoop} or Haloop~\cite{haloop},
+It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{hadoop} or Haloop~\cite{haloop},
 by allowing to cache results in memory between multiple queries, using so-called resilient
-distributed datasets~\cite{rdd}; often abbreviated to RDD. % TODO sources for hadoop and haloop
+distributed datasets~\cite{rdd}; often abbreviated to RDD.
 
 This section introduces Spark and is organized in four subsections.
 \Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark the RDD's.
@@ -19,7 +19,7 @@ to implement our parallel worst-case optimal join.
 RDD's form the core of Spark.
 However, for this thesis it is not necessary to understand them in great detail.
 In the next paragraph, we give a short introduction into the relevant aspects of RDD's.
-For the interested reader, a more in depth description is given in the original paper~\cite{RDD}.
+For the interested reader, a more in depth description is given in the original paper~\cite{rdd}.
 
 Resilient distributed datasets describe a distributed collection of data items of a single type.
 In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
@@ -60,10 +60,7 @@ In this section, we explain the architecture that allows this flexibility.
 
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/spark-cluster.png}
-    \caption{
-    Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.
-    Source: Apache Spark Documentation~\footnote{https://spark.apache.org/docs/latest/cluster-overview.html}
-    }
+    \caption{Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.Source: Apache Spark Documentation, https://spark.apache.org/docs/latest/cluster-overview.html}
 \end{figure}
 
 In Spark, each physical machine is called a \textit{worker}.
@@ -75,7 +72,7 @@ In total, a Spark cluster can run \textit{\# workers} $\times$ \textit{\# execut
 in parallel.
 
 Spark uses two kind of processes to execute an application: a \textit{driver program} and multiple \textit{executors}.
-When started, the driver program aquires resources from the \texit{cluster manager} to start its executors.
+When started, the driver program aquires resources from the \textit{cluster manager} to start its executors.
 These executors stay alive during the whole Spark application.
 Then, the driver program then continues executing the Spark application.
 When it encounters parallelizable tasks, it schedules them on the available executors.
@@ -94,14 +91,14 @@ In local mode, the driver program and a single executor with as many threads as 
 For our experiments, we run Spark purely in local mode.
 
 \subsubsection{Catalyst} \label{subsubsec:catalyst}
-Catalyst~\cite{catalyst} is Spark's query optimizer.
+Catalyst~\cite{spark-sql} is Spark's query optimizer.
 From a given query, e.g. an SQL query or one described using the DataFrame API, it constructs
 in multiple stages an executable \textit{physical plan}.
 \begin{figure}
     \includegraphics{figures/catalyst-stages.png}
     \caption{
       Input and stages of the Catalyst optimizer.
-      Source: Databricks Blog\footnote{https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html}
+      Source: Databricks Blog, https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html
     }
     \label{fig:catalyst-stages}
 \end{figure}
@@ -157,11 +154,11 @@ the whole count.
 
 After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it compiles Java byte code for
 some of the physical operators.
-This code executes often magnitudes faster than interpreted versions~\cite{catalyst} of the same operator because
+This code executes often magnitudes faster than interpreted versions~\cite{spark-sql} of the same operator because
 it can be specialized towards this particular query, e.g. if a join operates only on integers, code
 generation can prune all code paths dealing with strings.
-% TODO cite paper or website?
-Indeed, the code generation phase is part of another Spark project called \textit{Tungsten}~\cite{tungsten}.
+Indeed, the code generation phase is part of another Spark project called
+\textit{Tungsten}~\cite{tungsten-project,tungsten-code-generation}.
 In this thesis, we do not build any code generated physical operators.
 Hence, we do not treat this topic in depth.
 It is enough to know that all freshly generated Java code is wrapped into a single physical operator.
@@ -170,7 +167,6 @@ Therefore, it integrates seamlessly with interpreted operators.
 Finally, Catalyst arrives at an optimized physical plan which implements the query.
 The execution of this plan is called
 \textit{structured query execution}~\cite{spark-internals-structured-query-execution}.
-% TODO cite https://jaceklaskowski.gitbooks.io/mastering-spark-sql/spark-sql-QueryExecution.html
 It translates the plan into RDD operations implemented by Spark core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
 One should note that \textit{structured query execution} does not actually execute the query: the result is an RDD which is a none
@@ -193,7 +189,6 @@ possible to keep the whole value in memory.
 Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
 costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources: \texttt{org
 .apache.spark.broadcast.TorrentBroadcast}}.
-% TODO cite https://spark.apache.org/docs/2.2.0/rdd-programming-guide.html
 
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
