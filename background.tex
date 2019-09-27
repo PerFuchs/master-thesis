@@ -10,51 +10,51 @@ distributed datasets~\cite{rdd}; often abbreviated to RDD.
 This section introduces Spark and is organized in four subsections.
 \Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark the RDD's.
 In~\cref{subsubsec:spark-architecture} we explain the different components and processes in a Spark cluster.
-The query optimizer of Spark, Catalyst, is the component of Spark we integrate our \textsc{WCOJ} with; it's structure is explained
+The query optimizer of Spark, Catalyst, is the component of Spark we integrate our \textsc{WCOJ} with; its structure is explained
 in~\cref{subsubsec:catalyst}.
 Finally, in~\cref{subsubsec:broadcast-variables} we highlight important details about \textit{Broadcast variables} which are used
 to implement our parallel worst-case optimal join.
 
 \subsubsection{Resilient distributed datasets} \label{subsubsec:resilient-distributed-datasets}
 RDD's form the core of Spark.
-However, for this thesis it is not necessary to understand them in great detail.
-In the next paragraph, we give a short introduction into the relevant aspects of RDD's.
-For the interested reader, a more in depth description is given in the original paper~\cite{rdd}.
+However, for this thesis, it is not necessary to understand them in great detail.
+In the next paragraph, we give a short introduction to the relevant aspects of RDD's.
+For the interested reader, a more in-depth description is given in the original paper~\cite{rdd}.
 
 Resilient distributed datasets describe a distributed collection of data items of a single type.
 In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
-operations to manipulate single data items but coarse grained operation that are applied
+operations to manipulate single data items but coarse-grained operations which are applied
 to all data items, e.g. \textit{map} to apply a function to each data item.
 These operations are called transformations.
-An RDD is built starting from a persistent data source and multiple transformation to
-apply to this datasource.
-One can store the transformations applied to the input data source as in directed acyclic graph, the so called \textit{lineage graph}.
+An RDD is built starting from a persistent data source and multiple transformations to
+apply to this data source.
+One can store the transformations applied to the input data source as a directed acyclic graph, the so-called \textit{lineage graph}.
 This graph fully describes the dataset without materializing it because the transformations are deterministic.
 Hence, the dataset can be computed and recomputed on demand, e.g. when the user asks for the count
 of all items in the set.
-Operations which require that the data in the RDD is actually computed are called \textit{actions}.
+Operations which require that the data in the RDD is computed are called \textit{actions}.
 
 RDD's are distributed by organizing their data items into partitions.
 The partitioning can be chosen by the user or the Spark query optimizer such that it allows to run transformations on all partitions
 in parallel.
-For example, one might chose a round robin paritioning to generate splits of equal size when reading data items from disk or one
+For example, one might choose a round-robin partitioning to generate splits of equal size when reading data items from disk or one
 groups items by hashing a specific key to support parallelizable aggregation on that key per partition.
-The process of repartitioning a RDD is called a \textit{shuffle}.
-It is a expensive operations because it involves writing and reading the whole RDD to disk.
+The process of repartitioning an RDD is called a \textit{shuffle}.
+It is an expensive operation because it involves writing and reading the whole RDD to disk.
 
 Describing datasets as RDD's comes with two main benefits.
-First, it is resilient because if the dataset of some partitons of it get lost, it is possible to recompute them from persistent storage
+First, it is resilient because if the dataset or some partitions of it get lost, it is possible to recompute them from persistent storage
 using lineage graph information.
 Second, it allows Spark to compute RDD's in parallel.
 
 Spark can parallelize the computation of RDD in two ways.
-First, by data-parallelism due to the fact that different partitions of a RDD can
-be computed in independently from each other.
-Second, by task parallelism due to the fact that some parts of the DAG can be computed without dependence of the others.
+First, by data-parallelism, since different partitions of an RDD can
+be computed independently from each other.
+Second, by task parallelism, because some parts of the DAG can be computed without dependence of the others.
 Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
 
 \subsubsection{Spark architecture} \label{subsubsec:spark-architecture}
-Spark allows the user to run his program on a single machine or on hundreds of machines organized in a cluster.
+Spark allows the user to run his program on a single machine or hundreds of machines organized in a cluster.
 In this section, we explain the architecture that allows this flexibility.
 \Cref{fig:spark-cluster} shows a schematic Spark cluster setup.
 
@@ -71,21 +71,21 @@ Each executor runs multiple threads (often one per core on its worker) to execut
 In total, a Spark cluster can run \textit{\# workers} $\times$ \textit{\# executors per worker} $\times$ \textit{\# threads per executor} tasks
 in parallel.
 
-Spark uses two kind of processes to execute an application: a \textit{driver program} and multiple \textit{executors}.
-When started, the driver program aquires resources from the \textit{cluster manager} to start its executors.
+Spark uses two kinds of processes to execute an application: a \textit{driver program} and multiple \textit{executors}.
+When started, the driver program acquires resources from the \textit{cluster manager} to start its executors.
 These executors stay alive during the whole Spark application.
-Then, the driver program then continues executing the Spark application.
+Then, the driver program continues executing the Spark application.
 When it encounters parallelizable tasks, it schedules them on the available executors.
 
-All tasks scheduled on the same executor share a cache for in memory data structures like \textit{Broadcast variables} or persisted RDD
+All tasks scheduled on the same executor share a cache for in-memory data structures like \textit{Broadcast variables} or persisted RDD
 partitions.
 This is important in the context of this thesis because it means that we cache the input graph once per executor;
 which in many Spark deployments is once per worker or physical machine.
 This would not be possible if different tasks in the same JVM would not share the same cache.
 
-Spark allows the user to choose its own cluster manager to manage resources in the cluster.
+Spark allows the user to choose its cluster manager to manage resources in the cluster.
 It comes with good integration for Hadoop YARN~\cite{yarn}, Apache Mesos~\cite{mesos} and Kubernetes~\cite{kubernetes}, as well as,
-an standalone mode where it provides its own cluster manager functionality.
+a standalone mode where it provides its own cluster manager functionality.
 Finally, one can run Spark in \textit{local mode} on a single machine using multiple processor cores for worker threads.
 In local mode, the driver program and a single executor with as many threads as cores to use share a single JVM.
 For our experiments, we run Spark purely in local mode.
@@ -97,8 +97,8 @@ in multiple stages an executable \textit{physical plan}.
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/catalyst-stages.png}
     \caption{
-      Input and stages of the Catalyst optimizer.
-      Source: Databricks Blog, https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html
+    Input and stages of the Catalyst optimizer.
+    Source: Databricks Blog, https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html
     }
     \label{fig:catalyst-stages}
 \end{figure}
@@ -111,7 +111,7 @@ The input of Catalyst is a query in the form of a DataFrame or SQL string.
 From the optimizer builds a \textit{unresolved logical plan}.
 This plan can include unresolved attributes, e.g. attribute names which are not matched to a specific
 data source yet or which have no known type.
-To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describes the
+To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describe the
 available data sources.
 This phase is referred to as \textit{Analysis} and results in a \textit{logical plan}.
 The \textit{logical plan} represents \textit{what} should be done for the query but not exactly \textit{how},
@@ -122,9 +122,9 @@ As we see, the query is represented as an operator tree where the vertices are o
 one operator to another.
 The leaves of the tree are three aliases to the edge relationship
 Two of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
-The result of this join and the leave relationship \textit{T} are input to the second join.
-The tuples produced by this join are filtered to fulfill $A < B < C$.
-Finally, at the root of the tree there is an aggregation to count all results and report the sum.
+The result of this join and the leaf relationship \textit{T} are input to the second join.
+The tuples produced by this join are filtered to fulfil $A < B < C$.
+Finally, at the root of the tree, there is an aggregation to count all results and report the sum.
 
 \begin{figure}
     \centering
@@ -147,13 +147,13 @@ In this case, the optimizer selects the best one according to a \textit{cost mod
 The physical plan for the triangle query is shown in~\cref{fig:triangle-physical-plan}.
 The logical join operators from~\cref{fig:triangle-logical-plan} have been translated to broadcast hash joins and are now preceded by a
 broadcast exchange operator.
-The exchange operator builds a hashtable from its input operator and makes it available as broadcast variable to all executors of
+The exchange operator builds a hashtable from its input operator and makes it available as a broadcast variable to all executors of
 the cluster; we explain broadcast variables in depth in~\cref{subsubsec:broadcast-variables}.
-When an executor is tasked to execute the hash join operator, it aquires the broadcasted hashtable and executes a local hash join
+When an executor is tasked to execute the hash join operator, it acquires the broadcasted hashtable and executes a local hash join
 of its assigned partitions.
-This is a good example of strategy that translates a single logical operator into two physical operators.
-The other change to the logical plan is that the count aggregation has been broken up into an partial aggregation directly after the
-last join, an exchange reorganizing all partial counts into a single partition and a second aggregation over that partiton to caculate
+This is a good example of a strategy that translates a single logical operator into two physical operators.
+The other change to the logical plan is that the count aggregation has been broken up into a partial aggregation directly after the
+last join, an exchange reorganizing all partial counts into a single partition and a second aggregation over that partition to calculate
 the total count.
 
 After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it compiles Java byte code for
@@ -173,7 +173,7 @@ The execution of this plan is called
 \textit{structured query execution}~\cite{spark-internals-structured-query-execution}.
 It translates the plan into RDD operations implemented by Spark core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
-One should note that \textit{structured query execution} does not actually execute the query: the result is an RDD which is a none
+One should note that \textit{structured query execution} does not execute the query: the result is an RDD which is a none
 materialized representation of the operations necessary to generate the result.
 In this thesis, we are not concerned with the internals of RDD's.
 We do not need to introduce any new RDD operations or even touch Spark's core functionality.
@@ -185,10 +185,10 @@ its physical implementation.
 From the programmer point of view, \textit{broadcast variables} are normal readonly variables.
 They are initialized once by the driver program and should not be changed after initialization.
 Every serializable type can be used for a broadcast variable.
-After intitialization they can be accessed by every task.
-When they are not cached the task aquires the value of the variable from the driver program or other workers, deserializes it and
+After initialization, they can be accessed by every task.
+When they are not cached the task acquires the value of the variable from the driver program or other workers, deserializes it and
 adds it to the cache shared by all tasks on the machine.
-Spark guarantees that the each broadcast variable is sent only once to each executor and allows it to be spilled to disk if its not
+Spark guarantees that each broadcast variable is sent only once to each executor and allows it to be spilled to disk if it is not
 possible to keep the whole value in memory.
 Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
 costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources: \texttt{org
