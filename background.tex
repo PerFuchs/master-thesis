@@ -8,10 +8,11 @@ by allowing to cache results in memory between multiple queries, using so-called
 distributed datasets~\cite{rdd}; often abbreviated to RDD.
 
 This section introduces Spark and is organized in four subsections.
-\Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark the RDD's.
-In~\cref{subsubsec:spark-architecture} we explain the different components and processes in a Spark cluster.
-The query optimizer of Spark, Catalyst, is the component of Spark we integrate our \textsc{WCOJ} with; its structure is explained
-in~\cref{subsubsec:catalyst}.
+\Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark: the RDD's.
+In~\cref{subsubsec:spark-architecture}, we explain the different components and processes in a Spark cluster.
+The query optimizer of Spark, Catalyst, is explained in~\cref{subsubsec:catalyst}.
+It is the component we integrate our \textsc{WCOJ} with;
+therefore, it is the module of Spark that is most relevant to this thesis.
 Finally, in~\cref{subsubsec:broadcast-variables} we highlight important details about \textit{Broadcast variables} which are used
 to implement our parallel worst-case optimal join.
 
@@ -25,7 +26,7 @@ Resilient distributed datasets describe a distributed collection of data items o
 In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
 operations to manipulate single data items but coarse-grained operations which are applied
 to all data items, e.g. \textit{map} to apply a function to each data item.
-These operations are called transformations.
+These operations are called \textit{transformations}.
 An RDD is built starting from a persistent data source and multiple transformations to
 apply to this data source.
 One can store the transformations applied to the input data source as a directed acyclic graph, the so-called \textit{lineage graph}.
@@ -56,23 +57,27 @@ Indeed, it is possible to compute all parts of an RDD in parallel which are not 
 \subsubsection{Spark architecture} \label{subsubsec:spark-architecture}
 Spark allows the user to run his program on a single machine or hundreds of machines organized in a cluster.
 In this section, we explain the architecture that allows this flexibility.
-\Cref{fig:spark-cluster} shows a schematic Spark cluster setup.
+\Cref{fig:spark-cluster} shows the schematics of a Spark cluster setup.
 
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/spark-cluster.png}
-    \caption{Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.Source: Apache Spark Documentation, https://spark.apache.org/docs/latest/cluster-overview.html}
+    \caption{
+      Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.
+      Source: Apache Spark Documentation, https://spark.apache.org/docs/latest/cluster-overview.html
+    }
+    \label{fig:spark-cluster}
 \end{figure}
 
 In Spark, each physical machine is called a \textit{worker}.
 On each worker, Spark starts one or multiple Spark processes in their own JVM instance; each of them is called \textit{executor}.
 Nowadays, many Spark deployments use a single executor per worker\footnote{This is the setup Databricks uses; Databricks is the leading
-maintainer of the Spark platform and offers professional deployment to many customers.}
+maintainer of the Spark platform and offers professional deployment to many customers.}.
 Each executor runs multiple threads (often one per core on its worker) to execute multiple tasks in parallel.
 In total, a Spark cluster can run \textit{\# workers} $\times$ \textit{\# executors per worker} $\times$ \textit{\# threads per executor} tasks
 in parallel.
 
 Spark uses two kinds of processes to execute an application: a \textit{driver program} and multiple \textit{executors}.
-When started, the driver program acquires resources from the \textit{cluster manager} to start its executors.
+When started, the driver program acquires resources from the \textit{cluster manager} for its executor processes.
 These executors stay alive during the whole Spark application.
 Then, the driver program continues executing the Spark application.
 When it encounters parallelizable tasks, it schedules them on the available executors.
@@ -83,17 +88,24 @@ This is important in the context of this thesis because it means that we cache t
 which in many Spark deployments is once per worker or physical machine.
 This would not be possible if different tasks in the same JVM would not share the same cache.
 
-Spark allows the user to choose its cluster manager to manage resources in the cluster.
+Spark allows the user to choose a cluster manager to manage resources in the cluster.
 It comes with good integration for Hadoop YARN~\cite{yarn}, Apache Mesos~\cite{mesos} and Kubernetes~\cite{kubernetes}, as well as,
-a standalone mode where it provides its own cluster manager functionality.
-Finally, one can run Spark in \textit{local mode} on a single machine using multiple processor cores for worker threads.
-In local mode, the driver program and a single executor with as many threads as cores to use share a single JVM.
+a standalone mode where Spark provides its own cluster manager functionality.
+Finally, one can run Spark on a single machine in \textit{local mode}.
+In local mode, the driver program and a single executor share a single JVM.
+The executor uses the cores assigned to Spark to run multiple worker threads.
 For our experiments, we run Spark purely in local mode.
 
 \subsubsection{Catalyst} \label{subsubsec:catalyst}
 Catalyst~\cite{spark-sql} is Spark's query optimizer.
-From a given query, e.g. an SQL query or one described using the DataFrame API, it constructs
-in multiple stages an executable \textit{physical plan}.
+It can process queries given as a SQL string or described using the DataFrame API.
+From a given query it constructs an executable \textit{physical plan}.
+The query compilation process is organized in multiple stages.
+Its inputs and stages are shown in~\cref{fig:catalyst-stages}.
+Below we explain these in order.
+We use the triangle given by the datalog rule $COUNT(triangle(A, B, C)) \leftarrow R(A, B), S(B, C), T(A, C), A < B < C $ as
+a running example.
+
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/catalyst-stages.png}
     \caption{
@@ -102,25 +114,21 @@ in multiple stages an executable \textit{physical plan}.
     }
     \label{fig:catalyst-stages}
 \end{figure}
-Its inputs and stages are shown in~\cref{fig:catalyst-stages}.
-Below we explain these in order.
-We use the triangle given by the datalog rule $COUNT(triangle(A, B, C)) \leftarrow R(A, B), S(B, C), T(A, C), A < B < C $ as
-a running example.
 
 The input of Catalyst is a query in the form of a DataFrame or SQL string.
-From the optimizer builds a \textit{unresolved logical plan}.
+From this the optimizer builds a \textit{unresolved logical plan}.
 This plan can include unresolved attributes, e.g. attribute names which are not matched to a specific
 data source yet or which have no known type.
 To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describe the
 available data sources.
 This phase is referred to as \textit{Analysis} and results in a \textit{logical plan}.
-The \textit{logical plan} represents \textit{what} should be done for the query but not exactly \textit{how},
+The logical plan represents \textit{what} should be done for the query but not exactly \textit{how},
 e.g. it might contain a Join operator but not a Sort-merge join.
 
 We show the logical plan for the triangle query in~\cref{fig:triangle-logical-plan}.
-As we see, the query is represented as an operator tree where the vertices are operations and the edge indicate dataflow from
+As we see, the query is represented as tree where the vertices are operators and the edge indicate dataflow from
 one operator to another.
-The leaves of the tree are three aliases to the edge relationship
+The leaves of the tree are three aliases of the edge relationship.
 Two of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
 The result of this join and the leaf relationship \textit{T} are input to the second join.
 The tuples produced by this join are filtered to fulfil $A < B < C$.
@@ -135,30 +143,39 @@ Finally, at the root of the tree, there is an aggregation to count all results a
 
 The \textit{logical optimization phase} applies batches of rewriting rules until a fixpoint is reached.
 A simple example of a logical optimization would be rewriting $2 + 2$ into $4$.
-In our example, this phase pushes the three filters before the root into the two joins and even down to the scans of the input
-relationships.
+In the running example of the triangle query, this phase pushes the filters into the two joins.
+This optimization is called Filter Pushdown.
+It is efficient because it applies filters earlier within the pipeline reducing the number tuples to process by later operators.
 
 From the \textit{optimized logical plan} the optimizer generates one or multiple \textit{physical plans} by
 applying so called \textit{Strategies}.
-They translate a logical operator in one or multiple physical operators.
+They translate a logical operator in one or multiple \textit{physical operators}.
 \textit{Strategies} are also allowed to return multiple physical plans for a single \textit{logical plan}.
 In this case, the optimizer selects the best one according to a \textit{cost model}.
 
 The physical plan for the triangle query is shown in~\cref{fig:triangle-physical-plan}.
-The logical join operators from~\cref{fig:triangle-logical-plan} have been translated to broadcast hash joins and are now preceded by a
-broadcast exchange operator.
-The exchange operator builds a hashtable from its input operator and makes it available as a broadcast variable to all executors of
-the cluster; we explain broadcast variables in depth in~\cref{subsubsec:broadcast-variables}.
+We see multiple examples of translation of a logical operator, which describes what to do, to its physical pendant that also
+describes how to do it: the \textit{TableScan} becomes a \textit{CSVRead} and the \textit{Joins} are implemented as
+\textit{BroadcastHashJoins}.
+
+Furthermore, we see the introduction of exchanges.
+\textit{BroadcastExchanges} precede the \textit{BroadcastHashJoins}.
+They build a hashtable from their input operators and make them available as a broadcast variable to all executors of the cluster;
+we explain broadcast variables in depth in~\cref{subsubsec:broadcast-variables}.
 When an executor is tasked to execute the hash join operator, it acquires the broadcasted hashtable and executes a local hash join
 of its assigned partitions.
-This is a good example of a strategy that translates a single logical operator into two physical operators.
-The other change to the logical plan is that the count aggregation has been broken up into a partial aggregation directly after the
-last join, an exchange reorganizing all partial counts into a single partition and a second aggregation over that partition to calculate
-the total count.
+
+Another exchange operator is introduced for the aggregation.
+It is broken up into a partial aggregation directly after the last join, an exchange reorganizing all partial counts into a single
+partition and a second aggregation over that partition to calculate the total count.
+The last is a good example of Catalyst introducing a shuffle.
+
+To conclude, the translation to a physical plan translates logical operators into concrete implementations of these and adds exchanges
+to organize the data such that it can be processed independently in partitions.
 
 After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it compiles Java byte code for
 some of the physical operators.
-This code executes often magnitudes faster than interpreted versions~\cite{spark-sql} of the same operator because
+This code executes often magnitudes faster than interpreted versions of the same operator~\cite{spark-sql} because
 it can be specialized towards this particular query, e.g. if a join operates only on integers, code
 generation can prune all code paths dealing with strings.
 Indeed, the code generation phase is part of another Spark project called
@@ -171,28 +188,27 @@ Therefore, it integrates seamlessly with interpreted operators.
 Finally, Catalyst arrives at an optimized physical plan which implements the query.
 The execution of this plan is called
 \textit{structured query execution}~\cite{spark-internals-structured-query-execution}.
-It translates the plan into RDD operations implemented by Spark core.
+It translates the plan into RDD operations implemented by Spark's core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
-One should note that \textit{structured query execution} does not execute the query: the result is an RDD which is a none
+One should note that structured query execution does not materialize the query: the result is an RDD which is a none
 materialized representation of the operations necessary to generate the result.
 In this thesis, we are not concerned with the internals of RDD's.
 We do not need to introduce any new RDD operations or even touch Spark's core functionality.
-Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one \textit{logical operator}, multiple
-\textit{physical operators} and a \textit{Strategy} to translate the \textit{logical operator} in
-its physical implementation.
+Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one logical operator, multiple
+physical operators and a Strategy to translate between them.
 
 \subsubsection{Broadcast variables} \label{subsubsec:broadcast-variables}
-From the programmer point of view, \textit{broadcast variables} are normal readonly variables.
+\textit{Broadcast variables} readonly variables which are accessible by all tasks.
 They are initialized once by the driver program and should not be changed after initialization.
-Every serializable type can be used for a broadcast variable.
-After initialization, they can be accessed by every task.
-When they are not cached the task acquires the value of the variable from the driver program or other workers, deserializes it and
-adds it to the cache shared by all tasks on the machine.
-Spark guarantees that each broadcast variable is sent only once to each executor and allows it to be spilled to disk if it is not
+The process of broadcasting them is handled by Spark.
+It is guaranteed that each broadcast variable is sent only once to each executor and allows it to be spilled to disk if it is not
 possible to keep the whole value in memory.
 Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
-costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources: \texttt{org
-.apache.spark.broadcast.TorrentBroadcast}}.
+costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources:
+\texttt{org.apache.spark.broadcast.TorrentBroadcast}}.
+Once sent, they are cached once per executor~(see also~\cref{subsubsec:spark-architecture}) and shared by all tasks on this executor.
+They are cached in deserialized form in memory but can be spilled to disk if they are too big.
+In this thesis, we use broadcast variables to cache the edge relationship of the graph on all workers.
 
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
