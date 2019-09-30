@@ -5,11 +5,15 @@ from collections import defaultdict, OrderedDict
 from diagrams.base import *
 
 
-def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealing, parallelism_levels_5_clique_shares, output_path):
+def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealing, parallelism_levels_5_clique_shares, output_path,
+                           new_3c_data_path=""):
   data = pd.read_csv(dataset_path, sep=",", comment="#")
 
   fix_count(data)
   split_partitioning(data)
+
+  if new_3c_data_path:
+    data = replace_workstealing_3(data, new_3c_data_path)
 
   data["total_time"] = data["End"] - data["Start"]
 
@@ -102,6 +106,8 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
 
   tabulize_data(table, GENERATED_PATH + output_path.replace(".svg", ".tex"))
 
+  return data
+
 
 def tabulize_data(data, output_path):
   data.to_latex(buf=open(output_path, "w"),
@@ -115,7 +121,7 @@ def tabulize_data(data, output_path):
                 escape=True,
                 index=False
                 )
-FIX_DATASET_PATH = DATASET_FOLDER + "final/graphWCOJ-scaling/orkut-5-clique-1.csv"
+FIX_DATASET_PATH = DATASET_FOLDER + "final/graphWCOJ-scaling/orkut-3-clique-rerun.csv"
 
 # fix_shares(FIX_DATASET_PATH, DATASET_FOLDER +
 #            FIX_DATASET_PATH + ".shares-fixed")
@@ -126,6 +132,20 @@ DATASET_ORKUT = DATASET_FOLDER + "final/graphWCOJ-scaling/orkut-scaling.csv"
 DATASET_LIVEJ = DATASET_FOLDER + "final/graphWCOJ-scaling/liveJ-scaling.csv"
 DATASET_TWITTER = DATASET_FOLDER + "final/graphWCOJ-scaling/twitter-scaling.csv"
 
-output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 64, 96], [1, 16, 32, 64, 96], "graphWCOJ-scaling-orkut.svg")
+
+def replace_workstealing_3(data, new_data_path):
+  data = data.query("not (partitioning_base == '" + WORKSTEALING + "' and Query == '3-clique')")
+  data = data.query("not (partitioning_base == 'AllTuples' and Query == '3-clique')")
+
+  new_data = pd.read_csv(new_data_path, sep=",", comment="#")
+
+  fix_count(new_data)
+  split_partitioning(new_data)
+
+  data = data.append(new_data)
+
+  return data
+
+output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-orkut.svg")
 output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-livej.svg")
 output_table_and_graph(DATASET_TWITTER, [1, 2, 4, 8, 16, 32, 48, 64, 96], [1, 2, 4, 8, 16, 32, 48, 64, 96], "graphWCOJ-scaling-twitter.svg")

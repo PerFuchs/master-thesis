@@ -89,6 +89,20 @@ def add_wcoj_time(data):
                                                                                        axis=1)
   return data
 
+
+def add_spark_overhead(data):
+  column_names = data.columns.values
+  scheduled_columns = list(filter(lambda s: s.startswith("Scheduled"), column_names))
+  ends_columns = list(filter(lambda s: s.startswith("AlgoEnd"), column_names))
+
+  def applyFunc(r):
+    first_start = min(list(filter(lambda  v: 0 < v, get_values(r, scheduled_columns))))
+    last_end = max(get_values(r, ends_columns))
+
+    return ((r["End"] - r["Start"]) - (last_end - first_start))
+  data["spark_overhead"] = data.apply(applyFunc, axis=1)
+  return data
+
 def fix_missing_columns(input_file_path, output_file_path, parallelism):
   data = pd.read_csv(input_file_path, sep=",", comment="#")
   existing_columns = data.columns.values
