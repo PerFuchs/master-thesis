@@ -1,0 +1,1374 @@
+perf stat -e LLC-load-misses,LLC-loads,cache-misses,cache-references ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20
+
+ Performance counter stats for './liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+     2,617,561,793      LLC-load-misses:u         #   44.18% of all LL-cache hits
+     5,924,672,608      LLC-loads:u
+     2,671,176,347      cache-misses:u            #   39.181 % of all cache refs
+     6,817,472,086      cache-references:u
+
+     475.052320232 seconds time elapsed
+
+    1608.389414000 seconds user
+      66.478127000 seconds sys
+
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 4.7635 in ave
+rage over 10 repetitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 4.615462499999999 in average(max: 4.954, min: 4.448
+Spark overhead: 0.11699999999999999
+
+taskset -c 0-15 perf stat -e LLC-load-misses,LLC-loads,cache-misses,cache-references ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20
+
+     2,460,669,393      LLC-load-misses:u         #   42.46% of all LL-cache hits
+     5,795,112,236      LLC-loads:u
+     2,472,212,006      cache-misses:u            #   37.429 % of all cache refs
+     6,605,030,370      cache-references:u
+
+     344.441854829 seconds time elapsed
+
+    1201.228019000 seconds user
+      34.816102000 seconds sys
+
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.4026 in average over 10 rep
+etitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 5.268825000000003 in average(max: 5.523, min: 5.098
+Spark overhead: 0.12600000000000033
+
+perf stat -e LLC-load-misses,LLC-loads,cache-misses,cache-references taskset -c 0
+-15 ./liveJ.sh graphWCOJ clique3 16 16 workstealing 201
+Setting parallelism to 16
+Setting partitioning to FirstVariablePartitioningWithWorkstealing
+Setting workstealing batch size to 20
+..........
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.446899999999999 in average
+over 10 repetitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 5.312068749999997 in average(max: 5.737, min: 5.016
+Spark overhead: 0.1200000000000001
+
+Stop?
+
+ Performance counter stats for 'taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+     2,489,478,474      LLC-load-misses:u         #   41.55% of all LL-cache hits
+     5,991,288,685      LLC-loads:u
+     2,514,266,353      cache-misses:u            #   36.633 % of all cache refs
+     6,863,370,382      cache-references:u
+
+     661.611732348 seconds time elapsed
+
+    1175.443926000 seconds user
+      41.097966000 seconds sys
+
+
+perf stat -e L1-dcache-misses,L1-dcache-loads taskset -c 0-15 ./liveJ.sh graphWCO
+J clique3 16 16 workstealing 20
+Setting up Spark
+Leapfrogjoins ARE materialized
+Loading LiveJournal2010 dataset from file:////export/scratch2/per/datasets/soc-LiveJournal1
+Running on 68993773 rows
+Setting join algorithm to GraphWCOJ
+Reading CSR object from disk: //export/scratch2/per/datasets/soc-LiveJournal1.csrObjects
+GraphWCOJ broadcast materialization took: 7.162 seconds
+
+Setting parallelism to 16
+Setting partitioning to FirstVariablePartitioningWithWorkstealing
+Setting workstealing batch size to 20
+..........
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.4128 in average over 10 rep
+etitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 5.281449999999995 in average(max: 5.965, min: 4.969
+Spark overhead: 0.11099999999999977
+
+Stop?
+
+ Performance counter stats for 'taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+    12,047,194,774      L1-dcache-misses:u        #    0.84% of all L1-dcache hits
+ 1,436,519,436,301      L1-dcache-loads:u
+
+     554.828065090 seconds time elapsed
+
+    1178.038554000 seconds user
+      37.277711000 seconds sys
+
+ perf stat -e L1-dcache-misses,L1-dcache-loads ./liveJ.sh graphWCOJ clique3 16 16
+workstealing 20
+Setting up Spark
+Leapfrogjoins ARE materialized
+Loading LiveJournal2010 dataset from file:////export/scratch2/per/datasets/soc-LiveJournal1
+Running on 68993773 rows
+Setting join algorithm to GraphWCOJ
+Reading CSR object from disk: //export/scratch2/per/datasets/soc-LiveJournal1.csrObjects
+GraphWCOJ broadcast materialization took: 7.907 seconds
+
+Setting parallelism to 16
+Setting partitioning to FirstVariablePartitioningWithWorkstealing
+Setting workstealing batch size to 20
+..........
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.023700000000001 in average
+over 10 repetitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 4.8744125 in average(max: 5.276, min: 4.705
+Spark overhead: 0.11699999999999999
+
+Stop?
+
+ Performance counter stats for './liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+    11,785,094,348      L1-dcache-misses:u        #    0.74% of all L1-dcache hits
+ 1,597,511,591,170      L1-dcache-loads:u
+
+     287.143175570 seconds time elapsed
+
+    1599.227990000 seconds user
+      68.898646000 seconds sys
+
+
+perf stat -d -d -d ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20
+Setting up Spark
+Leapfrogjoins ARE materialized
+Loading LiveJournal2010 dataset from file:////export/scratch2/per/datasets/soc-LiveJournal1
+Running on 68993773 rows
+Setting join algorithm to GraphWCOJ
+Reading CSR object from disk: //export/scratch2/per/datasets/soc-LiveJournal1.csrObjects
+GraphWCOJ broadcast materialization took: 7.567 seconds
+
+Setting parallelism to 16
+Setting partitioning to FirstVariablePartitioningWithWorkstealing
+Setting workstealing batch size to 20
+..........
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 4.8473999999999995 in average
+ over 10 repetitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 4.702237499999998 in average(max: 4.992, min: 4.53
+Spark overhead: 0.1280000000000001
+
+Stop?
+
+ Performance counter stats for './liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+      1,847,201.99 msec task-clock:u              #    2.765 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+        14,222,509      page-faults:u             #    0.008 M/sec
+ 4,595,691,735,848      cycles:u                  #    2.488 GHz                      (25.09%)
+ 2,637,905,484,518      stalled-cycles-frontend:u #   57.40% frontend cycles idle     (25.42%)
+ 5,506,224,870,429      instructions:u            #    1.20  insn per cycle
+                                                  #    0.48  stalled cycles per insn  (32.00%)
+ 1,268,179,027,756      branches:u                #  686.541 M/sec                    (31.88%)
+    23,399,923,396      branch-misses:u           #    1.85% of all branches          (31.76%)
+ 1,620,828,037,778      L1-dcache-loads:u         #  877.450 M/sec                    (19.94%)
+    12,051,525,162      L1-dcache-load-misses:u   #    0.74% of all L1-dcache hits    (15.46%)
+     5,788,083,977      LLC-loads:u               #    3.133 M/sec                    (14.05%)
+     2,607,032,797      LLC-load-misses:u         #   45.04% of all LL-cache hits     (19.41%)
+   <not supported>      L1-icache-loads:u
+     1,512,385,993      L1-icache-load-misses:u                                       (25.37%)
+ 1,581,394,741,834      dTLB-loads:u              #  856.103 M/sec                    (18.94%)
+     1,635,202,146      dTLB-load-misses:u        #    0.10% of all dTLB cache hits   (18.65%)
+        81,576,930      iTLB-loads:u              #    0.044 M/sec                    (13.45%)
+       176,225,023      iTLB-load-misses:u        #  216.02% of all iTLB cache hits   (19.17%)
+   <not supported>      L1-dcache-prefetches:u
+     4,200,098,220      L1-dcache-prefetch-misses:u #    2.274 M/sec                    (25.31%)
+
+     667.956116809 seconds time elapsed
+
+    1777.984175000 seconds user
+      73.693260000 seconds sys
+
+
+[perfuchs@diamonds4 experimentRunner]$ perf stat -d -d -d taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 16 16 workstealin
+g 20
+Setting up Spark
+Leapfrogjoins ARE materialized
+Loading LiveJournal2010 dataset from file:////export/scratch2/per/datasets/soc-LiveJournal1
+Running on 68993773 rows
+Setting join algorithm to GraphWCOJ
+Reading CSR object from disk: //export/scratch2/per/datasets/soc-LiveJournal1.csrObjects
+GraphWCOJ broadcast materialization took: 7.98 seconds
+
+Setting parallelism to 16
+Setting partitioning to FirstVariablePartitioningWithWorkstealing
+Setting workstealing batch size to 20
+..........
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.5973 in average over 10 rep
+etitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 5.454156250000002 in average(max: 6.157, min: 4.988
+Spark overhead: 0.13900000000000023
+
+Stop?
+
+ Performance counter stats for 'taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 16 16 workstealing 20':
+
+      1,236,639.04 msec task-clock:u              #    2.627 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+        13,411,899      page-faults:u             #    0.011 M/sec
+ 3,166,107,339,034      cycles:u                  #    2.560 GHz                      (26.66%)
+ 1,595,678,012,397      stalled-cycles-frontend:u #   50.40% frontend cycles idle     (26.65%)
+ 4,848,576,334,018      instructions:u            #    1.53  insn per cycle
+                                                  #    0.33  stalled cycles per insn  (33.31%)
+ 1,037,293,418,720      branches:u                #  838.800 M/sec                    (33.33%)
+    22,319,159,797      branch-misses:u           #    2.15% of all branches          (33.32%)
+ 1,431,164,695,300      L1-dcache-loads:u         # 1157.302 M/sec                    (26.16%)
+    11,579,771,797      L1-dcache-load-misses:u   #    0.81% of all L1-dcache hits    (13.58%)
+     5,796,689,505      LLC-loads:u               #    4.687 M/sec                    (13.35%)
+     2,475,781,936      LLC-load-misses:u         #   42.71% of all LL-cache hits     (20.01%)
+   <not supported>      L1-icache-loads:u
+     1,456,254,951      L1-icache-load-misses:u                                       (26.68%)
+ 1,434,171,849,486      dTLB-loads:u              # 1159.734 M/sec                    (26.63%)
+     1,284,243,737      dTLB-load-misses:u        #    0.09% of all dTLB cache hits   (13.37%)
+       344,751,072      iTLB-loads:u              #    0.279 M/sec                    (13.33%)
+        85,103,427      iTLB-load-misses:u        #   24.69% of all iTLB cache hits   (19.99%)
+   <not supported>      L1-dcache-prefetches:u
+     3,746,468,859      L1-dcache-prefetch-misses:u #    3.030 M/sec                    (26.66%)
+
+     470.660126552 seconds time elapsed
+
+    1198.717855000 seconds user
+      40.312319000 seconds sys
+
+
+ perf stat -d -d -d taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 1 1 allTuples 1
+Setting up Spark
+Leapfrogjoins ARE materialized
+Loading LiveJournal2010 dataset from file:////export/scratch2/per/datasets/soc-LiveJournal1
+Running on 68993773 rows
+Setting join algorithm to GraphWCOJ
+Reading CSR object from disk: //export/scratch2/per/datasets/soc-LiveJournal1.csrObjects
+GraphWCOJ broadcast materialization took: 8.351 seconds
+
+..........
+Using GraphWCOJ, 3-clique with partitioning AllTuples() took 75.5608 in average over 10 repetitions (result size 1275252
+39) using 1 out of 1 workers.
+WCOJ took 75.438 in average(max: 83.836, min: 71.235
+Spark overhead: 0.12300000000000466
+
+Stop?
+
+ Performance counter stats for 'taskset -c 0-15 ./liveJ.sh graphWCOJ clique3 1 1 allTuples 1':
+
+      1,208,550.33 msec task-clock:u              #    0.241 CPUs utilized
+                 0      context-switches:u        #    0.000 K/sec
+                 0      cpu-migrations:u          #    0.000 K/sec
+         9,790,129      page-faults:u             #    0.008 M/sec
+ 3,159,518,347,782      cycles:u                  #    2.614 GHz                      (26.53%)
+ 1,530,894,151,002      stalled-cycles-frontend:u #   48.45% frontend cycles idle     (26.69%)
+ 5,010,465,962,859      instructions:u            #    1.59  insn per cycle
+                                                  #    0.31  stalled cycles per insn  (33.39%)
+ 1,017,072,449,828      branches:u                #  841.564 M/sec                    (33.52%)
+    22,634,128,275      branch-misses:u           #    2.23% of all branches          (33.52%)
+ 1,507,616,811,709      L1-dcache-loads:u         # 1247.459 M/sec                    (26.09%)
+    11,464,592,117      L1-dcache-load-misses:u   #    0.76% of all L1-dcache hits    (13.42%)
+     6,038,078,719      LLC-loads:u               #    4.996 M/sec                    (13.23%)
+     2,385,797,585      LLC-load-misses:u         #   39.51% of all LL-cache hits     (19.95%)
+   <not supported>      L1-icache-loads:u
+     1,626,829,165      L1-icache-load-misses:u                                       (26.68%)
+ 1,477,901,717,825      dTLB-loads:u              # 1222.871 M/sec                    (26.20%)
+     1,237,095,005      dTLB-load-misses:u        #    0.08% of all dTLB cache hits   (14.14%)
+       124,455,259      iTLB-loads:u              #    0.103 M/sec                    (13.33%)
+       123,666,022      iTLB-load-misses:u        #   99.37% of all iTLB cache hits   (19.94%)
+   <not supported>      L1-dcache-prefetches:u
+     3,483,402,863      L1-dcache-prefetch-misses:u #    2.882 M/sec                    (26.58%)
+
+    5005.618919000 seconds time elapsed
+
+    1170.157432000 seconds user
+      44.300232000 seconds sys
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Using GraphWCOJ, 3-clique with partitioning FirstVariablePartitioningWithWorkstealing took 5.451500000000001 in average over 10 repetitions (result size 127525239) using 16 out of 16 workers.
+WCOJ took 5.279043750000005 in average(max: 5.537, min: 5.096
+Spark overhead: 0.16300000000000026
+
+Stop?
+
+ Performance counter stats for 'system wide':
+
+S0-C0           2         995,005.44 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C0           2             37,526      context-switches          #    0.038 K/sec
+S0-C0           2              1,055      cpu-migrations            #    0.001 K/sec
+S0-C0           2            412,094      page-faults               #    0.414 K/sec
+S0-C0           2    284,015,788,902      cycles                    #    0.285 GHz                      (13.35%)
+S0-C0           2    241,735,375,165      stalled-cycles-frontend   #   85.11% frontend cycles idle     (13.34%)
+S0-C0           2    283,395,608,866      instructions              #    1.00  insn per cycle
+S0-C0           2                                                   #    0.85  stalled cycles per insn  (16.68%)
+S0-C0           2     59,690,220,205      branches                  #   59.990 M/sec                    (16.67%)
+S0-C0           2      1,410,479,898      branch-misses             #    2.36% of all branches          (16.67%)
+S0-C0           2     84,545,730,119      L1-dcache-loads           #   84.970 M/sec                    (6.67%)
+S0-C0           2      1,042,473,342      L1-dcache-load-misses     #    1.23% of all L1-dcache hits    (10.00%)
+S0-C0           2        532,388,502      LLC-loads                 #    0.535 M/sec                    (16.67%)
+S0-C0           2        163,728,948      LLC-load-misses           #   30.75% of all LL-cache hits     (6.67%)
+S0-C0           1    <not supported>      L1-icache-loads
+S0-C0           2        368,949,986      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C0           2     84,589,333,395      dTLB-loads                #   85.014 M/sec                    (6.67%)
+S0-C0           2        121,531,946      dTLB-load-misses          #    0.14% of all dTLB cache hits   (13.33%)
+S0-C0           2         12,167,811      iTLB-loads                #    0.012 M/sec                    (13.34%)
+S0-C0           2         26,193,877      iTLB-load-misses          #  215.27% of all iTLB cache hits   (16.67%)
+S0-C0           1    <not supported>      L1-dcache-prefetches
+S0-C0           2        272,627,935      L1-dcache-prefetch-misses #    0.274 M/sec                    (6.66%)
+
+S0-C1           2         995,005.41 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C1           2             28,664      context-switches          #    0.029 K/sec
+S0-C1           2              1,181      cpu-migrations            #    0.001 K/sec
+S0-C1           2            401,631      page-faults               #    0.404 K/sec
+S0-C1           2    262,736,922,457      cycles                    #    0.264 GHz                      (13.35%)
+S0-C1           2    277,805,966,633      stalled-cycles-frontend   #  105.74% frontend cycles idle     (13.34%)
+S0-C1           2    243,036,005,721      instructions              #    0.93  insn per cycle
+S0-C1           2                                                   #    1.14  stalled cycles per insn  (16.68%)
+S0-C1           2     50,014,747,680      branches                  #   50.266 M/sec                    (16.67%)
+S0-C1           2      1,297,100,160      branch-misses             #    2.59% of all branches          (16.67%)
+S0-C1           2     73,864,021,934      L1-dcache-loads           #   74.235 M/sec                    (10.00%)
+S0-C1           2        879,972,455      L1-dcache-load-misses     #    1.19% of all L1-dcache hits    (10.00%)
+S0-C1           2        463,184,522      LLC-loads                 #    0.466 M/sec                    (16.67%)
+S0-C1           2        167,490,627      LLC-load-misses           #   36.16% of all LL-cache hits     (6.67%)
+S0-C1           1    <not supported>      L1-icache-loads
+S0-C1           2        347,701,410      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C1           2     73,687,906,181      dTLB-loads                #   74.058 M/sec                    (13.34%)
+S0-C1           2        105,157,151      dTLB-load-misses          #    0.14% of all dTLB cache hits   (13.33%)
+S0-C1           2         10,248,348      iTLB-loads                #    0.010 M/sec                    (13.34%)
+S0-C1           2         24,244,444      iTLB-load-misses          #  236.57% of all iTLB cache hits   (16.67%)
+S0-C1           1    <not supported>      L1-dcache-prefetches
+S0-C1           2        228,057,402      L1-dcache-prefetch-misses #    0.229 M/sec                    (6.66%)
+S0-C2           2         995,005.37 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C2           2             34,578      context-switches          #    0.035 K/sec
+S0-C2           2              1,112      cpu-migrations            #    0.001 K/sec
+S0-C2           2            568,718      page-faults               #    0.572 K/sec
+S0-C2           2    259,995,606,036      cycles                    #    0.261 GHz                      (13.35%)
+S0-C2           2    337,119,197,437      stalled-cycles-frontend   #  129.66% frontend cycles idle     (13.34%)
+S0-C2           2    232,391,970,698      instructions              #    0.89  insn per cycle
+S0-C2           2                                                   #    1.45  stalled cycles per insn  (16.68%)
+S0-C2           2     47,832,748,322      branches                  #   48.073 M/sec                    (16.68%)
+S0-C2           2      1,226,861,477      branch-misses             #    2.56% of all branches          (16.67%)
+S0-C2           2     70,269,047,301      L1-dcache-loads           #   70.622 M/sec                    (13.34%)
+S0-C2           2        842,555,724      L1-dcache-load-misses     #    1.20% of all L1-dcache hits    (10.00%)
+S0-C2           2        434,354,715      LLC-loads                 #    0.437 M/sec                    (16.67%)
+S0-C2           2        155,522,583      LLC-load-misses           #   35.81% of all LL-cache hits     (6.67%)
+S0-C2           1    <not supported>      L1-icache-loads
+S0-C2           2        330,201,007      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C2           2     70,213,766,013      dTLB-loads                #   70.566 M/sec                    (13.34%)
+S0-C2           2        106,981,766      dTLB-load-misses          #    0.15% of all dTLB cache hits   (13.33%)
+S0-C2           2         10,644,090      iTLB-loads                #    0.011 M/sec                    (13.34%)
+S0-C2           2         25,914,218      iTLB-load-misses          #  243.46% of all iTLB cache hits   (16.67%)
+S0-C2           1    <not supported>      L1-dcache-prefetches
+S0-C2           2        210,519,235      L1-dcache-prefetch-misses #    0.212 M/sec                    (6.66%)
+S0-C3           2         995,005.33 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C3           2             30,681      context-switches          #    0.031 K/sec
+S0-C3           2              1,020      cpu-migrations            #    0.001 K/sec
+S0-C3           2          1,260,611      page-faults               #    0.001 M/sec
+S0-C3           2    405,470,540,309      cycles                    #    0.408 GHz                      (13.35%)
+S0-C3           2    590,791,788,287      stalled-cycles-frontend   #  145.71% frontend cycles idle     (13.34%)
+S0-C3           2    509,058,193,333      instructions              #    1.26  insn per cycle
+S0-C3           2                                                   #    1.16  stalled cycles per insn  (16.67%)
+S0-C3           2    103,456,955,977      branches                  #  103.976 M/sec                    (16.67%)
+S0-C3           2      2,963,930,796      branch-misses             #    2.86% of all branches          (16.67%)
+S0-C3           2    156,179,468,210      L1-dcache-loads           #  156.963 M/sec                    (13.33%)
+S0-C3           2      1,532,492,504      L1-dcache-load-misses     #    0.98% of all L1-dcache hits    (10.00%)
+S0-C3           2        796,051,599      LLC-loads                 #    0.800 M/sec                    (16.67%)
+S0-C3           2        323,917,530      LLC-load-misses           #   40.69% of all LL-cache hits     (6.67%)
+S0-C3           1    <not supported>      L1-icache-loads
+S0-C3           2        484,317,907      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S0-C3           2    155,950,311,759      dTLB-loads                #  156.733 M/sec                    (13.33%)
+S0-C3           2        207,477,430      dTLB-load-misses          #    0.13% of all dTLB cache hits   (13.33%)
+S0-C3           2         15,684,375      iTLB-loads                #    0.016 M/sec                    (13.33%)
+S0-C3           2         26,739,828      iTLB-load-misses          #  170.49% of all iTLB cache hits   (16.67%)
+S0-C3           1    <not supported>      L1-dcache-prefetches
+S0-C3           2        440,252,754      L1-dcache-prefetch-misses #    0.442 M/sec                    (6.66%)
+S0-C4           2         995,005.30 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C4           2             38,822      context-switches          #    0.039 K/sec
+S0-C4           2              1,068      cpu-migrations            #    0.001 K/sec
+S0-C4           2            614,264      page-faults               #    0.617 K/sec
+S0-C4           2    315,966,801,737      cycles                    #    0.318 GHz                      (13.35%)
+S0-C4           2    490,682,037,004      stalled-cycles-frontend   #  155.30% frontend cycles idle     (13.34%)
+S0-C4           2    347,963,328,241      instructions              #    1.10  insn per cycle
+S0-C4           2                                                   #    1.41  stalled cycles per insn  (16.68%)
+S0-C4           2     70,095,687,050      branches                  #   70.448 M/sec                    (16.67%)
+S0-C4           2      1,597,894,519      branch-misses             #    2.28% of all branches          (16.67%)
+S0-C4           2    108,448,720,363      L1-dcache-loads           #  108.993 M/sec                    (13.34%)
+S0-C4           2      1,089,687,746      L1-dcache-load-misses     #    1.00% of all L1-dcache hits    (10.00%)
+S0-C4           2        553,874,629      LLC-loads                 #    0.557 M/sec                    (16.67%)
+S0-C4           2        213,302,738      LLC-load-misses           #   38.51% of all LL-cache hits     (6.67%)
+S0-C4           1    <not supported>      L1-icache-loads
+S0-C4           2        401,691,818      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C4           2    108,313,843,931      dTLB-loads                #  108.858 M/sec                    (13.34%)
+S0-C4           2        141,000,786      dTLB-load-misses          #    0.13% of all dTLB cache hits   (13.33%)
+S0-C4           2         12,160,240      iTLB-loads                #    0.012 M/sec                    (13.34%)
+S0-C4           2         25,780,147      iTLB-load-misses          #  212.00% of all iTLB cache hits   (16.67%)
+S0-C4           1    <not supported>      L1-dcache-prefetches
+S0-C4           2        304,489,077      L1-dcache-prefetch-misses #    0.306 M/sec                    (6.66%)
+S0-C5           2         995,005.27 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C5           2             33,804      context-switches          #    0.034 K/sec
+S0-C5           2              1,024      cpu-migrations            #    0.001 K/sec
+S0-C5           2            407,762      page-faults               #    0.410 K/sec
+S0-C5           2    304,166,540,070      cycles                    #    0.306 GHz                      (13.36%)
+S0-C5           2    317,554,456,579      stalled-cycles-frontend   #  104.40% frontend cycles idle     (13.35%)
+S0-C5           2    243,413,593,271      instructions              #    0.80  insn per cycle
+S0-C5           2                                                   #    1.30  stalled cycles per insn  (16.69%)
+S0-C5           2     50,406,541,327      branches                  #   50.660 M/sec                    (16.69%)
+S0-C5           2      1,290,154,274      branch-misses             #    2.56% of all branches          (16.68%)
+S0-C5           2     72,759,174,911      L1-dcache-loads           #   73.124 M/sec                    (10.01%)
+S0-C5           2        913,524,438      L1-dcache-load-misses     #    1.26% of all L1-dcache hits    (10.01%)
+S0-C5           2        490,388,172      LLC-loads                 #    0.493 M/sec                    (16.68%)
+S0-C5           2        146,702,169      LLC-load-misses           #   29.92% of all LL-cache hits     (6.68%)
+S0-C5           1    <not supported>      L1-icache-loads
+S0-C5           2        381,762,593      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S0-C5           2     72,871,403,616      dTLB-loads                #   73.237 M/sec                    (13.34%)
+S0-C5           2        108,610,476      dTLB-load-misses          #    0.15% of all dTLB cache hits   (13.34%)
+S0-C5           2         11,280,838      iTLB-loads                #    0.011 M/sec                    (13.35%)
+S0-C5           2         25,288,343      iTLB-load-misses          #  224.17% of all iTLB cache hits   (16.69%)
+S0-C5           1    <not supported>      L1-dcache-prefetches
+S0-C5           2        230,391,998      L1-dcache-prefetch-misses #    0.232 M/sec                    (6.67%)
+S0-C8           2         995,005.23 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C8           2             30,547      context-switches          #    0.031 K/sec
+S0-C8           2              1,206      cpu-migrations            #    0.001 K/sec
+S0-C8           2            762,192      page-faults               #    0.766 K/sec
+S0-C8           2    267,028,914,801      cycles                    #    0.268 GHz                      (13.35%)
+S0-C8           2    222,604,918,900      stalled-cycles-frontend   #   83.36% frontend cycles idle     (13.34%)
+S0-C8           2    243,898,024,004      instructions              #    0.91  insn per cycle
+S0-C8           2                                                   #    0.91  stalled cycles per insn  (16.68%)
+S0-C8           2     50,244,710,805      branches                  #   50.497 M/sec                    (16.67%)
+S0-C8           2      1,286,530,684      branch-misses             #    2.56% of all branches          (16.67%)
+S0-C8           2     73,978,907,271      L1-dcache-loads           #   74.350 M/sec                    (10.00%)
+S0-C8           2        993,391,959      L1-dcache-load-misses     #    1.34% of all L1-dcache hits    (10.00%)
+S0-C8           2        530,532,797      LLC-loads                 #    0.533 M/sec                    (16.67%)
+S0-C8           2        218,893,579      LLC-load-misses           #   41.26% of all LL-cache hits     (6.67%)
+S0-C8           1    <not supported>      L1-icache-loads
+S0-C8           2        331,988,452      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C8           2     74,022,518,825      dTLB-loads                #   74.394 M/sec                    (10.00%)
+S0-C8           2        114,376,675      dTLB-load-misses          #    0.15% of all dTLB cache hits   (13.33%)
+S0-C8           2         10,464,359      iTLB-loads                #    0.011 M/sec                    (13.34%)
+S0-C8           2         25,088,883      iTLB-load-misses          #  239.76% of all iTLB cache hits   (16.67%)
+S0-C8           1    <not supported>      L1-dcache-prefetches
+S0-C8           2        227,999,275      L1-dcache-prefetch-misses #    0.229 M/sec                    (13.33%)
+S0-C9           2         995,005.19 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C9           2             32,316      context-switches          #    0.032 K/sec
+S0-C9           2              1,021      cpu-migrations            #    0.001 K/sec
+S0-C9           2            385,189      page-faults               #    0.387 K/sec
+S0-C9           2    265,072,281,365      cycles                    #    0.266 GHz                      (13.35%)
+S0-C9           2    223,695,860,557      stalled-cycles-frontend   #   84.39% frontend cycles idle     (13.34%)
+S0-C9           2    254,812,526,375      instructions              #    0.96  insn per cycle
+S0-C9           2                                                   #    0.88  stalled cycles per insn  (16.68%)
+S0-C9           2     52,403,208,624      branches                  #   52.666 M/sec                    (16.67%)
+S0-C9           2      1,367,367,118      branch-misses             #    2.61% of all branches          (16.67%)
+S0-C9           2     76,934,203,362      L1-dcache-loads           #   77.320 M/sec                    (13.34%)
+S0-C9           2        880,430,410      L1-dcache-load-misses     #    1.14% of all L1-dcache hits    (10.00%)
+S0-C9           2        460,752,129      LLC-loads                 #    0.463 M/sec                    (16.67%)
+S0-C9           2        169,397,154      LLC-load-misses           #   36.77% of all LL-cache hits     (6.67%)
+S0-C9           1    <not supported>      L1-icache-loads
+S0-C9           2        329,662,845      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C9           2     76,934,309,751      dTLB-loads                #   77.321 M/sec                    (13.34%)
+S0-C9           2        104,250,856      dTLB-load-misses          #    0.14% of all dTLB cache hits   (13.34%)
+S0-C9           2         10,370,374      iTLB-loads                #    0.010 M/sec                    (13.34%)
+S0-C9           2         31,525,992      iTLB-load-misses          #  304.00% of all iTLB cache hits   (16.67%)
+S0-C9           1    <not supported>      L1-dcache-prefetches
+S0-C9           2        225,662,484      L1-dcache-prefetch-misses #    0.227 M/sec                    (10.00%)
+S0-C10          2         995,005.21 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C10          2             28,969      context-switches          #    0.029 K/sec
+S0-C10          2                921      cpu-migrations            #    0.001 K/sec
+S0-C10          2            403,343      page-faults               #    0.405 K/sec
+S0-C10          2    269,479,969,698      cycles                    #    0.271 GHz                      (13.35%)
+S0-C10          2    231,915,100,318      stalled-cycles-frontend   #   86.06% frontend cycles idle     (13.35%)
+S0-C10          2    256,146,855,833      instructions              #    0.95  insn per cycle
+S0-C10          2                                                   #    0.91  stalled cycles per insn  (16.68%)
+S0-C10          2     52,934,395,691      branches                  #   53.200 M/sec                    (16.67%)
+S0-C10          2      1,345,934,587      branch-misses             #    2.54% of all branches          (16.67%)
+S0-C10          2     77,508,924,071      L1-dcache-loads           #   77.898 M/sec                    (10.01%)
+S0-C10          2        897,969,673      L1-dcache-load-misses     #    1.16% of all L1-dcache hits    (10.00%)
+S0-C10          2        484,905,714      LLC-loads                 #    0.487 M/sec                    (16.67%)
+S0-C10          2        163,553,205      LLC-load-misses           #   33.73% of all LL-cache hits     (6.67%)
+S0-C10          1    <not supported>      L1-icache-loads
+S0-C10          2        310,461,922      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S0-C10          2     77,441,904,934      dTLB-loads                #   77.831 M/sec                    (13.34%)
+S0-C10          2        104,966,258      dTLB-load-misses          #    0.14% of all dTLB cache hits   (13.34%)
+S0-C10          2         11,055,196      iTLB-loads                #    0.011 M/sec                    (13.34%)
+S0-C10          2         23,854,033      iTLB-load-misses          #  215.77% of all iTLB cache hits   (16.67%)
+S0-C10          1    <not supported>      L1-dcache-prefetches
+S0-C10          2        235,388,376      L1-dcache-prefetch-misses #    0.237 M/sec                    (6.66%)
+S0-C11          2         995,005.15 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C11          2             27,262      context-switches          #    0.027 K/sec
+S0-C11          2              1,025      cpu-migrations            #    0.001 K/sec
+S0-C11          2            434,250      page-faults               #    0.436 K/sec
+S0-C11          2    312,990,781,709      cycles                    #    0.315 GHz                      (13.36%)
+S0-C11          2    310,143,032,183      stalled-cycles-frontend   #   99.09% frontend cycles idle     (13.36%)
+S0-C11          2    253,063,478,040      instructions              #    0.81  insn per cycle
+S0-C11          2                                                   #    1.23  stalled cycles per insn  (16.70%)
+S0-C11          2     52,567,710,444      branches                  #   52.832 M/sec                    (16.68%)
+S0-C11          2      1,342,098,705      branch-misses             #    2.55% of all branches          (13.36%)
+S0-C11          2     75,837,695,081      L1-dcache-loads           #   76.218 M/sec                    (10.02%)
+S0-C11          2        941,129,354      L1-dcache-load-misses     #    1.24% of all L1-dcache hits    (6.68%)
+S0-C11          2        503,508,889      LLC-loads                 #    0.506 M/sec                    (16.68%)
+S0-C11          2        149,690,536      LLC-load-misses           #   29.73% of all LL-cache hits     (10.01%)
+S0-C11          1    <not supported>      L1-icache-loads
+S0-C11          2        374,425,084      L1-icache-load-misses     #    0.00% of all L1-icache hits    (16.68%)
+S0-C11          2     75,847,026,071      dTLB-loads                #   76.228 M/sec                    (10.02%)
+S0-C11          2        106,393,769      dTLB-load-misses          #    0.14% of all dTLB cache hits   (13.35%)
+S0-C11          2         11,210,805      iTLB-loads                #    0.011 M/sec                    (16.68%)
+S0-C11          2         25,789,918      iTLB-load-misses          #  230.05% of all iTLB cache hits   (13.35%)
+S0-C11          1    <not supported>      L1-dcache-prefetches
+S0-C11          2        230,231,749      L1-dcache-prefetch-misses #    0.231 M/sec                    (13.34%)
+S0-C12          2         995,005.10 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C12          2             27,740      context-switches          #    0.028 K/sec
+S0-C12          2              1,030      cpu-migrations            #    0.001 K/sec
+S0-C12          2            686,012      page-faults               #    0.689 K/sec
+S0-C12          2    313,395,772,694      cycles                    #    0.315 GHz                      (13.36%)
+S0-C12          2    299,480,598,612      stalled-cycles-frontend   #   95.56% frontend cycles idle     (13.36%)
+S0-C12          2    257,032,682,150      instructions              #    0.82  insn per cycle
+S0-C12          2                                                   #    1.17  stalled cycles per insn  (16.70%)
+S0-C12          2     52,950,935,731      branches                  #   53.217 M/sec                    (16.68%)
+S0-C12          2      1,357,387,017      branch-misses             #    2.56% of all branches          (13.36%)
+S0-C12          2     77,597,318,240      L1-dcache-loads           #   77.987 M/sec                    (13.34%)
+S0-C12          2        971,237,548      L1-dcache-load-misses     #    1.25% of all L1-dcache hits    (6.68%)
+S0-C12          2        528,775,554      LLC-loads                 #    0.531 M/sec                    (16.68%)
+S0-C12          2        166,376,455      LLC-load-misses           #   31.46% of all LL-cache hits     (10.02%)
+S0-C12          1    <not supported>      L1-icache-loads
+S0-C12          2        374,146,077      L1-icache-load-misses     #    0.00% of all L1-icache hits    (16.69%)
+S0-C12          2     77,709,222,645      dTLB-loads                #   78.099 M/sec                    (13.35%)
+S0-C12          2        113,853,697      dTLB-load-misses          #    0.15% of all dTLB cache hits   (13.35%)
+S0-C12          2         10,805,280      iTLB-loads                #    0.011 M/sec                    (16.69%)
+S0-C12          2         28,733,451      iTLB-load-misses          #  265.92% of all iTLB cache hits   (13.36%)
+S0-C12          1    <not supported>      L1-dcache-prefetches
+S0-C12          2        239,170,180      L1-dcache-prefetch-misses #    0.240 M/sec                    (10.02%)
+S0-C13          2         995,005.04 msec cpu-clock                 #    2.000 CPUs utilized
+S0-C13          2             28,546      context-switches          #    0.029 K/sec
+S0-C13          2              1,009      cpu-migrations            #    0.001 K/sec
+S0-C13          2          3,419,477      page-faults               #    0.003 M/sec
+S0-C13          2    556,073,973,342      cycles                    #    0.559 GHz                      (13.34%)
+S0-C13          2    293,640,243,728      stalled-cycles-frontend   #   52.81% frontend cycles idle     (13.34%)
+S0-C13          2    850,149,286,352      instructions              #    1.53  insn per cycle
+S0-C13          2                                                   #    0.35  stalled cycles per insn  (16.67%)
+S0-C13          2    212,015,928,301      branches                  #  213.080 M/sec                    (16.67%)
+S0-C13          2      2,169,710,354      branch-misses             #    1.02% of all branches          (6.67%)
+S0-C13          2    223,326,463,447      L1-dcache-loads           #  224.448 M/sec                    (6.67%)
+S0-C13          2      2,273,649,338      L1-dcache-load-misses     #    1.02% of all L1-dcache hits    (10.00%)
+S0-C13          2      1,061,217,781      LLC-loads                 #    1.067 M/sec                    (13.33%)
+S0-C13          2        232,057,601      LLC-load-misses           #   21.87% of all LL-cache hits     (10.00%)
+S0-C13          1    <not supported>      L1-icache-loads
+S0-C13          2        603,875,409      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S0-C13          2    223,375,957,959      dTLB-loads                #  224.497 M/sec                    (16.67%)
+S0-C13          2        378,498,566      dTLB-load-misses          #    0.17% of all dTLB cache hits   (10.01%)
+S0-C13          2         29,041,577      iTLB-loads                #    0.029 M/sec                    (13.33%)
+S0-C13          2         40,882,979      iTLB-load-misses          #  140.77% of all iTLB cache hits   (16.67%)
+S0-C13          1    <not supported>      L1-dcache-prefetches
+S0-C13          2        525,071,506      L1-dcache-prefetch-misses #    0.528 M/sec                    (6.66%)
+S1-C0           2         995,004.99 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C0           2             17,462      context-switches          #    0.018 K/sec
+S1-C0           2                449      cpu-migrations            #    0.000 K/sec
+S1-C0           2            439,431      page-faults               #    0.442 K/sec
+S1-C0           2    250,650,944,049      cycles                    #    0.252 GHz                      (13.34%)
+S1-C0           2    188,565,896,163      stalled-cycles-frontend   #   75.23% frontend cycles idle     (13.34%)
+S1-C0           2    245,253,767,679      instructions              #    0.98  insn per cycle
+S1-C0           2                                                   #    0.77  stalled cycles per insn  (16.68%)
+S1-C0           2     50,603,194,751      branches                  #   50.857 M/sec                    (16.67%)
+S1-C0           2      1,270,784,974      branch-misses             #    2.51% of all branches          (6.67%)
+S1-C0           2     74,266,038,593      L1-dcache-loads           #   74.639 M/sec                    (10.00%)
+S1-C0           2        952,078,302      L1-dcache-load-misses     #    1.28% of all L1-dcache hits    (10.00%)
+S1-C0           2        505,812,548      LLC-loads                 #    0.508 M/sec                    (13.34%)
+S1-C0           2        191,679,883      LLC-load-misses           #   37.90% of all LL-cache hits     (10.00%)
+S1-C0           1    <not supported>      L1-icache-loads
+S1-C0           2        328,971,342      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C0           2     73,999,152,726      dTLB-loads                #   74.371 M/sec                    (16.67%)
+S1-C0           2        103,174,787      dTLB-load-misses          #    0.14% of all dTLB cache hits   (6.67%)
+S1-C0           2         11,727,639      iTLB-loads                #    0.012 M/sec                    (13.34%)
+S1-C0           2         24,337,934      iTLB-load-misses          #  207.53% of all iTLB cache hits   (16.67%)
+S1-C0           1    <not supported>      L1-dcache-prefetches
+S1-C0           2        231,502,146      L1-dcache-prefetch-misses #    0.233 M/sec                    (10.00%)
+S1-C1           2         995,004.97 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C1           2             12,904      context-switches          #    0.013 K/sec
+S1-C1           2                406      cpu-migrations            #    0.000 K/sec
+S1-C1           2            776,161      page-faults               #    0.780 K/sec
+S1-C1           2    283,560,249,918      cycles                    #    0.285 GHz                      (13.34%)
+S1-C1           2    201,998,112,752      stalled-cycles-frontend   #   71.24% frontend cycles idle     (13.34%)
+S1-C1           2    313,095,517,716      instructions              #    1.10  insn per cycle
+S1-C1           2                                                   #    0.65  stalled cycles per insn  (16.67%)
+S1-C1           2     62,394,270,460      branches                  #   62.707 M/sec                    (16.67%)
+S1-C1           2      1,379,853,928      branch-misses             #    2.21% of all branches          (16.67%)
+S1-C1           2     88,261,330,547      L1-dcache-loads           #   88.704 M/sec                    (10.00%)
+S1-C1           2      1,127,187,104      L1-dcache-load-misses     #    1.28% of all L1-dcache hits    (10.00%)
+S1-C1           2        487,327,804      LLC-loads                 #    0.490 M/sec                    (13.34%)
+S1-C1           2        164,824,423      LLC-load-misses           #   33.82% of all LL-cache hits     (6.67%)
+S1-C1           1    <not supported>      L1-icache-loads
+S1-C1           2        382,369,373      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C1           2     87,909,269,108      dTLB-loads                #   88.351 M/sec                    (16.67%)
+S1-C1           2        134,403,036      dTLB-load-misses          #    0.15% of all dTLB cache hits   (10.00%)
+S1-C1           2         13,278,494      iTLB-loads                #    0.013 M/sec                    (13.34%)
+S1-C1           2         28,299,630      iTLB-load-misses          #  213.12% of all iTLB cache hits   (16.67%)
+S1-C1           1    <not supported>      L1-dcache-prefetches
+S1-C1           2        300,613,372      L1-dcache-prefetch-misses #    0.302 M/sec                    (6.67%)
+S1-C2           2         995,004.99 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C2           2             12,375      context-switches          #    0.012 K/sec
+S1-C2           2                360      cpu-migrations            #    0.000 K/sec
+S1-C2           2            360,084      page-faults               #    0.362 K/sec
+S1-C2           2    174,067,956,386      cycles                    #    0.175 GHz                      (10.10%)
+S1-C2           2    307,213,750,593      stalled-cycles-frontend   #  176.49% frontend cycles idle     (13.44%)
+S1-C2           2     22,216,913,567      instructions              #    0.13  insn per cycle
+S1-C2           2                                                   #   13.83  stalled cycles per insn  (16.78%)
+S1-C2           2      4,944,438,658      branches                  #    4.969 M/sec                    (13.45%)
+S1-C2           2        252,282,531      branch-misses             #    5.10% of all branches          (10.05%)
+S1-C2           2      9,119,201,390      L1-dcache-loads           #    9.165 M/sec                    (10.06%)
+S1-C2           2        521,315,851      L1-dcache-load-misses     #    5.72% of all L1-dcache hits    (13.38%)
+S1-C2           2        207,688,850      LLC-loads                 #    0.209 M/sec                    (13.42%)
+S1-C2           2         21,686,792      LLC-load-misses           #   10.44% of all LL-cache hits     (13.37%)
+S1-C2           1    <not supported>      L1-icache-loads
+S1-C2           2        338,475,858      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.39%)
+S1-C2           2      8,220,081,622      dTLB-loads                #    8.261 M/sec                    (10.08%)
+S1-C2           2         24,169,965      dTLB-load-misses          #    0.29% of all dTLB cache hits   (13.39%)
+S1-C2           2          7,163,867      iTLB-loads                #    0.007 M/sec                    (10.08%)
+S1-C2           2         18,311,227      iTLB-load-misses          #  255.61% of all iTLB cache hits   (13.47%)
+S1-C2           1    <not supported>      L1-dcache-prefetches
+S1-C2           2         63,111,522      L1-dcache-prefetch-misses #    0.063 M/sec                    (6.74%)
+S1-C3           2         995,004.93 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C3           2             11,094      context-switches          #    0.011 K/sec
+S1-C3           2                387      cpu-migrations            #    0.000 K/sec
+S1-C3           2            286,919      page-faults               #    0.288 K/sec
+S1-C3           2    118,243,766,173      cycles                    #    0.119 GHz                      (6.68%)
+S1-C3           2    258,436,820,001      stalled-cycles-frontend   #  218.56% frontend cycles idle     (13.34%)
+S1-C3           2     10,454,433,233      instructions              #    0.09  insn per cycle
+S1-C3           2                                                   #   24.72  stalled cycles per insn  (16.67%)
+S1-C3           2      2,437,482,904      branches                  #    2.450 M/sec                    (10.01%)
+S1-C3           2        106,589,060      branch-misses             #    4.37% of all branches          (10.01%)
+S1-C3           2      2,774,504,572      L1-dcache-loads           #    2.788 M/sec                    (13.34%)
+S1-C3           2        239,502,274      L1-dcache-load-misses     #    8.63% of all L1-dcache hits    (6.67%)
+S1-C3           2        182,961,728      LLC-loads                 #    0.184 M/sec                    (13.34%)
+S1-C3           2         15,231,025      LLC-load-misses           #    8.32% of all LL-cache hits     (13.34%)
+S1-C3           1    <not supported>      L1-icache-loads
+S1-C3           2        303,536,278      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C3           2      2,927,445,255      dTLB-loads                #    2.942 M/sec                    (10.00%)
+S1-C3           2          8,777,848      dTLB-load-misses          #    0.30% of all dTLB cache hits   (13.34%)
+S1-C3           2          2,816,348      iTLB-loads                #    0.003 M/sec                    (10.00%)
+S1-C3           2         15,749,436      iTLB-load-misses          #  559.21% of all iTLB cache hits   (13.34%)
+S1-C3           1    <not supported>      L1-dcache-prefetches
+S1-C3           2         21,092,177      L1-dcache-prefetch-misses #    0.021 M/sec                    (6.67%)
+S1-C4           2         995,004.88 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C4           2                548      context-switches          #    0.001 K/sec
+S1-C4           2                  0      cpu-migrations            #    0.000 K/sec
+S1-C4           2                  0      page-faults               #    0.000 K/sec
+S1-C4           2    153,213,309,348      cycles                    #    0.154 GHz                      (10.04%)
+S1-C4           2    154,125,976,577      stalled-cycles-frontend   #  100.60% frontend cycles idle     (13.38%)
+S1-C4           2     13,615,109,896      instructions              #    0.09  insn per cycle
+S1-C4           2                                                   #   11.32  stalled cycles per insn  (16.70%)
+S1-C4           2      2,928,793,403      branches                  #    2.943 M/sec                    (13.39%)
+S1-C4           2         78,589,198      branch-misses             #    2.68% of all branches          (10.03%)
+S1-C4           2      2,980,565,558      L1-dcache-loads           #    2.996 M/sec                    (10.03%)
+S1-C4           2        227,820,718      L1-dcache-load-misses     #    7.64% of all L1-dcache hits    (13.34%)
+S1-C4           2        166,283,676      LLC-loads                 #    0.167 M/sec                    (13.38%)
+S1-C4           2          6,205,406      LLC-load-misses           #    3.73% of all LL-cache hits     (13.35%)
+S1-C4           1    <not supported>      L1-icache-loads
+S1-C4           2        278,555,580      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.36%)
+S1-C4           2      2,993,009,438      dTLB-loads                #    3.008 M/sec                    (10.05%)
+S1-C4           2          8,012,205      dTLB-load-misses          #    0.27% of all dTLB cache hits   (13.37%)
+S1-C4           2          3,129,621      iTLB-loads                #    0.003 M/sec                    (10.04%)
+S1-C4           2         16,425,716      iTLB-load-misses          #  524.85% of all iTLB cache hits   (13.39%)
+S1-C4           1    <not supported>      L1-dcache-prefetches
+S1-C4           2         23,737,609      L1-dcache-prefetch-misses #    0.024 M/sec                    (6.71%)
+S1-C5           2         995,004.81 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C5           2                854      context-switches          #    0.001 K/sec
+S1-C5           2                  0      cpu-migrations            #    0.000 K/sec
+S1-C5           2                  0      page-faults               #    0.000 K/sec
+S1-C5           2    110,092,750,011      cycles                    #    0.111 GHz                      (13.34%)
+S1-C5           2    134,844,714,016      stalled-cycles-frontend   #  122.48% frontend cycles idle     (13.34%)
+S1-C5           2      9,833,463,816      instructions              #    0.09  insn per cycle
+S1-C5           2                                                   #   13.71  stalled cycles per insn  (16.68%)
+S1-C5           2      2,146,042,231      branches                  #    2.157 M/sec                    (16.68%)
+S1-C5           2         77,692,133      branch-misses             #    3.62% of all branches          (10.01%)
+S1-C5           2      2,222,995,670      L1-dcache-loads           #    2.234 M/sec                    (6.67%)
+S1-C5           2        191,960,891      L1-dcache-load-misses     #    8.64% of all L1-dcache hits    (6.67%)
+S1-C5           2        143,084,227      LLC-loads                 #    0.144 M/sec                    (16.67%)
+S1-C5           2         13,558,071      LLC-load-misses           #    9.48% of all LL-cache hits     (6.67%)
+S1-C5           1    <not supported>      L1-icache-loads
+S1-C5           2        231,992,791      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C5           2      2,183,441,634      dTLB-loads                #    2.194 M/sec                    (6.67%)
+S1-C5           2         15,376,338      dTLB-load-misses          #    0.70% of all dTLB cache hits   (10.00%)
+S1-C5           2          1,622,037      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S1-C5           2         14,275,520      iTLB-load-misses          #  880.10% of all iTLB cache hits   (16.67%)
+S1-C5           1    <not supported>      L1-dcache-prefetches
+S1-C5           2         15,568,658      L1-dcache-prefetch-misses #    0.016 M/sec                    (13.33%)
+S1-C8           2         995,004.75 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C8           2             10,185      context-switches          #    0.010 K/sec
+S1-C8           2                  0      cpu-migrations            #    0.000 K/sec
+S1-C8           2                  0      page-faults               #    0.000 K/sec
+S1-C8           2    105,659,049,435      cycles                    #    0.106 GHz                      (13.34%)
+S1-C8           2    124,985,916,679      stalled-cycles-frontend   #  118.29% frontend cycles idle     (13.34%)
+S1-C8           2      9,687,169,980      instructions              #    0.09  insn per cycle
+S1-C8           2                                                   #   12.90  stalled cycles per insn  (16.67%)
+S1-C8           2      2,120,271,814      branches                  #    2.131 M/sec                    (16.67%)
+S1-C8           2        104,699,720      branch-misses             #    4.94% of all branches          (6.67%)
+S1-C8           2      2,503,778,842      L1-dcache-loads           #    2.516 M/sec                    (6.67%)
+S1-C8           2        214,169,258      L1-dcache-load-misses     #    8.55% of all L1-dcache hits    (6.67%)
+S1-C8           2        159,934,587      LLC-loads                 #    0.161 M/sec                    (16.67%)
+S1-C8           2         19,136,507      LLC-load-misses           #   11.97% of all LL-cache hits     (6.67%)
+S1-C8           1    <not supported>      L1-icache-loads
+S1-C8           2        251,038,357      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S1-C8           2      2,219,375,182      dTLB-loads                #    2.231 M/sec                    (16.67%)
+S1-C8           2         15,370,957      dTLB-load-misses          #    0.69% of all dTLB cache hits   (10.00%)
+S1-C8           2          1,905,512      iTLB-loads                #    0.002 M/sec                    (13.33%)
+S1-C8           2         15,052,396      iTLB-load-misses          #  789.94% of all iTLB cache hits   (16.67%)
+S1-C8           1    <not supported>      L1-dcache-prefetches
+S1-C8           2         21,698,627      L1-dcache-prefetch-misses #    0.022 M/sec                    (6.67%)
+S1-C9           2         995,004.73 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C9           2                574      context-switches          #    0.001 K/sec
+S1-C9           2                  0      cpu-migrations            #    0.000 K/sec
+S1-C9           2                  0      page-faults               #    0.000 K/sec
+S1-C9           2    137,856,243,655      cycles                    #    0.139 GHz                      (13.36%)
+S1-C9           2    149,532,516,503      stalled-cycles-frontend   #  108.47% frontend cycles idle     (13.36%)
+S1-C9           2     12,298,163,373      instructions              #    0.09  insn per cycle
+S1-C9           2                                                   #   12.16  stalled cycles per insn  (16.69%)
+S1-C9           2      2,627,208,004      branches                  #    2.640 M/sec                    (16.70%)
+S1-C9           2         74,159,316      branch-misses             #    2.82% of all branches          (16.69%)
+S1-C9           2      2,644,124,352      L1-dcache-loads           #    2.657 M/sec                    (6.68%)
+S1-C9           2        208,982,411      L1-dcache-load-misses     #    7.90% of all L1-dcache hits    (6.68%)
+S1-C9           2        151,467,947      LLC-loads                 #    0.152 M/sec                    (16.69%)
+S1-C9           2          8,713,656      LLC-load-misses           #    5.75% of all LL-cache hits     (6.69%)
+S1-C9           1    <not supported>      L1-icache-loads
+S1-C9           2        286,162,882      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C9           2      2,692,362,118      dTLB-loads                #    2.706 M/sec                    (6.69%)
+S1-C9           2          9,694,182      dTLB-load-misses          #    0.36% of all dTLB cache hits   (10.01%)
+S1-C9           2          2,356,095      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S1-C9           2         16,516,446      iTLB-load-misses          #  701.01% of all iTLB cache hits   (16.69%)
+S1-C9           1    <not supported>      L1-dcache-prefetches
+S1-C9           2         23,615,173      L1-dcache-prefetch-misses #    0.024 M/sec                    (6.68%)
+S1-C10          2         995,004.74 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C10          2                500      context-switches          #    0.001 K/sec
+S1-C10          2                  0      cpu-migrations            #    0.000 K/sec
+S1-C10          2                  0      page-faults               #    0.000 K/sec
+S1-C10          2    104,747,065,749      cycles                    #    0.105 GHz                      (13.34%)
+S1-C10          2    121,794,591,433      stalled-cycles-frontend   #  116.27% frontend cycles idle     (13.34%)
+S1-C10          2      9,210,709,704      instructions              #    0.09  insn per cycle
+S1-C10          2                                                   #   13.22  stalled cycles per insn  (16.67%)
+S1-C10          2      2,013,836,081      branches                  #    2.024 M/sec                    (16.67%)
+S1-C10          2         94,868,643      branch-misses             #    4.71% of all branches          (16.67%)
+S1-C10          2      2,286,295,129      L1-dcache-loads           #    2.298 M/sec                    (6.67%)
+S1-C10          2        201,655,397      L1-dcache-load-misses     #    8.82% of all L1-dcache hits    (6.67%)
+S1-C10          2        147,723,634      LLC-loads                 #    0.148 M/sec                    (16.67%)
+S1-C10          2         24,554,606      LLC-load-misses           #   16.62% of all LL-cache hits     (6.67%)
+S1-C10          1    <not supported>      L1-icache-loads
+S1-C10          2        270,562,209      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S1-C10          2      2,232,025,975      dTLB-loads                #    2.243 M/sec                    (10.00%)
+S1-C10          2         14,177,398      dTLB-load-misses          #    0.64% of all dTLB cache hits   (10.00%)
+S1-C10          2          1,552,268      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S1-C10          2         13,952,544      iTLB-load-misses          #  898.85% of all iTLB cache hits   (16.67%)
+S1-C10          1    <not supported>      L1-dcache-prefetches
+S1-C10          2         15,057,658      L1-dcache-prefetch-misses #    0.015 M/sec                    (13.33%)
+S1-C11          2         995,004.68 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C11          2                500      context-switches          #    0.001 K/sec
+S1-C11          2                  0      cpu-migrations            #    0.000 K/sec
+S1-C11          2                  0      page-faults               #    0.000 K/sec
+S1-C11          2    109,776,698,172      cycles                    #    0.110 GHz                      (13.34%)
+S1-C11          2    131,619,534,765      stalled-cycles-frontend   #  119.90% frontend cycles idle     (13.34%)
+S1-C11          2      9,561,359,834      instructions              #    0.09  insn per cycle
+S1-C11          2                                                   #   13.77  stalled cycles per insn  (16.68%)
+S1-C11          2      2,063,282,852      branches                  #    2.074 M/sec                    (16.68%)
+S1-C11          2         81,911,081      branch-misses             #    3.97% of all branches          (16.67%)
+S1-C11          2      2,190,183,519      L1-dcache-loads           #    2.201 M/sec                    (13.34%)
+S1-C11          2        194,864,432      L1-dcache-load-misses     #    8.90% of all L1-dcache hits    (10.00%)
+S1-C11          2        143,982,436      LLC-loads                 #    0.145 M/sec                    (16.67%)
+S1-C11          2         19,044,783      LLC-load-misses           #   13.23% of all LL-cache hits     (6.67%)
+S1-C11          1    <not supported>      L1-icache-loads
+S1-C11          2        260,861,817      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S1-C11          2      2,171,674,833      dTLB-loads                #    2.183 M/sec                    (10.00%)
+S1-C11          2         14,718,179      dTLB-load-misses          #    0.68% of all dTLB cache hits   (10.00%)
+S1-C11          2          1,486,544      iTLB-loads                #    0.001 M/sec                    (13.34%)
+S1-C11          2         13,684,496      iTLB-load-misses          #  920.56% of all iTLB cache hits   (16.67%)
+S1-C11          1    <not supported>      L1-dcache-prefetches
+S1-C11          2         15,906,334      L1-dcache-prefetch-misses #    0.016 M/sec                    (13.34%)
+S1-C12          2         995,004.63 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C12          2                500      context-switches          #    0.001 K/sec
+S1-C12          2                  0      cpu-migrations            #    0.000 K/sec
+S1-C12          2                  0      page-faults               #    0.000 K/sec
+S1-C12          2    101,502,861,480      cycles                    #    0.102 GHz                      (13.34%)
+S1-C12          2    115,390,264,228      stalled-cycles-frontend   #  113.68% frontend cycles idle     (13.34%)
+S1-C12          2      9,311,534,290      instructions              #    0.09  insn per cycle
+S1-C12          2                                                   #   12.39  stalled cycles per insn  (16.67%)
+S1-C12          2      2,054,816,663      branches                  #    2.065 M/sec                    (16.67%)
+S1-C12          2        109,485,728      branch-misses             #    5.33% of all branches          (16.67%)
+S1-C12          2      2,499,275,612      L1-dcache-loads           #    2.512 M/sec                    (6.67%)
+S1-C12          2        211,175,512      L1-dcache-load-misses     #    8.45% of all L1-dcache hits    (6.67%)
+S1-C12          2        158,638,851      LLC-loads                 #    0.159 M/sec                    (16.67%)
+S1-C12          2         29,391,272      LLC-load-misses           #   18.53% of all LL-cache hits     (6.67%)
+S1-C12          1    <not supported>      L1-icache-loads
+S1-C12          2        339,816,636      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S1-C12          2      2,460,859,423      dTLB-loads                #    2.473 M/sec                    (6.67%)
+S1-C12          2         14,882,490      dTLB-load-misses          #    0.60% of all dTLB cache hits   (10.00%)
+S1-C12          2          1,437,531      iTLB-loads                #    0.001 M/sec                    (13.33%)
+S1-C12          2         14,689,021      iTLB-load-misses          # 1021.82% of all iTLB cache hits   (16.67%)
+S1-C12          1    <not supported>      L1-dcache-prefetches
+S1-C12          2         16,674,855      L1-dcache-prefetch-misses #    0.017 M/sec                    (6.67%)
+S1-C13          2         995,004.60 msec cpu-clock                 #    2.000 CPUs utilized
+S1-C13          2                508      context-switches          #    0.001 K/sec
+S1-C13          2                  0      cpu-migrations            #    0.000 K/sec
+S1-C13          2                  0      page-faults               #    0.000 K/sec
+S1-C13          2    110,169,452,560      cycles                    #    0.111 GHz                      (10.01%)
+S1-C13          2    128,927,587,788      stalled-cycles-frontend   #  117.03% frontend cycles idle     (13.34%)
+S1-C13          2      9,383,478,555      instructions              #    0.09  insn per cycle
+S1-C13          2                                                   #   13.74  stalled cycles per insn  (16.67%)
+S1-C13          2      2,062,487,848      branches                  #    2.073 M/sec                    (16.67%)
+S1-C13          2         87,997,807      branch-misses             #    4.27% of all branches          (6.67%)
+S1-C13          2      2,252,800,129      L1-dcache-loads           #    2.264 M/sec                    (6.67%)
+S1-C13          2        188,577,440      L1-dcache-load-misses     #    8.37% of all L1-dcache hits    (6.67%)
+S1-C13          2        142,742,243      LLC-loads                 #    0.143 M/sec                    (13.34%)
+S1-C13          2         20,384,423      LLC-load-misses           #   14.28% of all LL-cache hits     (10.00%)
+S1-C13          1    <not supported>      L1-icache-loads
+S1-C13          2        252,538,421      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.33%)
+S1-C13          2      2,135,804,151      dTLB-loads                #    2.147 M/sec                    (16.67%)
+S1-C13          2         14,376,394      dTLB-load-misses          #    0.67% of all dTLB cache hits   (10.00%)
+S1-C13          2          1,595,182      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S1-C13          2         13,884,102      iTLB-load-misses          #  870.38% of all iTLB cache hits   (16.67%)
+S1-C13          1    <not supported>      L1-dcache-prefetches
+S1-C13          2         16,710,368      L1-dcache-prefetch-misses #    0.017 M/sec                    (6.67%)
+S2-C0           2         995,004.58 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C0           2              3,183      context-switches          #    0.003 K/sec
+S2-C0           2                  2      cpu-migrations            #    0.000 K/sec
+S2-C0           2                616      page-faults               #    0.001 K/sec
+S2-C0           2    141,423,791,701      cycles                    #    0.142 GHz                      (10.08%)
+S2-C0           2    144,980,804,403      stalled-cycles-frontend   #  102.52% frontend cycles idle     (13.38%)
+S2-C0           2     13,582,337,839      instructions              #    0.10  insn per cycle
+S2-C0           2                                                   #   10.67  stalled cycles per insn  (16.75%)
+S2-C0           2      2,779,366,734      branches                  #    2.793 M/sec                    (16.73%)
+S2-C0           2         79,046,846      branch-misses             #    2.84% of all branches          (6.72%)
+S2-C0           2      2,990,442,869      L1-dcache-loads           #    3.005 M/sec                    (6.72%)
+S2-C0           2        264,068,477      L1-dcache-load-misses     #    8.83% of all L1-dcache hits    (6.73%)
+S2-C0           2        201,219,703      LLC-loads                 #    0.202 M/sec                    (13.40%)
+S2-C0           2          9,450,170      LLC-load-misses           #    4.70% of all LL-cache hits     (10.03%)
+S2-C0           1    <not supported>      L1-icache-loads
+S2-C0           2        299,062,236      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.42%)
+S2-C0           2      3,015,292,784      dTLB-loads                #    3.030 M/sec                    (16.70%)
+S2-C0           2          8,058,611      dTLB-load-misses          #    0.27% of all dTLB cache hits   (10.05%)
+S2-C0           2          2,660,729      iTLB-loads                #    0.003 M/sec                    (13.39%)
+S2-C0           2         16,953,971      iTLB-load-misses          #  637.19% of all iTLB cache hits   (16.75%)
+S2-C0           1    <not supported>      L1-dcache-prefetches
+S2-C0           2         25,758,483      L1-dcache-prefetch-misses #    0.026 M/sec                    (6.75%)
+S2-C1           2         995,004.56 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C1           2              2,303      context-switches          #    0.002 K/sec
+S2-C1           2                  5      cpu-migrations            #    0.000 K/sec
+S2-C1           2             23,818      page-faults               #    0.024 K/sec
+S2-C1           2    106,604,927,736      cycles                    #    0.107 GHz                      (10.01%)
+S2-C1           2    145,633,914,855      stalled-cycles-frontend   #  136.61% frontend cycles idle     (13.34%)
+S2-C1           2      9,875,171,854      instructions              #    0.09  insn per cycle
+S2-C1           2                                                   #   14.75  stalled cycles per insn  (16.68%)
+S2-C1           2      2,074,169,422      branches                  #    2.085 M/sec                    (16.68%)
+S2-C1           2         91,130,348      branch-misses             #    4.39% of all branches          (6.68%)
+S2-C1           2      2,326,501,061      L1-dcache-loads           #    2.338 M/sec                    (6.67%)
+S2-C1           2        213,336,114      L1-dcache-load-misses     #    9.17% of all L1-dcache hits    (6.67%)
+S2-C1           2        168,997,663      LLC-loads                 #    0.170 M/sec                    (13.34%)
+S2-C1           2         21,727,404      LLC-load-misses           #   12.86% of all LL-cache hits     (10.00%)
+S2-C1           1    <not supported>      L1-icache-loads
+S2-C1           2        253,097,579      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S2-C1           2      2,284,207,729      dTLB-loads                #    2.296 M/sec                    (16.67%)
+S2-C1           2         15,272,289      dTLB-load-misses          #    0.67% of all dTLB cache hits   (10.00%)
+S2-C1           2          1,650,232      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S2-C1           2         14,336,395      iTLB-load-misses          #  868.75% of all iTLB cache hits   (16.67%)
+S2-C1           1    <not supported>      L1-dcache-prefetches
+S2-C1           2         21,538,720      L1-dcache-prefetch-misses #    0.022 M/sec                    (6.67%)
+S2-C2           2         995,004.54 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C2           2              1,371      context-switches          #    0.001 K/sec
+S2-C2           2                  1      cpu-migrations            #    0.000 K/sec
+S2-C2           2                 43      page-faults               #    0.000 K/sec
+S2-C2           2    106,963,590,048      cycles                    #    0.108 GHz                      (13.34%)
+S2-C2           2    141,988,797,467      stalled-cycles-frontend   #  132.74% frontend cycles idle     (13.34%)
+S2-C2           2      9,878,212,302      instructions              #    0.09  insn per cycle
+S2-C2           2                                                   #   14.37  stalled cycles per insn  (16.68%)
+S2-C2           2      2,082,367,990      branches                  #    2.093 M/sec                    (16.68%)
+S2-C2           2         87,521,335      branch-misses             #    4.20% of all branches          (6.68%)
+S2-C2           2      2,336,591,304      L1-dcache-loads           #    2.348 M/sec                    (13.34%)
+S2-C2           2        219,302,383      L1-dcache-load-misses     #    9.39% of all L1-dcache hits    (13.34%)
+S2-C2           2        171,039,766      LLC-loads                 #    0.172 M/sec                    (13.34%)
+S2-C2           2         21,401,385      LLC-load-misses           #   12.51% of all LL-cache hits     (10.00%)
+S2-C2           1    <not supported>      L1-icache-loads
+S2-C2           2        258,781,686      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S2-C2           2      2,283,714,747      dTLB-loads                #    2.295 M/sec                    (16.67%)
+S2-C2           2         13,554,734      dTLB-load-misses          #    0.59% of all dTLB cache hits   (10.01%)
+S2-C2           2          1,606,550      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S2-C2           2         14,267,351      iTLB-load-misses          #  888.07% of all iTLB cache hits   (16.67%)
+S2-C2           1    <not supported>      L1-dcache-prefetches
+S2-C2           2         23,854,248      L1-dcache-prefetch-misses #    0.024 M/sec                    (16.67%)
+S2-C3           2         995,004.53 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C3           2              2,268      context-switches          #    0.002 K/sec
+S2-C3           2                  2      cpu-migrations            #    0.000 K/sec
+S2-C3           2                 99      page-faults               #    0.000 K/sec
+S2-C3           2    147,739,998,139      cycles                    #    0.148 GHz                      (10.03%)
+S2-C3           2    152,169,362,017      stalled-cycles-frontend   #  103.00% frontend cycles idle     (13.35%)
+S2-C3           2     14,770,588,623      instructions              #    0.10  insn per cycle
+S2-C3           2                                                   #   10.30  stalled cycles per insn  (16.70%)
+S2-C3           2      3,188,905,168      branches                  #    3.205 M/sec                    (16.69%)
+S2-C3           2        106,119,469      branch-misses             #    3.33% of all branches          (6.69%)
+S2-C3           2      3,280,022,389      L1-dcache-loads           #    3.296 M/sec                    (6.69%)
+S2-C3           2        299,809,782      L1-dcache-load-misses     #    9.14% of all L1-dcache hits    (6.69%)
+S2-C3           2        235,534,978      LLC-loads                 #    0.237 M/sec                    (13.35%)
+S2-C3           2         15,353,920      LLC-load-misses           #    6.52% of all LL-cache hits     (10.01%)
+S2-C3           1    <not supported>      L1-icache-loads
+S2-C3           2        344,312,513      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.36%)
+S2-C3           2      3,275,567,150      dTLB-loads                #    3.292 M/sec                    (16.68%)
+S2-C3           2         15,543,174      dTLB-load-misses          #    0.47% of all dTLB cache hits   (10.02%)
+S2-C3           2          2,661,639      iTLB-loads                #    0.003 M/sec                    (13.35%)
+S2-C3           2         17,914,591      iTLB-load-misses          #  673.07% of all iTLB cache hits   (16.69%)
+S2-C3           1    <not supported>      L1-dcache-prefetches
+S2-C3           2         29,256,047      L1-dcache-prefetch-misses #    0.029 M/sec                    (6.70%)
+S2-C4           2         995,004.53 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C4           2              5,744      context-switches          #    0.006 K/sec
+S2-C4           2                  4      cpu-migrations            #    0.000 K/sec
+S2-C4           2              5,866      page-faults               #    0.006 K/sec
+S2-C4           2    266,595,720,549      cycles                    #    0.268 GHz                      (10.04%)
+S2-C4           2    282,506,373,693      stalled-cycles-frontend   #  105.97% frontend cycles idle     (13.36%)
+S2-C4           2     42,525,569,032      instructions              #    0.16  insn per cycle
+S2-C4           2                                                   #    6.64  stalled cycles per insn  (16.71%)
+S2-C4           2      8,080,304,239      branches                  #    8.121 M/sec                    (6.73%)
+S2-C4           2         80,726,172      branch-misses             #    1.00% of all branches          (13.35%)
+S2-C4           2      5,923,892,681      L1-dcache-loads           #    5.954 M/sec                    (10.02%)
+S2-C4           2        307,008,673      L1-dcache-load-misses     #    5.18% of all L1-dcache hits    (13.34%)
+S2-C4           2        227,578,046      LLC-loads                 #    0.229 M/sec                    (13.36%)
+S2-C4           2         11,522,447      LLC-load-misses           #    5.06% of all LL-cache hits     (10.01%)
+S2-C4           1    <not supported>      L1-icache-loads
+S2-C4           2        313,052,506      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.37%)
+S2-C4           2      5,509,300,430      dTLB-loads                #    5.537 M/sec                    (10.02%)
+S2-C4           2         11,256,432      dTLB-load-misses          #    0.20% of all dTLB cache hits   (13.34%)
+S2-C4           2          3,837,691      iTLB-loads                #    0.004 M/sec                    (10.03%)
+S2-C4           2         17,418,743      iTLB-load-misses          #  453.89% of all iTLB cache hits   (13.38%)
+S2-C4           1    <not supported>      L1-dcache-prefetches
+S2-C4           2         26,656,792      L1-dcache-prefetch-misses #    0.027 M/sec                    (10.04%)
+S2-C5           2         995,004.53 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C5           2              1,200      context-switches          #    0.001 K/sec
+S2-C5           2                  2      cpu-migrations            #    0.000 K/sec
+S2-C5           2                  0      page-faults               #    0.000 K/sec
+S2-C5           2    120,036,243,779      cycles                    #    0.121 GHz                      (10.02%)
+S2-C5           2    156,210,989,062      stalled-cycles-frontend   #  130.14% frontend cycles idle     (13.35%)
+S2-C5           2     11,894,744,506      instructions              #    0.10  insn per cycle
+S2-C5           2                                                   #   13.13  stalled cycles per insn  (16.68%)
+S2-C5           2      2,513,087,766      branches                  #    2.526 M/sec                    (16.68%)
+S2-C5           2         74,194,572      branch-misses             #    2.95% of all branches          (6.68%)
+S2-C5           2      2,615,161,301      L1-dcache-loads           #    2.628 M/sec                    (10.01%)
+S2-C5           2        242,959,779      L1-dcache-load-misses     #    9.29% of all L1-dcache hits    (6.68%)
+S2-C5           2        181,378,287      LLC-loads                 #    0.182 M/sec                    (13.35%)
+S2-C5           2         11,986,458      LLC-load-misses           #    6.61% of all LL-cache hits     (10.01%)
+S2-C5           1    <not supported>      L1-icache-loads
+S2-C5           2        265,989,912      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S2-C5           2      2,650,183,074      dTLB-loads                #    2.663 M/sec                    (16.67%)
+S2-C5           2         12,398,719      dTLB-load-misses          #    0.47% of all dTLB cache hits   (6.68%)
+S2-C5           2          2,128,410      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S2-C5           2         15,622,597      iTLB-load-misses          #  734.00% of all iTLB cache hits   (16.68%)
+S2-C5           1    <not supported>      L1-dcache-prefetches
+S2-C5           2         21,004,513      L1-dcache-prefetch-misses #    0.021 M/sec                    (6.68%)
+S2-C8           2         995,004.51 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C8           2              3,352      context-switches          #    0.003 K/sec
+S2-C8           2                  1      cpu-migrations            #    0.000 K/sec
+S2-C8           2                  0      page-faults               #    0.000 K/sec
+S2-C8           2    131,310,895,274      cycles                    #    0.132 GHz                      (10.02%)
+S2-C8           2    146,052,390,254      stalled-cycles-frontend   #  111.23% frontend cycles idle     (13.37%)
+S2-C8           2     12,997,775,081      instructions              #    0.10  insn per cycle
+S2-C8           2                                                   #   11.24  stalled cycles per insn  (16.70%)
+S2-C8           2      2,686,844,470      branches                  #    2.700 M/sec                    (16.70%)
+S2-C8           2         79,689,846      branch-misses             #    2.97% of all branches          (10.02%)
+S2-C8           2      2,841,837,672      L1-dcache-loads           #    2.856 M/sec                    (13.34%)
+S2-C8           2        251,806,127      L1-dcache-load-misses     #    8.86% of all L1-dcache hits    (13.34%)
+S2-C8           2        194,096,220      LLC-loads                 #    0.195 M/sec                    (13.36%)
+S2-C8           2          9,625,828      LLC-load-misses           #    4.96% of all LL-cache hits     (10.01%)
+S2-C8           1    <not supported>      L1-icache-loads
+S2-C8           2        293,177,755      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S2-C8           2      2,908,338,202      dTLB-loads                #    2.923 M/sec                    (6.70%)
+S2-C8           2         11,356,483      dTLB-load-misses          #    0.39% of all dTLB cache hits   (13.34%)
+S2-C8           2          2,423,803      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S2-C8           2         16,496,597      iTLB-load-misses          #  680.61% of all iTLB cache hits   (16.70%)
+S2-C8           1    <not supported>      L1-dcache-prefetches
+S2-C8           2         22,770,781      L1-dcache-prefetch-misses #    0.023 M/sec                    (13.35%)
+S2-C9           2         995,004.49 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C9           2              1,261      context-switches          #    0.001 K/sec
+S2-C9           2                  2      cpu-migrations            #    0.000 K/sec
+S2-C9           2                  0      page-faults               #    0.000 K/sec
+S2-C9           2    132,466,091,250      cycles                    #    0.133 GHz                      (6.68%)
+S2-C9           2    138,243,677,698      stalled-cycles-frontend   #  104.36% frontend cycles idle     (13.34%)
+S2-C9           2     12,232,670,594      instructions              #    0.09  insn per cycle
+S2-C9           2                                                   #   11.30  stalled cycles per insn  (16.68%)
+S2-C9           2      2,659,756,946      branches                  #    2.673 M/sec                    (6.68%)
+S2-C9           2        109,642,331      branch-misses             #    4.12% of all branches          (10.01%)
+S2-C9           2      2,790,229,951      L1-dcache-loads           #    2.804 M/sec                    (13.34%)
+S2-C9           2        250,703,949      L1-dcache-load-misses     #    8.99% of all L1-dcache hits    (6.67%)
+S2-C9           2        196,131,956      LLC-loads                 #    0.197 M/sec                    (13.34%)
+S2-C9           2         22,484,742      LLC-load-misses           #   11.46% of all LL-cache hits     (13.34%)
+S2-C9           1    <not supported>      L1-icache-loads
+S2-C9           2        316,024,616      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S2-C9           2      2,902,313,871      dTLB-loads                #    2.917 M/sec                    (10.01%)
+S2-C9           2         12,263,001      dTLB-load-misses          #    0.42% of all dTLB cache hits   (13.34%)
+S2-C9           2          2,515,885      iTLB-loads                #    0.003 M/sec                    (10.00%)
+S2-C9           2         15,583,760      iTLB-load-misses          #  619.41% of all iTLB cache hits   (13.34%)
+S2-C9           1    <not supported>      L1-dcache-prefetches
+S2-C9           2         23,752,492      L1-dcache-prefetch-misses #    0.024 M/sec                    (13.34%)
+S2-C10          2         995,004.47 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C10          2              3,076      context-switches          #    0.003 K/sec
+S2-C10          2                  1      cpu-migrations            #    0.000 K/sec
+S2-C10          2                  0      page-faults               #    0.000 K/sec
+S2-C10          2    110,871,616,003      cycles                    #    0.111 GHz                      (10.01%)
+S2-C10          2    117,122,723,291      stalled-cycles-frontend   #  105.64% frontend cycles idle     (13.34%)
+S2-C10          2     10,698,004,450      instructions              #    0.10  insn per cycle
+S2-C10          2                                                   #   10.95  stalled cycles per insn  (16.67%)
+S2-C10          2      2,357,886,330      branches                  #    2.370 M/sec                    (6.68%)
+S2-C10          2        124,403,319      branch-misses             #    5.28% of all branches          (10.01%)
+S2-C10          2      2,540,451,611      L1-dcache-loads           #    2.553 M/sec                    (10.00%)
+S2-C10          2        237,805,467      L1-dcache-load-misses     #    9.36% of all L1-dcache hits    (13.33%)
+S2-C10          2        196,974,714      LLC-loads                 #    0.198 M/sec                    (13.34%)
+S2-C10          2         30,266,447      LLC-load-misses           #   15.37% of all LL-cache hits     (13.33%)
+S2-C10          1    <not supported>      L1-icache-loads
+S2-C10          2        318,713,269      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S2-C10          2      2,720,032,772      dTLB-loads                #    2.734 M/sec                    (16.67%)
+S2-C10          2         15,856,202      dTLB-load-misses          #    0.58% of all dTLB cache hits   (13.34%)
+S2-C10          2          2,264,976      iTLB-loads                #    0.002 M/sec                    (10.00%)
+S2-C10          2         14,329,196      iTLB-load-misses          #  632.64% of all iTLB cache hits   (13.34%)
+S2-C10          1    <not supported>      L1-dcache-prefetches
+S2-C10          2         19,682,427      L1-dcache-prefetch-misses #    0.020 M/sec                    (10.00%)
+S2-C11          2         995,004.45 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C11          2                642      context-switches          #    0.001 K/sec
+S2-C11          2                  0      cpu-migrations            #    0.000 K/sec
+S2-C11          2                  0      page-faults               #    0.000 K/sec
+S2-C11          2    144,315,619,512      cycles                    #    0.145 GHz                      (10.04%)
+S2-C11          2    146,474,067,009      stalled-cycles-frontend   #  101.50% frontend cycles idle     (13.37%)
+S2-C11          2     13,628,425,366      instructions              #    0.09  insn per cycle
+S2-C11          2                                                   #   10.75  stalled cycles per insn  (16.70%)
+S2-C11          2      2,889,124,593      branches                  #    2.904 M/sec                    (6.73%)
+S2-C11          2         82,453,123      branch-misses             #    2.85% of all branches          (10.02%)
+S2-C11          2      3,035,016,653      L1-dcache-loads           #    3.050 M/sec                    (10.02%)
+S2-C11          2        264,997,208      L1-dcache-load-misses     #    8.73% of all L1-dcache hits    (13.36%)
+S2-C11          2        202,207,003      LLC-loads                 #    0.203 M/sec                    (13.36%)
+S2-C11          2          9,051,360      LLC-load-misses           #    4.48% of all LL-cache hits     (13.35%)
+S2-C11          1    <not supported>      L1-icache-loads
+S2-C11          2        277,162,172      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S2-C11          2      3,034,052,216      dTLB-loads                #    3.049 M/sec                    (10.03%)
+S2-C11          2          9,827,022      dTLB-load-misses          #    0.32% of all dTLB cache hits   (13.35%)
+S2-C11          2          2,950,911      iTLB-loads                #    0.003 M/sec                    (10.02%)
+S2-C11          2         16,441,654      iTLB-load-misses          #  557.17% of all iTLB cache hits   (13.38%)
+S2-C11          1    <not supported>      L1-dcache-prefetches
+S2-C11          2         25,802,966      L1-dcache-prefetch-misses #    0.026 M/sec                    (13.35%)
+S2-C12          2         995,004.42 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C12          2              1,088      context-switches          #    0.001 K/sec
+S2-C12          2                  0      cpu-migrations            #    0.000 K/sec
+S2-C12          2                  0      page-faults               #    0.000 K/sec
+S2-C12          2    105,992,477,189      cycles                    #    0.107 GHz                      (13.34%)
+S2-C12          2    132,636,598,498      stalled-cycles-frontend   #  125.14% frontend cycles idle     (13.34%)
+S2-C12          2      9,914,733,114      instructions              #    0.09  insn per cycle
+S2-C12          2                                                   #   13.38  stalled cycles per insn  (16.68%)
+S2-C12          2      2,128,892,939      branches                  #    2.140 M/sec                    (16.68%)
+S2-C12          2         92,012,172      branch-misses             #    4.32% of all branches          (16.67%)
+S2-C12          2      2,318,535,215      L1-dcache-loads           #    2.330 M/sec                    (10.01%)
+S2-C12          2        224,677,849      L1-dcache-load-misses     #    9.69% of all L1-dcache hits    (10.00%)
+S2-C12          2        173,807,866      LLC-loads                 #    0.175 M/sec                    (13.34%)
+S2-C12          2         23,870,220      LLC-load-misses           #   13.73% of all LL-cache hits     (13.34%)
+S2-C12          1    <not supported>      L1-icache-loads
+S2-C12          2        286,809,647      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S2-C12          2      2,327,548,817      dTLB-loads                #    2.339 M/sec                    (16.67%)
+S2-C12          2         16,059,588      dTLB-load-misses          #    0.69% of all dTLB cache hits   (6.67%)
+S2-C12          2          1,566,762      iTLB-loads                #    0.002 M/sec                    (13.34%)
+S2-C12          2         13,579,812      iTLB-load-misses          #  866.74% of all iTLB cache hits   (16.67%)
+S2-C12          1    <not supported>      L1-dcache-prefetches
+S2-C12          2         20,504,397      L1-dcache-prefetch-misses #    0.021 M/sec                    (10.00%)
+S2-C13          2         995,004.40 msec cpu-clock                 #    2.000 CPUs utilized
+S2-C13          2             11,245      context-switches          #    0.011 K/sec
+S2-C13          2                  1      cpu-migrations            #    0.000 K/sec
+S2-C13          2                  0      page-faults               #    0.000 K/sec
+S2-C13          2    128,269,483,257      cycles                    #    0.129 GHz                      (13.35%)
+S2-C13          2    145,544,535,112      stalled-cycles-frontend   #  113.47% frontend cycles idle     (13.36%)
+S2-C13          2     12,655,917,835      instructions              #    0.10  insn per cycle
+S2-C13          2                                                   #   11.50  stalled cycles per insn  (16.69%)
+S2-C13          2      2,615,009,106      branches                  #    2.628 M/sec                    (16.69%)
+S2-C13          2         81,496,524      branch-misses             #    3.12% of all branches          (6.69%)
+S2-C13          2      2,861,244,801      L1-dcache-loads           #    2.876 M/sec                    (6.69%)
+S2-C13          2        253,234,354      L1-dcache-load-misses     #    8.85% of all L1-dcache hits    (10.01%)
+S2-C13          2        192,340,605      LLC-loads                 #    0.193 M/sec                    (13.35%)
+S2-C13          2         10,891,438      LLC-load-misses           #    5.66% of all LL-cache hits     (6.69%)
+S2-C13          1    <not supported>      L1-icache-loads
+S2-C13          2        293,859,350      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S2-C13          2      2,859,266,264      dTLB-loads                #    2.874 M/sec                    (13.35%)
+S2-C13          2         13,168,258      dTLB-load-misses          #    0.46% of all dTLB cache hits   (6.69%)
+S2-C13          2          2,358,130      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S2-C13          2         16,513,269      iTLB-load-misses          #  700.27% of all iTLB cache hits   (16.69%)
+S2-C13          1    <not supported>      L1-dcache-prefetches
+S2-C13          2         23,667,134      L1-dcache-prefetch-misses #    0.024 M/sec                    (6.68%)
+S3-C0           2         995,004.37 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C0           2                500      context-switches          #    0.001 K/sec
+S3-C0           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C0           2                  0      page-faults               #    0.000 K/sec
+S3-C0           2    129,861,877,746      cycles                    #    0.131 GHz                      (10.05%)
+S3-C0           2    131,368,773,603      stalled-cycles-frontend   #  101.16% frontend cycles idle     (13.39%)
+S3-C0           2     13,287,747,330      instructions              #    0.10  insn per cycle
+S3-C0           2                                                   #    9.89  stalled cycles per insn  (16.72%)
+S3-C0           2      2,818,942,958      branches                  #    2.833 M/sec                    (10.07%)
+S3-C0           2         85,429,692      branch-misses             #    3.03% of all branches          (10.03%)
+S3-C0           2      2,981,050,927      L1-dcache-loads           #    2.996 M/sec                    (6.71%)
+S3-C0           2        230,645,718      L1-dcache-load-misses     #    7.74% of all L1-dcache hits    (10.03%)
+S3-C0           2        173,871,132      LLC-loads                 #    0.175 M/sec                    (13.37%)
+S3-C0           2         10,655,470      LLC-load-misses           #    6.13% of all LL-cache hits     (13.35%)
+S3-C0           1    <not supported>      L1-icache-loads
+S3-C0           2        262,303,185      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.36%)
+S3-C0           2      2,922,346,740      dTLB-loads                #    2.937 M/sec                    (10.04%)
+S3-C0           2         12,669,361      dTLB-load-misses          #    0.43% of all dTLB cache hits   (13.36%)
+S3-C0           2          3,014,362      iTLB-loads                #    0.003 M/sec                    (10.04%)
+S3-C0           2         16,660,291      iTLB-load-misses          #  552.70% of all iTLB cache hits   (13.39%)
+S3-C0           1    <not supported>      L1-dcache-prefetches
+S3-C0           2         23,810,023      L1-dcache-prefetch-misses #    0.024 M/sec                    (6.70%)
+S3-C1           2         995,004.35 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C1           2                500      context-switches          #    0.001 K/sec
+S3-C1           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C1           2                  0      page-faults               #    0.000 K/sec
+S3-C1           2     96,997,305,332      cycles                    #    0.097 GHz                      (13.34%)
+S3-C1           2    108,621,391,313      stalled-cycles-frontend   #  111.98% frontend cycles idle     (13.35%)
+S3-C1           2      9,336,882,800      instructions              #    0.10  insn per cycle
+S3-C1           2                                                   #   11.63  stalled cycles per insn  (16.68%)
+S3-C1           2      1,987,144,705      branches                  #    1.997 M/sec                    (16.68%)
+S3-C1           2        107,640,616      branch-misses             #    5.42% of all branches          (6.67%)
+S3-C1           2      2,358,902,183      L1-dcache-loads           #    2.371 M/sec                    (6.67%)
+S3-C1           2        211,380,424      L1-dcache-load-misses     #    8.96% of all L1-dcache hits    (10.01%)
+S3-C1           2        164,031,737      LLC-loads                 #    0.165 M/sec                    (13.34%)
+S3-C1           2         28,668,262      LLC-load-misses           #   17.48% of all LL-cache hits     (6.67%)
+S3-C1           1    <not supported>      L1-icache-loads
+S3-C1           2        308,699,763      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C1           2      2,288,047,403      dTLB-loads                #    2.300 M/sec                    (13.34%)
+S3-C1           2         18,054,059      dTLB-load-misses          #    0.79% of all dTLB cache hits   (6.67%)
+S3-C1           2          1,427,123      iTLB-loads                #    0.001 M/sec                    (13.34%)
+S3-C1           2         13,661,472      iTLB-load-misses          #  957.27% of all iTLB cache hits   (16.67%)
+S3-C1           1    <not supported>      L1-dcache-prefetches
+S3-C1           2         22,596,026      L1-dcache-prefetch-misses #    0.023 M/sec                    (6.67%)
+S3-C2           2         995,004.30 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C2           2              1,252      context-switches          #    0.001 K/sec
+S3-C2           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C2           2                  0      page-faults               #    0.000 K/sec
+S3-C2           2    120,750,219,699      cycles                    #    0.121 GHz                      (6.69%)
+S3-C2           2    123,198,723,498      stalled-cycles-frontend   #  102.03% frontend cycles idle     (13.36%)
+S3-C2           2     12,236,493,697      instructions              #    0.10  insn per cycle
+S3-C2           2                                                   #   10.07  stalled cycles per insn  (16.69%)
+S3-C2           2      2,616,788,028      branches                  #    2.630 M/sec                    (13.36%)
+S3-C2           2         93,148,495      branch-misses             #    3.56% of all branches          (10.02%)
+S3-C2           2      2,818,726,118      L1-dcache-loads           #    2.833 M/sec                    (13.34%)
+S3-C2           2        223,684,244      L1-dcache-load-misses     #    7.94% of all L1-dcache hits    (6.68%)
+S3-C2           2        163,407,898      LLC-loads                 #    0.164 M/sec                    (13.35%)
+S3-C2           2         13,863,691      LLC-load-misses           #    8.48% of all LL-cache hits     (13.34%)
+S3-C2           1    <not supported>      L1-icache-loads
+S3-C2           2        266,706,836      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C2           2      2,779,404,974      dTLB-loads                #    2.793 M/sec                    (10.02%)
+S3-C2           2         12,742,793      dTLB-load-misses          #    0.46% of all dTLB cache hits   (13.34%)
+S3-C2           2          2,784,224      iTLB-loads                #    0.003 M/sec                    (10.02%)
+S3-C2           2         16,254,301      iTLB-load-misses          #  583.80% of all iTLB cache hits   (13.36%)
+S3-C2           1    <not supported>      L1-dcache-prefetches
+S3-C2           2         21,057,169      L1-dcache-prefetch-misses #    0.021 M/sec                    (6.68%)
+S3-C3           2         995,004.27 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C3           2                500      context-switches          #    0.001 K/sec
+S3-C3           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C3           2                  0      page-faults               #    0.000 K/sec
+S3-C3           2    134,312,448,488      cycles                    #    0.135 GHz                      (6.86%)
+S3-C3           2    135,249,676,129      stalled-cycles-frontend   #  100.70% frontend cycles idle     (13.50%)
+S3-C3           2     13,633,024,358      instructions              #    0.10  insn per cycle
+S3-C3           2                                                   #    9.92  stalled cycles per insn  (16.79%)
+S3-C3           2      2,902,798,587      branches                  #    2.917 M/sec                    (10.25%)
+S3-C3           2         76,791,856      branch-misses             #    2.65% of all branches          (10.06%)
+S3-C3           2      2,962,299,678      L1-dcache-loads           #    2.977 M/sec                    (13.40%)
+S3-C3           2        224,905,665      L1-dcache-load-misses     #    7.59% of all L1-dcache hits    (6.82%)
+S3-C3           2        168,409,100      LLC-loads                 #    0.169 M/sec                    (13.50%)
+S3-C3           2          6,355,450      LLC-load-misses           #    3.77% of all LL-cache hits     (13.40%)
+S3-C3           1    <not supported>      L1-icache-loads
+S3-C3           2        281,570,629      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.45%)
+S3-C3           2      2,929,189,355      dTLB-loads                #    2.944 M/sec                    (10.13%)
+S3-C3           2         11,258,088      dTLB-load-misses          #    0.38% of all dTLB cache hits   (13.44%)
+S3-C3           2          3,179,076      iTLB-loads                #    0.003 M/sec                    (10.09%)
+S3-C3           2         16,719,144      iTLB-load-misses          #  525.91% of all iTLB cache hits   (13.53%)
+S3-C3           1    <not supported>      L1-dcache-prefetches
+S3-C3           2         22,594,816      L1-dcache-prefetch-misses #    0.023 M/sec                    (6.84%)
+S3-C4           2         995,004.24 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C4           2                500      context-switches          #    0.001 K/sec
+S3-C4           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C4           2                  0      page-faults               #    0.000 K/sec
+S3-C4           2    123,667,781,587      cycles                    #    0.124 GHz                      (13.36%)
+S3-C4           2    129,531,536,299      stalled-cycles-frontend   #  104.74% frontend cycles idle     (13.37%)
+S3-C4           2     12,657,671,862      instructions              #    0.10  insn per cycle
+S3-C4           2                                                   #   10.23  stalled cycles per insn  (16.69%)
+S3-C4           2      2,726,928,186      branches                  #    2.741 M/sec                    (16.70%)
+S3-C4           2         82,929,035      branch-misses             #    3.04% of all branches          (13.35%)
+S3-C4           2      2,816,296,958      L1-dcache-loads           #    2.830 M/sec                    (6.69%)
+S3-C4           2        218,903,304      L1-dcache-load-misses     #    7.77% of all L1-dcache hits    (6.70%)
+S3-C4           2        162,274,901      LLC-loads                 #    0.163 M/sec                    (16.69%)
+S3-C4           2         11,375,830      LLC-load-misses           #    7.01% of all LL-cache hits     (6.69%)
+S3-C4           1    <not supported>      L1-icache-loads
+S3-C4           2        304,236,526      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C4           2      2,823,262,678      dTLB-loads                #    2.837 M/sec                    (16.68%)
+S3-C4           2         11,547,816      dTLB-load-misses          #    0.41% of all dTLB cache hits   (10.03%)
+S3-C4           2          2,222,848      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S3-C4           2         15,926,961      iTLB-load-misses          #  716.51% of all iTLB cache hits   (16.69%)
+S3-C4           1    <not supported>      L1-dcache-prefetches
+S3-C4           2         24,679,724      L1-dcache-prefetch-misses #    0.025 M/sec                    (6.69%)
+S3-C5           2         995,004.20 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C5           2              1,532      context-switches          #    0.002 K/sec
+S3-C5           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C5           2                  0      page-faults               #    0.000 K/sec
+S3-C5           2    120,526,628,162      cycles                    #    0.121 GHz                      (13.36%)
+S3-C5           2    130,382,812,762      stalled-cycles-frontend   #  108.18% frontend cycles idle     (13.36%)
+S3-C5           2     12,476,205,524      instructions              #    0.10  insn per cycle
+S3-C5           2                                                   #   10.45  stalled cycles per insn  (16.70%)
+S3-C5           2      2,644,350,552      branches                  #    2.658 M/sec                    (16.70%)
+S3-C5           2         76,375,859      branch-misses             #    2.89% of all branches          (13.35%)
+S3-C5           2      2,740,507,875      L1-dcache-loads           #    2.754 M/sec                    (6.69%)
+S3-C5           2        219,881,352      L1-dcache-load-misses     #    8.02% of all L1-dcache hits    (6.69%)
+S3-C5           2        158,341,296      LLC-loads                 #    0.159 M/sec                    (16.70%)
+S3-C5           2         11,915,535      LLC-load-misses           #    7.53% of all LL-cache hits     (6.69%)
+S3-C5           1    <not supported>      L1-icache-loads
+S3-C5           2        291,593,712      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S3-C5           2      2,764,093,133      dTLB-loads                #    2.778 M/sec                    (16.67%)
+S3-C5           2         13,100,571      dTLB-load-misses          #    0.47% of all dTLB cache hits   (10.02%)
+S3-C5           2          2,321,680      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S3-C5           2         16,706,159      iTLB-load-misses          #  719.57% of all iTLB cache hits   (16.69%)
+S3-C5           1    <not supported>      L1-dcache-prefetches
+S3-C5           2         20,703,391      L1-dcache-prefetch-misses #    0.021 M/sec                    (6.69%)
+S3-C8           2         995,004.17 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C8           2                502      context-switches          #    0.001 K/sec
+S3-C8           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C8           2                  0      page-faults               #    0.000 K/sec
+S3-C8           2    134,549,223,824      cycles                    #    0.135 GHz                      (10.24%)
+S3-C8           2    134,342,458,699      stalled-cycles-frontend   #   99.85% frontend cycles idle     (13.60%)
+S3-C8           2     14,089,496,879      instructions              #    0.10  insn per cycle
+S3-C8           2                                                   #    9.53  stalled cycles per insn  (16.97%)
+S3-C8           2      2,989,160,115      branches                  #    3.004 M/sec                    (16.85%)
+S3-C8           2         76,591,660      branch-misses             #    2.56% of all branches          (10.23%)
+S3-C8           2      2,987,229,863      L1-dcache-loads           #    3.002 M/sec                    (13.39%)
+S3-C8           2        232,281,495      L1-dcache-load-misses     #    7.78% of all L1-dcache hits    (6.86%)
+S3-C8           2        169,928,466      LLC-loads                 #    0.171 M/sec                    (13.59%)
+S3-C8           2          6,242,341      LLC-load-misses           #    3.67% of all LL-cache hits     (13.40%)
+S3-C8           1    <not supported>      L1-icache-loads
+S3-C8           2        305,409,180      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.55%)
+S3-C8           2      3,013,294,425      dTLB-loads                #    3.028 M/sec                    (13.52%)
+S3-C8           2         11,140,499      dTLB-load-misses          #    0.37% of all dTLB cache hits   (6.82%)
+S3-C8           2          2,688,258      iTLB-loads                #    0.003 M/sec                    (13.53%)
+S3-C8           2         16,555,658      iTLB-load-misses          #  615.85% of all iTLB cache hits   (13.57%)
+S3-C8           1    <not supported>      L1-dcache-prefetches
+S3-C8           2         21,352,402      L1-dcache-prefetch-misses #    0.021 M/sec                    (6.91%)
+S3-C9           2         995,004.12 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C9           2                500      context-switches          #    0.001 K/sec
+S3-C9           2                  0      cpu-migrations            #    0.000 K/sec
+S3-C9           2                  0      page-faults               #    0.000 K/sec
+S3-C9           2    123,233,146,306      cycles                    #    0.124 GHz                      (10.04%)
+S3-C9           2    128,844,181,594      stalled-cycles-frontend   #  104.55% frontend cycles idle     (13.37%)
+S3-C9           2     12,584,812,830      instructions              #    0.10  insn per cycle
+S3-C9           2                                                   #   10.24  stalled cycles per insn  (16.71%)
+S3-C9           2      2,667,450,475      branches                  #    2.681 M/sec                    (16.70%)
+S3-C9           2         84,997,602      branch-misses             #    3.19% of all branches          (6.70%)
+S3-C9           2      2,801,142,199      L1-dcache-loads           #    2.815 M/sec                    (6.69%)
+S3-C9           2        210,542,873      L1-dcache-load-misses     #    7.52% of all L1-dcache hits    (6.70%)
+S3-C9           2        161,699,355      LLC-loads                 #    0.163 M/sec                    (13.36%)
+S3-C9           2         12,109,226      LLC-load-misses           #    7.49% of all LL-cache hits     (10.01%)
+S3-C9           1    <not supported>      L1-icache-loads
+S3-C9           2        298,007,421      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.35%)
+S3-C9           2      2,757,627,145      dTLB-loads                #    2.771 M/sec                    (16.68%)
+S3-C9           2         11,521,196      dTLB-load-misses          #    0.42% of all dTLB cache hits   (10.01%)
+S3-C9           2          2,312,526      iTLB-loads                #    0.002 M/sec                    (13.36%)
+S3-C9           2         15,302,226      iTLB-load-misses          #  661.71% of all iTLB cache hits   (13.36%)
+S3-C9           1    <not supported>      L1-dcache-prefetches
+S3-C9           2         21,887,380      L1-dcache-prefetch-misses #    0.022 M/sec                    (6.70%)
+S3-C10          2         995,004.09 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C10          2                874      context-switches          #    0.001 K/sec
+S3-C10          2                  0      cpu-migrations            #    0.000 K/sec
+S3-C10          2                156      page-faults               #    0.000 K/sec
+S3-C10          2    119,537,375,733      cycles                    #    0.120 GHz                      (10.03%)
+S3-C10          2    125,760,680,016      stalled-cycles-frontend   #  105.21% frontend cycles idle     (13.36%)
+S3-C10          2     11,926,527,549      instructions              #    0.10  insn per cycle
+S3-C10          2                                                   #   10.54  stalled cycles per insn  (16.70%)
+S3-C10          2      2,469,148,024      branches                  #    2.482 M/sec                    (16.68%)
+S3-C10          2         93,471,600      branch-misses             #    3.79% of all branches          (10.02%)
+S3-C10          2      2,626,433,698      L1-dcache-loads           #    2.640 M/sec                    (6.68%)
+S3-C10          2        218,114,732      L1-dcache-load-misses     #    8.30% of all L1-dcache hits    (6.68%)
+S3-C10          2        162,634,929      LLC-loads                 #    0.163 M/sec                    (13.35%)
+S3-C10          2         15,328,680      LLC-load-misses           #    9.43% of all LL-cache hits     (13.33%)
+S3-C10          1    <not supported>      L1-icache-loads
+S3-C10          2        306,956,489      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C10          2      2,676,342,364      dTLB-loads                #    2.690 M/sec                    (10.02%)
+S3-C10          2         14,721,462      dTLB-load-misses          #    0.55% of all dTLB cache hits   (10.01%)
+S3-C10          2          2,176,817      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S3-C10          2         15,346,627      iTLB-load-misses          #  705.00% of all iTLB cache hits   (13.36%)
+S3-C10          1    <not supported>      L1-dcache-prefetches
+S3-C10          2         18,947,221      L1-dcache-prefetch-misses #    0.019 M/sec                    (6.68%)
+S3-C11          2         995,004.05 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C11          2                500      context-switches          #    0.001 K/sec
+S3-C11          2                  0      cpu-migrations            #    0.000 K/sec
+S3-C11          2                  0      page-faults               #    0.000 K/sec
+S3-C11          2    116,323,834,884      cycles                    #    0.117 GHz                      (10.03%)
+S3-C11          2    123,191,104,193      stalled-cycles-frontend   #  105.90% frontend cycles idle     (13.35%)
+S3-C11          2     11,616,560,618      instructions              #    0.10  insn per cycle
+S3-C11          2                                                   #   10.60  stalled cycles per insn  (16.69%)
+S3-C11          2      2,403,453,296      branches                  #    2.416 M/sec                    (16.68%)
+S3-C11          2         92,943,426      branch-misses             #    3.87% of all branches          (6.68%)
+S3-C11          2      2,601,285,071      L1-dcache-loads           #    2.614 M/sec                    (10.01%)
+S3-C11          2        216,484,041      L1-dcache-load-misses     #    8.32% of all L1-dcache hits    (13.34%)
+S3-C11          2        162,091,161      LLC-loads                 #    0.163 M/sec                    (13.35%)
+S3-C11          2         17,400,073      LLC-load-misses           #   10.73% of all LL-cache hits     (10.01%)
+S3-C11          1    <not supported>      L1-icache-loads
+S3-C11          2        300,405,659      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C11          2      2,636,972,756      dTLB-loads                #    2.650 M/sec                    (16.67%)
+S3-C11          2         13,896,525      dTLB-load-misses          #    0.53% of all dTLB cache hits   (13.34%)
+S3-C11          2          2,116,768      iTLB-loads                #    0.002 M/sec                    (13.35%)
+S3-C11          2         15,823,946      iTLB-load-misses          #  747.55% of all iTLB cache hits   (16.69%)
+S3-C11          1    <not supported>      L1-dcache-prefetches
+S3-C11          2         19,883,389      L1-dcache-prefetch-misses #    0.020 M/sec                    (6.68%)
+S3-C12          2         995,004.01 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C12          2                500      context-switches          #    0.001 K/sec
+S3-C12          2                  0      cpu-migrations            #    0.000 K/sec
+S3-C12          2                  0      page-faults               #    0.000 K/sec
+S3-C12          2    132,999,533,473      cycles                    #    0.134 GHz                      (10.10%)
+S3-C12          2    133,266,172,042      stalled-cycles-frontend   #  100.20% frontend cycles idle     (13.38%)
+S3-C12          2     13,434,715,060      instructions              #    0.10  insn per cycle
+S3-C12          2                                                   #    9.92  stalled cycles per insn  (16.76%)
+S3-C12          2      2,842,738,526      branches                  #    2.857 M/sec                    (16.75%)
+S3-C12          2         77,685,276      branch-misses             #    2.73% of all branches          (13.36%)
+S3-C12          2      2,916,971,174      L1-dcache-loads           #    2.932 M/sec                    (13.34%)
+S3-C12          2        224,872,079      L1-dcache-load-misses     #    7.71% of all L1-dcache hits    (13.38%)
+S3-C12          2        167,555,798      LLC-loads                 #    0.168 M/sec                    (13.40%)
+S3-C12          2          8,217,453      LLC-load-misses           #    4.90% of all LL-cache hits     (10.03%)
+S3-C12          1    <not supported>      L1-icache-loads
+S3-C12          2        291,145,497      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.42%)
+S3-C12          2      2,915,524,829      dTLB-loads                #    2.930 M/sec                    (6.74%)
+S3-C12          2         12,152,022      dTLB-load-misses          #    0.42% of all dTLB cache hits   (13.36%)
+S3-C12          2          2,510,520      iTLB-loads                #    0.003 M/sec                    (13.40%)
+S3-C12          2         16,705,706      iTLB-load-misses          #  665.43% of all iTLB cache hits   (16.75%)
+S3-C12          1    <not supported>      L1-dcache-prefetches
+S3-C12          2         21,438,855      L1-dcache-prefetch-misses #    0.022 M/sec                    (10.05%)
+S3-C13          2         995,003.94 msec cpu-clock                 #    2.000 CPUs utilized
+S3-C13          2                500      context-switches          #    0.001 K/sec
+S3-C13          2                  0      cpu-migrations            #    0.000 K/sec
+S3-C13          2                  0      page-faults               #    0.000 K/sec
+S3-C13          2     98,902,752,134      cycles                    #    0.099 GHz                      (10.01%)
+S3-C13          2    107,968,771,838      stalled-cycles-frontend   #  109.17% frontend cycles idle     (13.34%)
+S3-C13          2      9,528,383,767      instructions              #    0.10  insn per cycle
+S3-C13          2                                                   #   11.33  stalled cycles per insn  (16.68%)
+S3-C13          2      2,019,004,433      branches                  #    2.029 M/sec                    (16.68%)
+S3-C13          2        113,593,257      branch-misses             #    5.63% of all branches          (6.67%)
+S3-C13          2      2,327,261,251      L1-dcache-loads           #    2.339 M/sec                    (6.67%)
+S3-C13          2        208,481,881      L1-dcache-load-misses     #    8.96% of all L1-dcache hits    (6.67%)
+S3-C13          2        161,529,886      LLC-loads                 #    0.162 M/sec                    (13.34%)
+S3-C13          2         31,043,571      LLC-load-misses           #   19.22% of all LL-cache hits     (10.00%)
+S3-C13          1    <not supported>      L1-icache-loads
+S3-C13          2        306,006,915      L1-icache-load-misses     #    0.00% of all L1-icache hits    (13.34%)
+S3-C13          2      2,299,912,551      dTLB-loads                #    2.311 M/sec                    (13.34%)
+S3-C13          2         17,224,197      dTLB-load-misses          #    0.75% of all dTLB cache hits   (10.00%)
+S3-C13          2          1,437,928      iTLB-loads                #    0.001 M/sec                    (13.34%)
+S3-C13          2         13,563,505      iTLB-load-misses          #  943.27% of all iTLB cache hits   (16.67%)
+S3-C13          1    <not supported>      L1-dcache-prefetches
+S3-C13          2         17,204,388      L1-dcache-prefetch-misses #    0.017 M/sec                    (16.67%)
+
+     497.541977092 seconds time elapsed
