@@ -148,12 +148,12 @@ We stopped our investigation in this direction.
 
 \subsection{Work-stealing} \label{ssec:work-stealing}
 Normally, Spark uses static, physical partitioning of the data.
-As we learned the last section can lead to a trade-off between the ability to handle skew and duplicated work.
-A standard approach to handle skew and the arising unbalanced workloads is work-stealing.
-In work-stealing, the work is not necessarily statically partitioned before-hand but organized in many smaller tasks which can be
+As we learned in the last section that can lead to a trade-off between the ability to handle skew and duplicated work.
+A standard approach to handle skew and unbalanced workloads is work-stealing.
+Fot this, the work is not statically partitioned before-hand but organized in many smaller tasks which can be
 solved by all workers.
-Workers either assigned an equal split of tasks and steal tasks from other workers when they are out of work or all tasks are arranged in a
-queue accessible for all workers so that workers can poll tasks from it whenever they are out of work.
+Workers are either assigned an equal split of tasks and steal tasks from other workers when they are out of work or all tasks are arranged
+in a queue accessible for all workers, so that workers can poll tasks from it whenever they are out of work.
 In either way, this results in a situation where no task is guaranteed to be solved by a single worker and each worker only finishes
 when no free tasks are left in the system.
 Hence, the maximum amount of skew roughly the size of the smallest task.
@@ -165,71 +165,71 @@ Second, how do workers get their tasks?
 We address these questions in order by first describing our preferred solution and then their integration with Spark.
 We conclude the section with an evaluation of the limitations of this integration.
 
-Before getting into the design, we remember that we built our solution for the Spark \textit{local-mode}.
-That means that the Spark master and all workers are threads within the same JVM process.
+Before, we remember that we built our solution for the Spark \textit{local-mode} (see~\cref{subsubsec:spark-architecture}).
+Hence, the Spark master and all executors are threads within the same JVM process.
 This is important because it allows us to share data structures between multiple Spark tasks as normal JVM objects.
-We refer the reader to our future work section (\ref{ssec:future-work}) and/or to our related work section about Fractal
-(\ref{ssec:fractal}) for a discussion on how to built work-stealing for Spark in \textit{cluster-mode}.
+We discuss how the design can be extended Spark's \textit{cluster-mode} in future work (\cref{subsec:cluster-mode}) and
+related work (\cref{subsec:fractal}).
 
 The first design decision is the definition of a work-stealing task.
 It is not necessary to define the tasks such that they have all the same size.
 However, it is important to choose the task size small enough to avoid skew.
 Furthermore, the tasks should not overlap so that work is not duplicated.
-We choose the define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
+We choose to the define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
 This is none overlapping.
 The task size can vary widely and is query dependent.
 However, given the huge amount of tasks (as many as vertices in the graph), we believe this to be small enough.
 We plan to evaluate this during our experiments.
 
-The second design choice in work-stealing is to find a way of how workers get their tasks.
+The second design choice in work-stealing is how to hand tasks to workers.
 For simplicity, we choose to use a shared, thread-safe queue that holds all tasks.
 The main drawback of this solution is that the access to the queue has to be synchronized between all workers.
-If there are too many workers contending for the critical section of polling a job of the queue, they can slow each other down.
-However, the critical section is small because it includes only the call to the poll method of the queue.
+If there are too many workers contending for the critical section of polling a job from the queue, they can slow each other down.
+However, the critical section is short because it includes only the call to the poll method of the queue.
 Additionally, we decide to implement a batching scheme such that a single poll can assign multiple tasks to a worker.
 This allows us to fine-tune how often a worker needs to return to the queue for new tasks.
 % TODO batch size experiment?
 
 It turns out that the work-stealing scheme as described above is straightforward to integrate into Spark.
 We choose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
-Java. Most importantly they are shared between all threads of the same JVM.} to hold a dictionary associate an ID for each
+Java. Most importantly they are shared between all threads of the same JVM.} to hold a dictionary which associates an ID for each
 query with a thread-safe queue instance.
-This allows accessing this queue from each task in Spark.
+This queue can be accesses by each Spark thread.
 Due to the association between query and queue, it is possible to run multiple queries in parallel without interference.
 
 The queue for a query is filled by the first Spark task that accesses it.
 This can be implemented by a short synchronized code section at the beginning of all tasks.
 It checks if the queue is empty and if so pushes one task per possible binding (all graph vertices) or batch of possible bindings.
-The synchronized section is fast running and only encountered once when the task starts.
-Hence, it comes to neglectable performance costs.
+The synchronized section is fast and only runs once when the tasks start.
+Hence, it comes at neglectable performance costs.
 
 Once the queue is filled, we run our normal \textit{LeapfrogTriejoin} with filtered \textit{Leapfrog join} for the first attribute.
 This filter is implemented as a decorator around the original \textit{Leapfrog join}.
-The \textit{leapfrogNext} method of this decorator returns only values that are polled by the work-stealing task queue by this worker.
+The \textit{leapfrogNext} method of this decorator returns only values that are polled from the work-stealing queue before.
 
 Our integration of work-stealing in Spark comes with some limitations.
 We see it more as a proof-of-concept that work-stealing is a good choice for the parallelization of worst-case optimal joins in Spark than
 as a solid implementation of work-stealing in Spark.
-This is not possible within the time-frame of this thesis.
+The later is not possible within the time-frame of this thesis.
 In the following, we discuss the constraints of our integration.
 
 Work-stealing leads to an unforeseeable partitioning of the results: it is not possible to foresee which bindings end up in a certain
 partition nor can we guarantee a specific partition size.
-If the user relies on any specific partitioning, he needs to repartition the results after manually.
-We do not see this limitation as a huge issue because most Spark joins do not guarantee a specific partitioning.
-However, they mostly repeatably construct the same partitions for the same query.
-This cannot be guaranteed for any work-stealing approach.
-If the user on a stable partitioning per query, he should cache the query after the worst-case optimal join execution.
+If the user relies on any specific partitioning, he needs to repartition the results after.
+Moreover, we cannot guarantue to construct an equal partitioning over multiple runs of the same query.
+If the user depends on a stable partitioning per query, he should cache the query after the worst-case optimal join execution.
 
-We do not integrate our work-stealing scheme into the Spark scheduler but we provide a best-effort implementation given that we use all
-resources assigned to us as soon as they are assigned to us.
+% TODO partitioning sizes? Skew after the join, do we always need to repartition?
+
+We do not integrate our work-stealing scheme into the Spark scheduler but we provide a best-effort implementation because
+we use all resources assigned to us as soon as they are assigned to us.
 We can handle all scheduler decisions.
 The first worker assigned fills the queue.
-The worker who takes the last element from the queue sets a boolean that this query has been fulfilled.
+The worker who takes the last element from the queue sets a boolean that this query has been completed.
 Hence, tasks that are started after the query has been computed, do not recompute the query.
 
 We do not provide a fault-tolerant system.
-We see two possibilities to integrate fault-tolerance in our system.
+We see two possibilities to make our system fault-tolerant.
 First, one can stop all tasks if a single task fails and restart the computation with the last cached results before the worst-case
 optimal join.
 Second, one could extend the critical section of polling a queue value by the \textit{LeapfrogJoin} by two more operations: we peek
