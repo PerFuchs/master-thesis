@@ -13,7 +13,7 @@ Hence, we believe that the WCOJ's, with their efficiency for analytical graph qu
 
 %However, it has been shown that one can use multiple rounds of Shares to trade-off more shuffle operations for less replication while maintaining optimal communication costs~\cite{shares-multi-round}.
 %Lately, in 2018, Afrati et al. published a Shares version which can handle skew and implemented it in Hadoop~\cite{sharesSkew,hadoop}.
-\subsection{\textsc{WCOJ} on Timely Data Flow}
+\subsection{\textsc{WCOJ} on Timely Data Flow}\label{subsec:wcoj-timely-data-flow}
 A second distributed version of worst-case optimal joins was published in 2018 based on a Timely Data Flow system~\cite{ammar2018distributed,naiad}.
 In Timely Data Flow, shuffling is a streaming, asynchronous operation which requires no disk access\footnote{The most commonly used cluster computing engines (Hadoop and Spark) implement shuffling as a synchronizing operation that requires to write and read all tuples from disk.}.
 Therefore, the number of shuffle operations is less important than in Hadoop or Spark.
@@ -24,6 +24,8 @@ Hence, their and our research share the same goals, however, we aim to achieve i
 
 % TODO longbins paper
 
+\subsection{Semih's work on worst-case optimal join for different queries}\label{subsec:wcoj-binary-joins}
+% TODO Semih's work
 %Below we analyse the scalability of \texttt{HC} in the context of analytical graph queries.
 %First, we point out some simple implications of our use-case, then we analyse how a growing number of variables influences the number of tuples per server, the number of servers needed to build the hypercube and the number of replicated tuples in the system.
 

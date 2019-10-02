@@ -211,17 +211,37 @@ They are cached in deserialized form in memory but can be spilled to disk if the
 In this thesis, we use broadcast variables to cache the edge relationship of the graph on all workers.
 
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
-The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
-In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}.
-In the same year, Veldhuizen proved that the algorithm ``Leapfrog Triejoin'' used in LogicBlox, a database system developed by his company, is also worst-case optimal with regards to the
-fractional edge number bound.
-Both alorithms have been shown to be instances `Generic Join' in 2013 Ngo et al.~\cite{skew-strikes-back}.
-Leapfrog Triejoin is the only worst-case join algorithm that has been implemented and benchmarked numerous times in widely different settings, e.g. Oxford course work, published research and a commercial database system~\cite{leapfrog,andreas,olddog,myria,ammar2018distributed,leapfrog-triejoin-schroeder}.
+The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query
+is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
+In short, this bound proves that traditional, binary join plans perform asymtopically worse than theoretical possible
+for the worst-case database instances, e.g. heavely skewed instances.
+For instance, the triangle query cannot be solved in less than $\mathcal{O} (N^2)$ of the edge table size, while the AGM bound
+shows the possibility to solve it in $\mathcal{O} (N^{3/2})$.
+The AGM bound has been treated widely in literature~\cite{skew-strikes-back,andreas,agm}.
+A particular good explanation is given by Hung Ngo et al in~\cite{skew-strikes-back}.
+We refer the reader to these papers for further infomation.
+In the next paragraph, we discus different algorithms matching the AGM bound which are called worst-case optimal joins.
+
+In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}, called \textit{NPRR} join.
+In the same year, Veldhuizen proved that the algorithm \textit{Leapfrog Triejoin} used in LogicBlox,
+a database system developed by his company, is also worst-case optimal with regards to the fractional edge number bound.
+We often abbreviate Leapfrog Triejoin to \textsc{LFJT}.
+Both algorithms have been shown to be instances of a single algorithm, the `Generic Join', in 2013 Ngo et al.~\cite{skew-strikes-back}.
+
+We choose to use the Leapfrog Triejoin as the basis for our work.
+This is for two reasons.
+First, because the Leapfrog Triejoin is the only worst-case join algorithm that has been implemented and benchmarked numerous times
+in widely different settings, e.g. Oxford course work, published research and a commercial database system~\cite{leapfrog,andreas,olddog,myria,ammar2018distributed,leapfrog-triejoin-schroeder}.
+We are not aware of any implementations of the NPRR join.
+To the best of our knowledge, the generic join has been used in two published papers~\cite{amin,timely-dataflow}, we
+discuss these in our related work section (~\ref{subsec:wcoj-timely-data-flow} and \ref{subsec:wcoj-binary-joins}).
+Second, the \textsc{LFTJ} has been integrated into a distributed MapReduce like system called Myria which is similar to Spark.
+This implementation has strong influence on our work and is discussed in~\cref{subsec:myria}.
 
 \subsubsection{LeapfrogTriejoin}
 % TODO LFTJ chapter
 
-\subsection{Distributed worst-case optimal join in Myria}
+\subsection{Distributed worst-case optimal join in Myria} \label{subsec:myria}
 In 2014, a Leapfrog Triejoin variant, dubbed ``Tributary Join'', was used as a distributed join algorithm on a shared-nothing architecture called ``Myria''~\cite{myria-detailed}.
 They use Tributary Join as a local, serial worst-case optimal join algorithm, combined with the Hypercube shuffle algorithm to partition the data between their machines~\cite{hypercube}.
 % TODO sort out hypercube and shares usage
