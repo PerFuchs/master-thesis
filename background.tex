@@ -215,31 +215,127 @@ The development of worst-case optimal joins started in 2008 with the discovery t
 is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
 In short, this bound proves that traditional, binary join plans perform asymtopically worse than theoretical possible
 for the worst-case database instances, e.g. heavely skewed instances.
-For instance, the triangle query cannot be solved in less than $\mathcal{O} (N^2)$ of the edge table size, while the AGM bound
+For instance, the worst-case of the triangle query is in $\mathcal{O} (N^2)$ , while the AGM bound
 shows the possibility to solve it in $\mathcal{O} (N^{3/2})$.
 The AGM bound has been treated widely in literature~\cite{skew-strikes-back,andreas,agm}.
 A particular good explanation is given by Hung Ngo et al in~\cite{skew-strikes-back}.
-We refer the reader to these papers for further infomation.
+We refer the reader to these papers for further information.
 In the next paragraph, we discus different algorithms matching the AGM bound which are called worst-case optimal joins.
 
 In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}, called \textit{NPRR} join.
 In the same year, Veldhuizen proved that the algorithm \textit{Leapfrog Triejoin} used in LogicBlox,
 a database system developed by his company, is also worst-case optimal with regards to the fractional edge number bound.
 We often abbreviate Leapfrog Triejoin to \textsc{LFJT}.
-Both algorithms have been shown to be instances of a single algorithm, the `Generic Join', in 2013 Ngo et al.~\cite{skew-strikes-back}.
+Both algorithms have been shown to be instances of a single algorithm, the \textit{Generic Join}, in 2013 Ngo et al.~\cite{skew-strikes-back}.
 
-We choose to use the Leapfrog Triejoin as the basis for our work.
-This is for two reasons.
-First, because the Leapfrog Triejoin is the only worst-case join algorithm that has been implemented and benchmarked numerous times
-in widely different settings, e.g. Oxford course work, published research and a commercial database system~\cite{leapfrog,andreas,olddog,myria,ammar2018distributed,leapfrog-triejoin-schroeder}.
-We are not aware of any implementations of the NPRR join.
-To the best of our knowledge, the generic join has been used in two published papers~\cite{amin,timely-dataflow}, we
-discuss these in our related work section (~\ref{subsec:wcoj-timely-data-flow} and \ref{subsec:wcoj-binary-joins}).
-Second, the \textsc{LFTJ} has been integrated into a distributed MapReduce like system called Myria which is similar to Spark.
-This implementation has strong influence on our work and is discussed in~\cref{subsec:myria}.
+We identified three worst-case optimal join algorithm: NPRR, LFTJ and Generic Join.
+We choose Leapfrog Triejoin as the basis for our work.
+The argumentation for this decision is given below.
+First, we identify the main criteria this choice.
+Then, we use them to compare the different algorithms.
+
+The most important argument for our decision is the degree to which the algorithm has been shown
+to be of practical use.
+In particular, the number of systems it is used in and openly available data on its performance.
+If an algorithm is used in academia as well as in industry, we deem this as a big advantage.
+This criteria carries a lot of weight because the first literature on worst-case optimal joins
+has been rather theoretical but in our work we take a more praxis and system oriented perspective.
+
+The practical character of our work also motivates the second dimension we compare the algorithms in, namely
+ease of implemenation.
+If two of the three algoritms both have well proven performance, we would like to choose the algorithm
+that takes less time to implement and is easier to adapt and experiment with.
+That is to be able to spent more time on evaluation and optimizations for the graph use-case, instead of,
+time spent on replicating existing work.
+
+The Leapfrog Triejoin is used in two commercial database solutions:
+LogicBlox~\cite{logicBlox} and RelationalAI~\footnote{https://www.relational.ai/}.
+Its performance has been reported on in two publications~\cite{myria-detailed,olddog}.
+In particular, it beats various general and graph specific databases for graph pattern matching~\cite{oldgo}, i.e.
+PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso.
+The broadest study of its performance uses 15 different datasets and 7 queries~\cite{olddog}.
+We conclude that the performance of \textsc{LFTJ} is well established by peer reviewed publications
+as well as industrial usage.
+% TODO find cites for graphlab and Virtuoso
+
+\textit{NPRR} has been well analyzed from the theoretical point of view.
+However, we are not able to find any openenly available sources with performance measurements.
+This disqualifies \textsc{NPRR} as basis for our thesis.
+
+\textit{Generic Join} is used in at least three academic graph processing engines,
+namely GraphFlow~\cite{graphflow}, EmptyHeaded~\cite{emptyheaded} and a unnamed implemenation in
+Timely DataFlow~\cite{ammar2018distributed}.
+All three show good performance.
+However, we are not aware of any commercial systems using \textsc{GJ}.
+
+The comparision of Leapfrog Triejoin, \textsc{NPRR} and \textit{Generic Join} by proven performance
+rules out \textsc{NPRR} and puts \textsc{LFTJ} and \textsc{GJ} on a similar level.
+Next, we compare these two algorithm in ease of implementation.
+
+The description of the Leapfrog Triejoin implementation in its original paper~\cite{lftj} is excellent.
+Furthermore, multiple open source implementation exists~\cite{de-witt,myria-detailed}.
+In particular, the implementation of Christian Schroeder for a course at Oxford is helpful because it is standalone and
+does not require us to understand a whole system\footnote{TODO GitHub Dewitt}.
+
+\textit{Generic Join} is described as a generalization of \textsc{NPRR} and Leapfrog Triejoin in its original
+paper~\cite{skew-strikes-back}.
+Although, well written and algorithmically clear, this explanation is much less practical than the one given for \textsc{LFTJ} which
+is backed by a executable implementation.
+
+To conclude, we choose Leapfrog Triejoin as basis for our work based on its openely available records of performance, use in
+academic as well as industrial systems and good description for direct implementation.
+Furthermore, Peter Boncz (supervisor of this thesis) has direct contact to the inventors of \textsc{LFTJ} giving us access to valuable
+expertise if necessary.
 
 \subsubsection{LeapfrogTriejoin}
-% TODO LFTJ chapter
+% Use in industry
+The Leapfrog Triejoin gives strong theoretical guarantues which have been proven to be worst-case optimal in~\cite{lftj}.
+Moreover, the \textsc{LFTJ} has been shown to be of practical use in multiple systems and papers.
+It is at the core of the commercial LogicBlox database system~\cite{lftj} and in the products of
+RelationalAI\footnote{https://www.relational.ai/}, the latter company of its inventors.
+Hence, showing its worth in industry.
+In academia, Leapfrog Triejoin has been shown to beat traditional binary join plans employing Hashjoins or Sort-Merge joins,
+
+% background over "typical" graph pattern matching queries needed
+%   olddog good introduction about binary joins vs wcoj for graph pattern matching
+% background about graph pattern matching needed
+
+% WCOJ against graph engines (oldog)
+
+% worst case optimal up to a logN modulo, can be eliminated lftj
+%  more optimal than NPRR on some instances (see lftj)
+
+% Queries in terms of full conjunctive queries, existence queries, none-equi joins
+%   extensions to disjunctions, ranges, negation and projection discussed in LFTJ
+
+% background on binary join operators?
+% comparision, intermediate results
+%  intuitive understanding of why better?
+
+% Queries: olddog, Semih's paper,
+%    Mostly for graphs
+% Comparision with other systems: oldog, graphlab, virtuoso, monetdb, pssql, neo4j
+
+
+% Variable ordering: Semih's paper, lftj, design of logixblox: Optimization and parallelism.
+
+
+% Algorithm and Implemenation
+%    As layered algorithm LFTJ, LF, TrieIterators
+%    performance guaruntues of the different layers
+%    different backing datastructures B-Trees, Arrays Tributary join.
+%       in this work we add CSR
+%    Connection to query should stay clear, that's why LFTJ paper chooses to introduce them bit
+%    by bit
+
+
+% Codegeneration studied by RelationalAi
+% Compression studied by Richard
+
+
+% Query assumptions
+%    Each variable at most once per argument list
+%    Each argument list must be a subsequence of the variable ordering
 
 \subsection{Distributed worst-case optimal join in Myria} \label{subsec:myria}
 In 2014, a Leapfrog Triejoin variant, dubbed ``Tributary Join'', was used as a distributed join algorithm on a shared-nothing architecture called ``Myria''~\cite{myria-detailed}.
