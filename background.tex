@@ -295,22 +295,9 @@ expertise if necessary.
 
 \subsubsection{LeapfrogTriejoin}
 
-
-
-% Use in industry
-The Leapfrog Triejoin gives strong theoretical guarantues which have been proven to be worst-case optimal in~\cite{lftj}.
-Moreover, the \textsc{LFTJ} has been shown to be of practical use in multiple systems and papers.
-It is at the core of the commercial LogicBlox database system~\cite{lftj} and in the products of
-RelationalAI\footnote{https://www.relational.ai/}, the latter company of its inventors.
-Hence, showing its worth in industry.
-In academia, Leapfrog Triejoin has been shown to beat traditional binary join plans employing Hashjoins or Sort-Merge joins,
-
 % full, conjugative query == equi joins?
 %  equi joins important for graph pattern matching
 %  concentrate on only that
-
-% LFTJ paper proof concentrates on full, conjugative queries and extends it to existence1 queries, this
-% is first order logic without all quantifier and no negated existence
 
 The Leapfrog Triejoin is a variable-oriented join.
 Given an input queries, it requires a variable ordering.
@@ -529,6 +516,7 @@ Then, this action is followed by another \textit{up} or a \textit{next} dependin
 
 %    different backing datastructures B-Trees, Arrays Tributary join.
 %       in this work we add CSR
+%    In implementation
 
 % Inputs:
 %      attributes subsequent of the join variable ordering
@@ -567,13 +555,53 @@ fragment, e.g. cliques or cycles.
 Finding a good variable ordering for the \textsc{LFTJ} is an interesting research problem in itself.
 We are aware of two existing approaches.
 
-The first is to create and maintain representative samples for each input relationship and determine the best order based on them.
+The first is to create and maintain representative samples for each input relationship and determine the best order based on runs over
+these samples.
 This has been implemented in the LogicBlox the first system to use Leapfrog Triejoins~\cite{logicBlox}.
+To the best of our knowledge, the exact method of creating the representative samples has not been published.
 
-The second % TODO good summary of Amine's paper
+The second approach is described in great detail by Mhedhbi and Salihoglu in~\cite{mhedhbi2019}.
+Its has been implemented in their research graph database Graphflow~\cite{graphflow}.
+% C. Kankanamge, S. Sahu, A. Mhedbhi, J. Chen, and S. Salihoglu. Graphflow: An Active Graph Database. In SIGMOD, 2017
 
-In our work, we determine a good variable ordering by running the queries with different variable orderings and choosing the fastest
-option.
+They define a novel cost-metric for \textsc{WCOJ}s which estimates the costs incured by constructing the intersections of adjacency
+lists.
+The metric takes three factors into account.
+First, the size adjacency lists.
+
+Then, the number of intermediate matches.
+The concept of intermedieate matches is best understood by a simple example;
+we see the tailed-triangle query in~\cref{fig:tailed-triangle}.
+Two very different vertice ordering categories exists for this query.
+The ones that start on $v_4$ and find all 2-paths of the graph;
+and vertice orderings that start with $v_1, v_2, v_3$ in any order which close the triangle first.
+Clearly, there are more 2-paths in any graph than triangles.
+Hence, the second category produces far less intermediate matches.
+
+Finally, they implement an intersection cache in their system which takes advantage of the fact that some queries can reuse already
+constructed intersections.
+So, the last factor taken into account by their cost metrics is the usage of this intersection cache.
+
+Using the described cost metrics and a catalogue of sampled subgraph extentions containing the sizes of adjacency lists to intersect and
+produced intermediate results they estimate the costs for a query vertice orderings and choose the best.
+Moreover, the implement the ability to change the query ordering adaptively during query execution  based on the real adjacency list sizes
+and intermediate results.
+They show that adaptive planning can improve the performance of many plans and makes the query optimizer more robust against bad plans.
+To conclude, the work of Mhedhbi et al. is the most comprehensive study on query vertex orderings for \textsc{WCOJs} currently available;
+they introduce a cost metric, a query optimizer to use this metric and prove that it is possible and beneficial to compute parts of
+the results using a different variable order.
+
+In our work, we do not implement an automatic process to choose the best variable order.
+The order we choose is based on experiments with different orders and intuition of the author.
+Integrating the approach of LogixBlox would be possible but require the implementer to find a good sampling strategy (as no details
+are openenly available).
+% TODO ask peter if I need to explain if this can be integrated with our system. The paper is quite a hard read
+% Integration of catalogue
+% use of cost metrics
+%   how exactly is the metric used?
+% adaptive variable ordering?
+
+
 
 % OLD
 %====
