@@ -221,56 +221,56 @@ The development of worst-case optimal joins started in 2008 with the discovery t
 is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
 In short, this bound proves that traditional, binary join plans perform asymtopically worse than theoretical possible
 for the worst-case database instances, e.g. heavely skewed instances.
-For instance, the worst-case of the triangle query is in $\mathcal{O} (N^2)$ , while the AGM bound
+For example, the worst-case runtime of binary joins on the triangle query is in $\mathcal{O} (N^2)$, while the AGM bound
 shows the possibility to solve it in $\mathcal{O} (N^{3/2})$.
 The AGM bound has been treated widely in literature~\cite{skew-strikes-back,andreas,agm}.
 A particular good explanation is given by Hung Ngo et al in~\cite{skew-strikes-back}.
 We refer the reader to these papers for further information.
 In the next paragraph, we discus different algorithms matching the AGM bound which are called worst-case optimal joins.
 
-In 2012, Ngo, Porat, Re and Rudra published a join algorithm matching this bound~\cite{nprr}, called \textit{NPRR} join.
-In the same year, Veldhuizen proved that the algorithm \textit{Leapfrog Triejoin} used in LogicBlox,
+In 2012, Ngo, Porat, Re and Rudra published the first join algorithm matching the AGM bound, called \textit{NPRR} join~\cite{nprr}.
+In the same year, Veldhuizen proved that the algorithm Leapfrog Triejoin used in LogicBlox,
 a database system developed by his company, is also worst-case optimal with regards to the fractional edge number bound.
 We often abbreviate Leapfrog Triejoin to \textsc{LFJT}.
-Both algorithms have been shown to be instances of a single algorithm, the \textit{Generic Join}, in 2013 Ngo et al.~\cite{skew-strikes-back}.
+Both algorithms have been shown to be instances of a single algorithm, the \textit{Generic Join}, in 2013 by Ngo et al.~\cite{skew-strikes-back}.
 
-We identified three worst-case optimal join algorithm: NPRR, LFTJ and Generic Join.
+Three worst-case optimal join algorithms are known in literature.
 We choose Leapfrog Triejoin as the basis for our work.
 The argumentation for this decision is given below.
-First, we identify the main criteria this choice.
+First, we identify the main criteria for this choice.
 Then, we use them to compare the different algorithms.
 
 The most important argument for our decision is the degree to which the algorithm has been shown
 to be of practical use.
 In particular, the number of systems it is used in and openly available data on its performance.
-If an algorithm is used in academia as well as in industry, we deem this as a big advantage.
+If an algorithm is used in academia as well as in industry, we deem this as a advantage.
 This criteria carries a lot of weight because the first literature on worst-case optimal joins
 has been rather theoretical but in our work we take a more praxis and system oriented perspective.
 
-The practical character of our work also motivates the second dimension we compare the algorithms in, namely
+The practical character of our work also motivates the second dimension which we compare the algorithms in, namely
 ease of implemenation.
 If two of the three algoritms both have well proven performance, we would like to choose the algorithm
 that takes less time to implement and is easier to adapt and experiment with.
-That is to be able to spent more time on evaluation and optimizations for the graph use-case, instead of,
+That is, to be able to spent more time on evaluation and optimizations for the graph use-case, instead of,
 time spent on replicating existing work.
 
 The Leapfrog Triejoin is used in two commercial database solutions:
-LogicBlox~\cite{logicBlox} and RelationalAI~\footnote{https://www.relational.ai/}.
+LogicBlox~\cite{logicBlox} and RelationalAI\footnote{https://www.relational.ai/}.
 Its performance has been reported on in two publications~\cite{myria-detailed,olddog}.
-In particular, it beats various general and graph specific databases for graph pattern matching~\cite{oldgo}, i.e.
-PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso.
+In particular, it beats various general and graph specific databases for graph pattern matching, i.e.
+PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso~\cite{olddog}.
 The broadest study of its performance uses 15 different datasets and 7 queries~\cite{olddog}.
 We conclude that the performance of \textsc{LFTJ} is well established by peer reviewed publications
 as well as industrial usage.
 % TODO find cites for graphlab and Virtuoso
 
-\textit{NPRR} has been well analyzed from the theoretical point of view.
+The \textit{NPRR} algorithm has been well analyzed from the theoretical point of view.
 However, we are not able to find any openenly available sources with performance measurements.
 This disqualifies \textsc{NPRR} as basis for our thesis.
 
-\textit{Generic Join} is used in at least three academic graph processing engines,
-namely GraphFlow~\cite{graphflow}, EmptyHeaded~\cite{emptyheaded} and a unnamed implemenation in
-Timely DataFlow~\cite{ammar2018distributed}.
+The \textit{Generic Join} is used in at least three academic graph processing engines,
+namely GraphFlow~\cite{graphflow}, EmptyHeaded~\cite{emptyheaded} and a unnamed implementation in
+Timely Dataflow~\cite{ammar2018distributed}.
 All three show good performance.
 However, we are not aware of any commercial systems using \textsc{GJ}.
 
@@ -279,42 +279,65 @@ rules out \textsc{NPRR} and puts \textsc{LFTJ} and \textsc{GJ} on a similar leve
 Next, we compare these two algorithm in ease of implementation.
 
 The description of the Leapfrog Triejoin implementation in its original paper~\cite{lftj} is excellent.
-Furthermore, multiple open source implementation exists~\cite{de-witt,myria-detailed}.
+Furthermore, multiple open source implementation exists~\cite{leapfrog-triejoin-schroeder,myria-detailed}.
 In particular, the implementation of Christian Schroeder for a course at Oxford is helpful because it is standalone and
-does not require us to understand a whole system\footnote{TODO GitHub Dewitt}.
+does not require us to understand a whole system\footnote{https://github.com/schroederdewitt/leapfrog-triejoin}.
 
 \textit{Generic Join} is described as a generalization of \textsc{NPRR} and Leapfrog Triejoin in its original
 paper~\cite{skew-strikes-back}.
 Although, well written and algorithmically clear, this explanation is much less practical than the one given for \textsc{LFTJ} which
-is backed by a executable implementation.
+is backed by an executable implementation.
 
 To conclude, we choose Leapfrog Triejoin as basis for our work based on its openely available records of performance, use in
-academic as well as industrial systems and good description for direct implementation.
+academia as well as industrial systems and good description for direct implementation.
 Furthermore, Peter Boncz (supervisor of this thesis) has direct contact to the inventors of \textsc{LFTJ} giving us access to valuable
 expertise if necessary.
 
-\subsubsection{LeapfrogTriejoin}
-
-% full, conjugative query == equi joins?
-%  equi joins important for graph pattern matching
-%  concentrate on only that
+\subsubsection{Leapfrog Triejoin} \label{subsubsec:leapfrog-triejoin}
+In this section, we described the Leapfrog Triejoin algorithm.
+In the first paragraph, we give the high-level idea behind the algorithm and some of its requirements.
+Then we discuss the kind of queries that can be answered with it.
+The main part of the section, discusses the conceptual algorithm itself.
+We finish with a short discussion of two implementation problems, namely the data structure to represent the input relationships and
+the problem of choosing a good variable ordering.
 
 The Leapfrog Triejoin is a variable-oriented join.
 Given an input queries, it requires a variable ordering.
 For example in the triangle query $triangles(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$,
 the variable ordering could be $a, b, c$.
-Furthermore, the Leapfrog Triejoin requires that its input relationships to be sorted by lexicographic, ascending order over the given
-variable ordering.
-Then it fixes one possible binding for $a$, one for $b$ given $a$ and finally one for $c$ given $a$ and $b$.
+Furthermore, the Leapfrog Triejoin requires its input relationships to be sorted by lexicographic, ascending order over the given
+variable ordering, e.g. $R$ needs to be sorted by primarily by $a$ and secondary by $b$ given the variable ordering $a, b, c$.
+The algorithm is variable-oriented because it fixes one possible binding for $a$, one for $b$ given $a$ and finally one for $c$ given $a$
+and $b$.
 This allows it to enumerate the result of the join query without intermediary results.
 The process can be thought of as a backtracking, depth-first search for possible bindings.
 
-% TODO figures of layered LFTJ
-The algorithm to implement this search uses three components which are composed in a layered fashion.
+The algorithms impelemted in this thesis can process joins of the full conjunctive fragment of first order logic or conjunctive
+equi-joins in relational algebra terms.
+Possible extentsions to disjunctions, ranges (none-equi joins), negation, projection, functions and scalar operations on join variables are
+explained in the original Leapfrog Triejoin paper~\cite{lftj}.
+However, they are not relevant to the core of this work because many interesting graph patterns can be answered using the full conjunctive
+fragment, e.g. cliques or cycles.
+
+The Leapfrog Triejoin algorithm uses three components which are composed in a layered fashion.
 The concrete composition used for the triangle query is shown in~\cref{fig:lftj-layers}.
 In this figure, we see three layers each of them made of one or more instances of a component.
-The components are the \textit{TrieIterator}, \textit{LeapfrogJoin} and \textit{LeapFrogTriejoin}.
-In the next paragraphs, we explain each layer in order starting with the lowest layer.
+The components are the \textit{TrieIterator}, \textit{LeapfrogJoin} and \textit{LeapfrogTriejoin}.
+In the next paragraphs, we explain each layer in order, starting with the lowest layer.
+
+\begin{figure}
+    \includesvg[width=\textwidth]{lftj-layers}
+    \caption{
+    The three layers of the Leapfrog Triejoin algorithm.
+    The configuration for a triangle query is shown: three \textit{TrieIterators} one
+    per input relationship, three \textit{LeapfrogJoins} one per variable and
+    one \textit{LeapfrogTriejoin} component are neccessary.
+    The arrows indicate that a component uses another.
+    The \textit{LeapfrogTriejoin} uses all other components but only the vertical part of the \textit{TrieIterators} (dashed arrows).
+    The \textit{LeapfrogJoins} uses the linear part of two \textit{TrieIterators} each.
+    }
+    \label{fig:lftj-layers}
+\end{figure}
 
 The lowest layer is made of one \textit{TrieIterator} per input relationship.
 In our example, we have three instances one for R, S and T each.
@@ -322,39 +345,90 @@ The \textit{TrieIterator} interface represents the input relationship as a trie 
 the first attribute on the first level, the values for the second attribute on the second level and so
 on; an example for this is shown in~\cref{fig:trie-example}.
 
-The trie contains one level per attribute of the relationship;
-in this case, this are two levels one for $a$ and one for $b$.
-Each level is made of all possible values for this attribute.
-All tuples of the relationship can be enumerated by a depth-first traversal of this trie.
+\begin{figure}
+    \centering
+    \includesvg[height=5cm]{trie}
+    \caption{A 3-ary relationship as table (left) and trie (right), to position the iterator at the tuple (1, 1, 5) one
+    calls \textit{open} twice, \textit{key} returns now 5, after a call to \textit{next}, \textit{key} returns 6 and \textit{up}
+    would lead to \textit{key} returning 1.}
+    \label{fig:trie-example}
+\end{figure}
 
-The \textit{TrieIterator} component offers five methods shown in~\cref{table:trieIterator-inteface}.
-The \textit{open} and \textit{up} methods control the trie level the iterator is positioned at;
+The trie contains one level per attribute of the relationship;
+in the case of the triangle query, there are two levels: one for $a$ and one for $b$.
+Each level is made of all possible values for its attribute.
+All tuples of the relationship can be enumerated by a depth-first traversal of the trie.
+
+The \textit{TrieIterator} component offers six methods shown in~\cref{table:trieIterator-interface}.
+The \textit{open} and \textit{up} methods control the level the iterator is positioned at;
 \textit{open} moves it one level down and \textit{up} moves it one level up.
 Additionally, \textit{open} places the iterator at the first value for the next level and the up
-method returns to the value of the upper level that was current when the next level was opened.
+method returns to the value of the upper level that was current when the deeper level was opened.
 We call these two methods the vertical component of the \textit{TrieIterator} interface.
+
+\begin{table}
+    \centering
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        Method         & required complexity    \\
+        \midrule
+        int key()      &  $\mathcal{O}(1)$       \\
+        bool atEnd()   &  $\mathcal{O}(1)$       \\
+        void up()      &  $\mathcal{O}(\log_N)$  \\
+        void open()    &  $\mathcal{O}(\log_N)$  \\
+        void next()    &  $\mathcal{O}(\log_N)$  \\
+        void seek(key) &  $\mathcal{O}(\log_N)$  \\
+        \bottomrule
+    \end{tabular}
+    \caption{
+      The \textit{TrieIterator} interface with required complexity.
+      $N$ is the size of relationship represented by the iterator.
+    }
+    \label{table:trieIterator-interface}
+\end{table}
 
 The other four methods are called linear component.
 All of them operate on the current level of the \textit{TrieIterator}.
-The \textit{key} function returns the current key.
+The \textit{key} function returns the current key (a single integer).
 The \textit{next} method moves the iterator to the next key on the same level.
 The \textit{seek(key)} operation finds the least upper bound for its parameter \textit{key}.
 Finally, the \textit{atEnd} method returns \textit{true} when the iterator is placed behind the last value of the current level.
 
-
-The middle layer is build of one \textit{LeapfrogJoin} per variable in the join.
+The middle layer of the Leapfrog Triejoin is made of one \textit{LeapfrogJoin} per variable in the join.
 This join generates possible bindings for its variable by intersecting the possible values for all input relationship containing the
 variable.
 Therefore, it operates on the linear component of all \textit{TrieIterators} of relationships with this variable.
 \Cref{fig:lftj-layers} for the triangle query shows three \textit{LeapfrogJoin} instances (for $a, b$ and $c$);
 each of them uses two \textit{TrieIterators}.
 
-The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:leapfrogJoin-interface} with their required asymptopical performance.
+The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:leapfrogJoin-interface}, with their required asymptopical
+performance.
 In the following paragraphs, we explain each of them.
-In short, the join offers a iterator interface over the intersection of its input iterators.
+In short, the join offers an iterator interface over the intersection of its input iterators.
 This intersection is found by repeatingly seeking the value of the largest input iterator in the smallest input iterator.
 This process resemples a frog taking a leap which gives the join its name.
 When all iterators point to the same value leapfrogging stops and the value is emitted as part of the intersection.
+
+\begin{table}
+    \centering
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        Method         &  required complexity    \\
+        \midrule
+        int key()      &  $\mathcal{O}(1)$       \\
+        bool atEnd()   &  $\mathcal{O}(1)$       \\
+        void init()    &  $\mathcal{O}(\log_N)$  \\
+        void next()    &  $\mathcal{O}(\log_N)$  \\
+        void seek(key) &  $\mathcal{O}(\log_N)$  \\
+        \bottomrule
+    \end{tabular}
+    \caption{
+    The \textit{LeapfrogJoin} interface with required complexity.
+    $N$ is the size of relationship represented by the iterator.
+    }
+    \label{table:leapfrogJoin-interface}
+\end{table}
+
 
 The \textit{init} operation sorts the input iterator by their current key and finds the first value of the intersection.
 To find the first value it uses the private method \textit{leapfrogSearch} which is the work-horse of the whole join.
@@ -394,7 +468,8 @@ to find the upper bound of this key.
 
 Finally, the functions \textit{key} and \textit{atEnd} return the current key or if the intersection is complete respectively.
 
-The last layer is a single \textit{LeapfrogTriejoin} instance.
+% TODO line numbers
+The last layer of the whole algorithm is a single \textit{LeapfrogTriejoin} instance.
 It interacts with both lower layers to enumerate all possible bindings for the join.
 For this it aquires one binding for the first variable from the corresponding \textit{LeapfrogJoin}.
 Then it moves the \textit{TrieIterators} containing this variable to the next level and
@@ -403,7 +478,7 @@ This process continues until all variables are bound and a tuple representing th
 by the join operator.
 Then it finds the next possible binding by backtracking.
 
-The algorithm used for the backtracking depth-first traversal is shown in~\cref{alg:leapfrogTrieJoin-state-machine}.
+\Cref{alg:leapfrogTrieJoin-state-machine} shows the backtracking depth-first traversal.
 This traversal needs to stop each time when a complete tuple has been found to support the iterator interface of the join.
 Therefore, it is implemented as a state-machine which stops each time the deepest level is reached and all variables are bound
 (loop condition in line 35). % LINE
@@ -413,10 +488,10 @@ There are three possible actions: \textit{next}, \textit{down} and \textit{up}.
 We summarize the possible actions, conditions for the next action and if the main loop of the state machine yields the next tuple
 in~\cref{table:lftj-state-machine} and describe each action below.
 
-\begin{algorithm}[H]
-    \kwData{
-      depth \\* the index of the variable to find a binding for, range from -1 to #variables - 1 *\\ \;
-      MAX_DEPTH \\* the number of variables \\*
+\begin{algorithm}
+    \KwData{
+      depth \* the index of the variable to find a binding for, range from -1 to \#variables - 1 *\ \;
+      MAX\_DEPTH \\* the number of variables \\*
       bindings \\* array holding the current variable bindings or $-1$ for no binding \\* \;
       action   \\* state of the state machine \\* \;
     }
@@ -465,7 +540,7 @@ in~\cref{table:lftj-state-machine} and describe each action below.
       }
     }  
     \caption{LeapfrogTrieJoin state machine}
-    \label{leapfrogTrieJoin-state-machine}
+    \label{alg:leapfrogTrieJoin-state-machine}
     % TODO mention triejoinopen and triejoinUP
 \end{algorithm}
 % TODO styling
@@ -475,7 +550,7 @@ otherwise we set the binding and continue by another \textit{next} action, if we
 to the next deeper level by the \textit{down} action (line 7). % LINE
 
 The \textit{down} action moves to the next variable in the global variable ordering by opening all related \textit{TrieIterators}
-and initializing the corresponding \textit{LeapfrogJoin} (line 20 call to \textit{trieJoinOpen}) % LINE.
+and initializing the corresponding \textit{LeapfrogJoin} (line 20 call to \textit{trieJoinOpen}). % LINE.
 A \textit{down} can be followed by an \textit{up} if the \textit{LeapfrogJoin} is \textit{atEnd} (line 22),
 by a \textit{next} action if the trie join is at its lowest level (line 25), or by another \textit{down} action to reach the deepest level.
 
@@ -513,66 +588,39 @@ Then, this action is followed by another \textit{up} or a \textit{next} dependin
     \label{table:lftj-state-machine}
 \end{table}
 
+% TODO positioning
+\paragraph{TrieIterator implementation, backing data structure}
+While we can implement the \textit{LeapfrogJoin} and \textit{LeapfrogTriejoin} component of the Leapfrog Triejoin from the
+algorithmic description given above, we are missing some details for a concrete implementation of the
+\textit{TrieIterator} interface.
+Mainly, we need to decide for a datastructure to back the \textit{TrieIterator}.
 
-%    different backing datastructures B-Trees, Arrays Tributary join.
-%       in this work we add CSR
-%    In implementation
+We choose to use sorted arrays as described in~\cite{myria-detailed}.
+One array is used per column of the input relationship and binary search on these arrays allows us to implement the \textit{TrieIterator}
+interface with the required asymptopical complexities (see~\cref{table:trieIterator-interface}).
 
-% Inputs:
-%      attributes subsequent of the join variable ordering
-% variable ordering needs to be discussed before
-%    only existence or the whole problem of join variable ordering?
-
-
-
-% Queries: olddog, Semih's paper,
-%    Mostly for graphs
-
-% background over "typical" graph pattern matching queries needed
-%   olddog good introduction about binary joins vs wcoj for graph pattern matching
-% background about graph pattern matching needed
-
-% background on binary join operators?
-% comparision, intermediate results
-%  intuitive understanding of why better?
-
-% WCOJ against graph engines (oldog)
-% Comparision with other systems: oldog, graphlab, virtuoso, monetdb, pssql, neo4j
-
-
-% TODO find placement
-\paragraph{Extentsions}
-The algorithm described below and all variants implemented in this thesis can process joins of the full conjunctive fragment of first
-order logic or conjugative equi-joins in relational algebra terms.
-Possible extentsions to disjunctions, ranges (none-equi joins), negation, projection, functions and scalar operations on join variables are
-described in the original Leapfrog Triejoin paper~\cite{lftj}.
-However, they are not relevant to the core of this work because many interesting graph patterns can be answered using the full conjunctive
-fragment, e.g. cliques or cycles.
-
-% Codegeneration studied by RelationalAi
-% Compression studied by Richard
 \paragraph{Variable ordering}  % TODO move all sections one up and use of chapter?
 Finding a good variable ordering for the \textsc{LFTJ} is an interesting research problem in itself.
 We are aware of two existing approaches.
 
 The first is to create and maintain representative samples for each input relationship and determine the best order based on runs over
 these samples.
-This has been implemented in the LogicBlox the first system to use Leapfrog Triejoins~\cite{logicBlox}.
+This has been implemented in LogicBlox, the first system to use Leapfrog Triejoins~\cite{logicBlox}.
 To the best of our knowledge, the exact method of creating the representative samples has not been published.
 
 The second approach is described in great detail by Mhedhbi and Salihoglu in~\cite{mhedhbi2019}.
 Its has been implemented in their research graph database Graphflow~\cite{graphflow}.
-% C. Kankanamge, S. Sahu, A. Mhedbhi, J. Chen, and S. Salihoglu. Graphflow: An Active Graph Database. In SIGMOD, 2017
 
 They define a novel cost-metric for \textsc{WCOJ}s which estimates the costs incured by constructing the intersections of adjacency
 lists.
 The metric takes three factors into account.
 First, the size adjacency lists.
 
-Then, the number of intermediate matches.
+% TODO tailed triangle query, all other query pics for experiments
+Second, the number of intermediate matches.
 The concept of intermedieate matches is best understood by a simple example;
 we see the tailed-triangle query in~\cref{fig:tailed-triangle}.
-Two very different vertice ordering categories exists for this query.
+Two very different vertice ordering categories exist for this query.
 The ones that start on $v_4$ and find all 2-paths of the graph;
 and vertice orderings that start with $v_1, v_2, v_3$ in any order which close the triangle first.
 Clearly, there are more 2-paths in any graph than triangles.
@@ -582,26 +630,72 @@ Finally, they implement an intersection cache in their system which takes advant
 constructed intersections.
 So, the last factor taken into account by their cost metrics is the usage of this intersection cache.
 
-Using the described cost metrics and a catalogue of sampled subgraph extentions containing the sizes of adjacency lists to intersect and
-produced intermediate results they estimate the costs for a query vertice orderings and choose the best.
-Moreover, the implement the ability to change the query ordering adaptively during query execution  based on the real adjacency list sizes
+They use the described cost metric, a dynamic programming approach to enumerate possible plans and  a catalogue of sampled subgraph
+instances containing the sizes of adjacency lists to intersect and produced intermediate results to estimate the costs for all
+variable orderings.
+
+Moreover, they implement the ability to change the query ordering adaptively during query execution  based on the real adjacency list sizes
 and intermediate results.
-They show that adaptive planning can improve the performance of many plans and makes the query optimizer more robust against bad plans.
+They show that adaptive planning can improve the performance of many plans.
+Furthermore, it makes the query optimizer more robust against choosing bad orderings.
+
 To conclude, the work of Mhedhbi et al. is the most comprehensive study on query vertex orderings for \textsc{WCOJs} currently available;
 they introduce a cost metric, a query optimizer to use this metric and prove that it is possible and beneficial to compute parts of
 the results using a different variable order.
 
 In our work, we do not implement an automatic process to choose the best variable order.
 The order we choose is based on experiments with different orders and intuition of the author.
-Integrating the approach of LogixBlox would be possible but require the implementer to find a good sampling strategy (as no details
-are openenly available).
-% TODO ask peter if I need to explain if this can be integrated with our system. The paper is quite a hard read
-% Integration of catalogue
-% use of cost metrics
-%   how exactly is the metric used?
-% adaptive variable ordering?
+
+Integrating the approach of LogixBlox would be possible but require the implementer to find a good sampling strategy because no details
+are openenly available.
+
+The approach of Mhedhbi and Salihoglu is much better documented but also more complex.
+It consists out of four contribution which build up on each other but could be useful on its own.
+The cost metric described in their paper applies to our system as well and could be used.
+
+They use this metric for cost estimation in connection with a none-trivial subgraph catalogue.
+The main challenge in integrating this way of cost estimation with our system is to elegantly integrate catalogue creation in Spark.
+
+Their solution for adaptive variable orderings is helpful because it proves that this technique is beneficial;
+they also publish performance measurements, so the impact can be evaluated.
+However, there system employs a \textit{Generic Join} while we use a Leapfrog Triejoin.
+The integration of adaptive variable orderings into Leapfrog Triejoin is not trivial and it is likely that their implementation is not
+directly applicable.
+
+Finally, they introduce an intersection cache to make use of repeatedly used intersections.
+This can be directly applied to our system, e.g. using the decorator pattern around \textit{LeapfrogJoins}.
+We note that they only cache the last, full n-way-interesection of multiple adjacency lists.
+It would be interesting to research if the system would benefit from caching partial n-way intersections as well because
+we noticed that for some queries, e.g. 5-clique, the intersection between the first two lists can be reused more often than the full
+intersection.
+This opens the interesting question in which order we should intersect the lists.
+
+We conclude that two concepts to choose a good variable ordering exists which are both (partially) applicable to our system.
+The LogixBlox approach is simpler and directly integratable but not well documented.
+The solution used in GraphFlow is far more complexe and developed for another \textsc{WCOJ}.
+Anyhow, the paper describes it in great detail and parts of it could be integrated directly, while others need some engineering effort or
+need to be redesigned completely.
 
 
+% Additional ideas.
+%===================
+% Queries: olddog, Semih's paper,
+%    Mostly for graphs
+
+% background over "typical" graph pattern matching queries needed
+%   olddog good introduction about binary joins vs wcoj for graph pattern matching
+% background about graph pattern matching needed
+
+
+% WCOJ against graph engines (oldog)
+% Comparision with other systems: oldog, graphlab, virtuoso, monetdb, pssql, neo4j
+
+% comparision, intermediate results
+%  intuitive understanding of why better?
+% background on binary join operators?
+
+% Codegeneration studied by RelationalAi
+% Compression studied by Richard
 
 % OLD
 %====
