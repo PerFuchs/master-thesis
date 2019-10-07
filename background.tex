@@ -213,6 +213,7 @@ In this thesis, we use broadcast variables to cache the edge relationship of the
 \subsection{Graph pattern matching}
 % Definition of graph pattern matching
 % Important queries can be covered by full, conjugutive E1 formulaes
+% Worst-Case Optimal Algorithms for Parallel Query Processing, contains great background on conjugutive queries
 %  or equijoins
 %
 
@@ -672,7 +673,7 @@ This opens the interesting question in which order we should intersect the lists
 
 We conclude that two concepts to choose a good variable ordering exists which are both (partially) applicable to our system.
 The LogixBlox approach is simpler and directly integratable but not well documented.
-The solution used in GraphFlow is far more complexe and developed for another \textsc{WCOJ}.
+The solution used in GraphFlow is far more complex and developed for another \textsc{WCOJ}.
 Anyhow, the paper describes it in great detail and parts of it could be integrated directly, while others need some engineering effort or
 need to be redesigned completely.
 
@@ -796,35 +797,138 @@ need to be redesigned completely.
 
 
 \subsection{Distributed worst-case optimal join in Myria} \label{subsec:myria}
-In 2014, a Leapfrog Triejoin variant, dubbed ``Tributary Join'', was used as a distributed join algorithm on a shared-nothing architecture called ``Myria''~\cite{myria-detailed}.
-They use Tributary Join as a local, serial worst-case optimal join algorithm, combined with the Hypercube shuffle algorithm to partition the data between their machines~\cite{hypercube}.
-% TODO sort out hypercube and shares usage
-However, it is not obvious how well Hypercube shuffles scales because it replicates many of its input tuples~\cite{myria-detailed}.
-The combination of Hypercube shuffles and Tributary Join in Myria does not scale well (speedup of 8 on 64 workers compared to the time it takes on 2 nodes) which, although unlikely to be optimal, is not investigated in great detail; we therefore, explain Hypercube shuffles in detail and show that they tend to replicate all data to all nodes for bigger graph patterns~\cref{ssec:hypercube-shuffle}.
-Their approach is directly applicable to Spark.
-% TODO add Graphflow paper: variable ordering studied, combination of bin + wcoj in plans, query planning first known approach, parallel
-% execution?
-% TODO check emptyheaded, it uses WCOJ's
+In 2014, a Leapfrog Triejoin variant, dubbed Tributary Join, was used as a distributed join algorithm on a shared-nothing architecture called Myria~\cite{myria-detailed}.
+They use Tributary Join as a local, serial worst-case optimal join algorithm, combined with the Hypercube shuffle algorithm, also called
+\textit{Shares}, to partition the data between their machines~\cite{shares}.
+The combination of a shuffle algorithm with a \textsc{WCOJ} allows them to distribute an unchanged serial worst-case optimal join
+version by running it only on a subset of the data on each worker.
+
+This approach is directly applicable to Spark.
+We could implement a hypercube shuffle for Spark and then choose any \textsc{WCOJ} to run on all partitions.
+However, it is not obvious how well this approach scales because Shares replicates many of its input tuples~\cite{myria-detailed}.
+The experiments on Myria indicate that the combination of Hypercube shuffles and Tributary Join does not scale well.
+They report a speedup of 8 on 64 workers compared to the time it takes on 2 nodes, which, although unlikely to be optimal, is not
+investigated in great detail.
+
+Therefore, we decide to analyse the expected scaling behaviour of Shares for graph pattern matching.
+Our main concern is that the number of duplicated tuples in the system increases with the query size (number of vertices) and
+with the number of workers added to the system.
+We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
+of this thesis (\ref{sec:shares-proof}). % TODO mention simulation
+As result of this proof, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
+strategy to parallelize a worst-case optimal join.
+
+To conclude, the implementation in Myria and in particular the Shares algorithm is the starting point of this thesis.
+We see it as our baseline for a distributed \textsc{WCOJ} implementation.
+In the coming section, we explain Shares in detail.
+
+We note that a implementation of a distributed worst-case optimal join on Timely Dataflow exists.
+However, it is not applicable to Spark.
+Therefore, we treat it in the related work section of this thesis (\ref{subsec:wcoj-timely-data-flow}).
 
 \subsubsection{Shares}
-% TODO rename HC Shares
-We first explain how the Hypercube shuffle algorithm, \texttt{HC}, partitions data.
-After, we provide an analysis of its scaling with regards to graph patterns with an increasing number of vertices.
-
-\texttt{HC} partitions the input relationships for a multi-way join over \textit{w} worker nodes, such that, all tuples, which could be joined, end up on the same worker in a single shuffle round.
+Shares partitions the input relationships for a multi-way join over \textit{w} worker nodes, such that, all tuples, which could be joined,
+end up on the same worker in a single shuffle round.
 Hence, it allows running any multi-way join algorithm locally after one shuffle round.
 The output of the join is the union of all local results.
-\texttt{HC} realizes this partitioning by logical organizing all workers in a hypercube with one dimension per join variable; we call the number of variables \textit{A} and use $a_i$ to reference a single variable.
-Each dimension has a size $p_i$, the $p_i$'s have to be chosen such that the constraint $w \ge \prod_{i}p_i$ is satisfied.  % TODO choosing problem
-In other words, each worker can be addressed by its coordinate in the hypercube of the form $\{1..p_1\} \times ... \times \{1..p_A\}$.
+The idea is to organize all workers in a logical hypercube, such that each worker can be addressed by it hypercube coordinate.
+Then it is straightforward to find a mapping from the attribute values of a tuple to these coordinates, so that joinable tuples
+arrive on the same worker after one shuffle round.
+We first explain how to organize the workers in a hypercube and then how to map tuples to these workers.
+% TODO find best hypercube configuation is not straigthforward.
+Finally, we note that this scheme is communication cost optimal and the implications of this proof.
 
-With this topology in mind, it is straightforward to find a partitioning for all tuples from all relationships such that tuples that could join are sent to the same node.
-We choose a hash function $h_i$ for each join variable which maps its values in the range of \{1..$p_i$\}.
-Then each worker determines where to send the tuple it holds by hashing its join variables.
-This results in a coordinate in the hypercube which is fixed for all join variables, which occur in the tuple, and unbounded for join variables not bound by the tuple.
+A hypercube is characterized by the number of dimensions and the size of each dimension.
+\Cref{fig:hypercube} shows a hypercube with three dimesions labelled $a, b$ and $c$.
+They have the size of 3, 3 and 2 for $a, b$ and $c$ respectively.
+It can be seen as a possible configuration for the triangle query $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ with
+12 workers.
+
+\begin{figure}
+    \includesvg[width=0.5\textwidth]{hypercube.svg}
+    \caption{}
+    \label{fig:hypercube}
+\end{figure}
+
+Given an input query, Shares builds a hypercube with one dimension per variable in the input.
+It then chooses the size of each dimension, such that the product is smaller than number of workers.
+We call $v$ the numbers of variables in the query and $p_0, \dots, p_v$ the sizes of each dimension.
+This allows us to address each worker with a coordinate of the form $(0..p_0, \dots, 0..p_v)$.
+If the product of all dimension sizes is smaller than the number of workers, additional workers are not used.
+The process of finding the best sizes for the dimensions depends on the input query and the input relationships.
+We discuss it in later in~\cref{subsubsubsec:hypercube-configuration}.
+
+
+With this topology in mind, it is straightforward to find a partitioning for all tuples from all relationships such that tuples that
+could join are sent to the same worker.
+We choose a hash function for each join variable which maps its values in the range of $(0..p_v)$.
+Then each worker determines where to send the tuples it holds by hashing its values.
+This results in a coordinate in the hypercube which is fixed for all join variables, which occur in the tuple, and unbounded for join
+variables which do not occur in the tuple.
 Then the tuple is sent to all workers with a matching coordinate.
-For example, assume a join with three variables $a_1$, $a_2$ and $a_3$ and tuple \textit{t} that binds $a_1$ and $a_2$ then we get the coordinates $h_{a1}(t_{a1}) \times h_{a2}(t_{a2}) \times \{0..p_{a3}\}$ and send the tuple
-to all workers with a coordinate matching the first two attributes and arbitrary third component of the coordinate; the tuple is replicated across $p_{a_3}$ machines.
+
+\Cref{fig:hypercube} shows how tuples forming a triangle from three relationships are mapped to the workers.
+The blue, green and red tuple in $S, R$ and $T$ form a triangle.
+The green and the red tuple are sent to 2 workers each and the blue tuple to three workers (marked with small rhombs).
+They are sent to all workers along the axis where the coordinate is not determined by a value in the tuple.
+We see that they all end up together on the worker with the coordinate (2, 0, 0).
+This is where the triangle occurs in the output of the join.
+
+
+
+% Optimiality
+This scheme is proven to be communication cost optimal for n-way joins in any MapReduce like environment in~\cite{shares}.
+This implies that it is not possible to find a partitioning scheme that replicates less data, given that we shuffle/communicate only once.
+
+% Worst-Case Optimal Algorithms for Parallel Query Processing  -- proves Shares worst-case optimal for any query by choosing different share
+% configurations for skewed values. connection with SharesSkew?
+% Skew in parallel query processing -- proofs shares is optimal for databases without skew
+
+% SharesSkew: An Algorithm to Handle Skew for Joins in MapReduce
+% The only other work that investigates skew when comput-
+%ing multiway joins in MapReduce is [5, 7]. In [5] "skew in parallel query processing", lower and
+%upper bounds are given on the communication cost for algo-
+%rithms that compute multiway joins in one round in share
+%nothing architectures (it includes MapReduce but certain re-
+%sults therein capture more general models as well). For the
+%upper bound, the Shares algorithm is shown to either meet
+%the lower bound (when there is no skew) or offer a good
+%upper bound in the presence of skew. In both cases, the pa-
+%rameters of the map function (i.e., the shares – see Section 3
+%for details) are computed by a linear program which gives
+%a solution to fractional edge packing of the hypergraph of
+%the join. The main similarity of the algorithm we present in
+%the present paper and the algorithm presented in [5] to han-
+%dle skewed data is that, in both algorithms, the join to be
+%computed is decomposed in a number of joins, called resid-
+%ual joins. Each residual join is defined by a combination
+%of heavy hitters and is applied on a different subset of the
+%data. The combination of heavy hitters and the definition
+%of a heavy hitter differ in the two papers, however.
+
+
+% Communication steps for parallel query processing.
+% n [4] "communication steps for parallel query processing" it is proven that with high
+%probability the Shares algorithm 2 distributes tuples evenly
+%on uniform databases (these are defined precisely in [4] to
+%be databases which resemble the case of random data). This
+%class of databases include databases where all relations have
+%the same size and there is no skew.
+
+% SharesSkew: An Algorithm to Handle Skew for Joins in MapReduce
+% More practical paper considering Shares and Skew, also via residual joins
+%
+
+
+
+% problem 1: Shares is only proved to be optimal with no skew, for skew it is optimal for some queries but not for others,
+%  using different HC configurations for different residual joins leads to shares being always optimal.
+%  but we are only talking about shares...
+% problem 2: shares is proven to be one-round optimal. However, multi-round solutions exists.
+%   Excluded by being super expensive in Spark (disk-write-read)
+%   Excluded by multiple statements of them being not so great, need to find these again.
+
+% TODO multiple shuffle rounds, semih's research statement, shuffles are very expensive in Spark.
 
 Next, we analyse the scalability of \texttt{HC} on growing graph patterns - that is, joins over a single relationship, the edge relationship of the graph \textit{E} and with two variables per atom.
 In this context, atoms of the join can be seen as the edges of the pattern and variables as vertices.
