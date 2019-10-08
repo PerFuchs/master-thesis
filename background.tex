@@ -845,8 +845,17 @@ It can be seen as a possible configuration for the triangle query $triangle(a, b
 12 workers.
 
 \begin{figure}
-    \includesvg[width=0.5\textwidth]{hypercube.svg}
-    \caption{}
+    \centering
+    \subfloat{\includegraphics[width=0.4\textwidth,valign=c]{figures/hypercube-example-table.png}}
+    \hspace{0.04\textwidth}
+    \subfloat{\includegraphics[width=0.55\textwidth,valign=c]{figures/hypercube-example.png}}
+    \caption{
+      Left: Three aliases of an edge relationship with one triangle.
+        The participating tuples are marked in red, green and blue.
+      Right: Example of a Shares hypercube configuration for the triangle query for 12 workers with three attributes/dimensions of the sizes
+        3, 2, 2.
+        The tuples marked in red, green and blue end up on the workers with red, green and blue rhombs respectively.
+    }
     \label{fig:hypercube}
 \end{figure}
 
@@ -857,7 +866,6 @@ This allows us to address each worker with a coordinate of the form $(0..p_0, \d
 If the product of all dimension sizes is smaller than the number of workers, additional workers are not used.
 The process of finding the best sizes for the dimensions depends on the input query and the input relationships.
 We discuss it in later in~\cref{subsubsubsec:hypercube-configuration}.
-
 
 With this topology in mind, it is straightforward to find a partitioning for all tuples from all relationships such that tuples that
 could join are sent to the same worker.
@@ -874,15 +882,73 @@ They are sent to all workers along the axis where the coordinate is not determin
 We see that they all end up together on the worker with the coordinate (2, 0, 0).
 This is where the triangle occurs in the output of the join.
 
+\subsubsubsection{Finding the best hypercube configuration} \label{subsubsubsec:hypercube-configuration}
+% TODO
 
+\subsubsection{Shares is worst-case communication-cost optimal}
+Shares, as described above, is shown to be worst-case optimal in its communication costs in MapReduce like systems for
+n-ary joins with one shuffle round.
+First, Beame et al. prove that Shares scheme is optimal on databases without skew~\cite{shares-proof}. % skew in parallel
+Later the same authors are able to give a proof that Shares is also an optimal algorithm for skewed databases if one knows the
+\textit{heavy-hitter} tuples and splits the join into a skew free part and residual joins for the heavy hitters using different
+hypercube configurations for each residual join~\cite{shares-skew-proof}. % worst-case
 
-% Optimiality
-This scheme is proven to be communication cost optimal for n-way joins in any MapReduce like environment in~\cite{shares}.
-This implies that it is not possible to find a partitioning scheme that replicates less data, given that we shuffle/communicate only once.
+The implication of these proofs is that it is not possible to find a partitioning scheme for one shuffle round that replicates
+less data than Shares.
+This observation is central to our thesis because it is one argument to replicate the graph on all workers instead of using
+a shuffle algorithm to partition it.
 
-% Worst-Case Optimal Algorithms for Parallel Query Processing  -- proves Shares worst-case optimal for any query by choosing different share
-% configurations for skewed values. connection with SharesSkew?
+In the rest of this thesis, Shares refers to the original algorithm~\cite{shares} % Optimizing joins in MapReduce
+and not the skew resilient variant \textit{SharesSkew}~\cite{shares-skew,shares-proof}.
+This is mainly because even in the presence of skew the original Shares scheme offers good upper bounds, although it can not always match
+the lowest bound possible~\cite{shares-skew}. % shares skew
+But also because the skew resilient variant requires to know which tuples are \textit{heavy-hitters} (a definition of skew introducing
+tuples).
+Finally, while first experiments with SharesSkew exists~\textit{shares-skew}, we are not aware of an extensive study verifying it is possible
+to integrate SharesSkew into a complete system.
+Hence, we deem it out of scope for this thesis to attempt a full integration.
+
+Some readers might ask if there are better multi-round algorithms which replicate less data.
+Indeed, the authors of multiple Shares related papers raise the same question as future work~\cite{shares-skew-proof}.
+They are able to answer this question for specific joins in~\cite{shares-skew-proof}, e.g. chain-joins and cycle-joins.
+Later, they present an algorithm which is multi-round optimal for acyclic queries~\cite{gym}.
+
+The discussions about multi-round optimal partitioning schemes are rather theoretical.
+To the best of our knowledge, no implementation has been published.
+Also, they have not been shown optimal for general conjunctive join queries but only for special cases.
+However, not for clique joins which are important class of joins in our thesis.
+Additionally, they add additonal complexity to the query optimizer, e.g. they require the input query to be represented as
+generalized hypertree decomposition to calculate their intersection width~\cite{gym} or to find many different hypercube
+configurations~\cite{shares-binary,shares-skew,shares-skew-proof} which is not trivial in
+praxis~\cref{subsubsubsect:hypercube-configuration}.
+Again, we leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
+The most interesting paper in this direction is~\cite{shares-binary}.
+It develops a multi-round algorithm for n-ary joins on binary relationships as the edge relationship of a graph.
+
 % Skew in parallel query processing -- proofs shares is optimal for databases without skew
+% first mentioning of residual joins for skew -- connection with sharesskew given in related work of shares skew
+% mentioned in "Algorithmic aspects of parallel" We show how we can extend the Hyper- cube algorithm from skew-free data to arbitrary
+% data, and describe a worst-case optimal algorithm called SkewHC [7] "skew in parallel query processing.
+
+% Worst-Case Optimal Algorithms for Parallel Query Processing
+% ==========================================================
+% Worst-Case Optimal Algorithms for Parallel Query Processing  -- proves Shares worst-case optimal for any query by choosing different share
+% configurations for skewed values.
+% connection with SharesSkew?
+
+% In [5] "Skew in parallel query processing", the authors showed that the HyperCube (HC) algorithm, first presented by Afrati and Ullman
+%[2] "Optimizing joins in a map-reduce environment", can optimally compute any conjunctive query for a single round on data without skew.
+%The work in [5] also presents one-round algorithms and lower bounds for skewed data but the upper and lower bounds do not necessarily
+%coincide.
+
+%Our setting and worst-case analysis can be viewed as the analogous version of the work
+%of Ngo et al. [17] on worst-case optimal algorithms for multiway join processing. As we will show later, the worst-case instances for a given query q are different for the two settings in the case of one round, but coincide for all the families of queries we examine when we consider multiple rounds.
+%Our
+
+% SharesSkew
+% ============
+% SharesSkew: An Algorithm to Handle Skew for Joins in MapReduce
+% More practical paper considering Shares and Skew, also via residual joins
 
 % SharesSkew: An Algorithm to Handle Skew for Joins in MapReduce
 % The only other work that investigates skew when comput-
@@ -906,7 +972,7 @@ This implies that it is not possible to find a partitioning scheme that replicat
 %data. The combination of heavy hitters and the definition
 %of a heavy hitter differ in the two papers, however.
 
-
+% Uninteresting
 % Communication steps for parallel query processing.
 % n [4] "communication steps for parallel query processing" it is proven that with high
 %probability the Shares algorithm 2 distributes tuples evenly
@@ -915,12 +981,6 @@ This implies that it is not possible to find a partitioning scheme that replicat
 %class of databases include databases where all relations have
 %the same size and there is no skew.
 
-% SharesSkew: An Algorithm to Handle Skew for Joins in MapReduce
-% More practical paper considering Shares and Skew, also via residual joins
-%
-
-
-
 % problem 1: Shares is only proved to be optimal with no skew, for skew it is optimal for some queries but not for others,
 %  using different HC configurations for different residual joins leads to shares being always optimal.
 %  but we are only talking about shares...
@@ -928,8 +988,23 @@ This implies that it is not possible to find a partitioning scheme that replicat
 %   Excluded by being super expensive in Spark (disk-write-read)
 %   Excluded by multiple statements of them being not so great, need to find these again.
 
-% TODO multiple shuffle rounds, semih's research statement, shuffles are very expensive in Spark.
+% Multiple rounds:
+% GYM is an algorithm studying that.
+% Shares skew labels it as future work, but shows optimality can only be reached using multiple round for some problems.
+%
+%(worst-case optimal algorithms for parallel query processing)
+% The central remaining open question is to design worst-case optimal algorithms for
+%multiple rounds for any conjunctive query.
+% Already proves lower bounds for multi-rounds
 
+% All papers either only on special queries or (GYM) acyclic queries
+%   but for GYM it's only formulated as a trade off and needs a bit of machinery as the intersection width
+%   "Intersection width is a new notion we introduce for queries and generalized hypertree decompos- itions (GHDs) of queries that
+% captures how connected the adjacent components of the GHDs are."
+
+% multi-round algorithms need heavy hitter knowledge
+
+\subsubsubsection{Shares scalibility proof}\label{subsubsubsec:shares-proof}
 Next, we analyse the scalability of \texttt{HC} on growing graph patterns - that is, joins over a single relationship, the edge relationship of the graph \textit{E} and with two variables per atom.
 In this context, atoms of the join can be seen as the edges of the pattern and variables as vertices.
 In the following we consider the join query represented by the Datalog rule $Q(a_1, ..., a_A) = R_1(a_1, a_2), ..., R_k(a_{A-1}, a_A)$, we call $atoms(Q)$ the set of all atoms in $Q$, $p_1(R)$ and $p_2(R)$ the $p_i$ corresponding to the variables of $R$.
