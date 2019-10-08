@@ -600,6 +600,9 @@ We choose to use sorted arrays as described in~\cite{myria-detailed}.
 One array is used per column of the input relationship and binary search on these arrays allows us to implement the \textit{TrieIterator}
 interface with the required asymptopical complexities (see~\cref{table:trieIterator-interface}).
 
+%We briefly compare a B-tree v.s. array-based implementation of
+%the LFTJ API. The main API function is seek(v), which fetches the next value v’ of the current attribute Ai s.t. v’ > v: in a B-tree this can be computed in amortized time O(1), while our implementation uses a binary search on the remaining part of the array at a cost per operation of O(log n). Thus, TJ is at most a factor log n slower than LFTJ, and, in particular, it is also worst case optimal (up to log n). In practice, the dominating cost of TJ is given by the sorting phase (which, as explained, is unavoidable), hence our choice to use a sorted array instead of a B-tree, because sorting is cheaper than computing a B-tree.
+
 \paragraph{Variable ordering}  % TODO move all sections one up and use of chapter?
 Finding a good variable ordering for the \textsc{LFTJ} is an interesting research problem in itself.
 We are aware of two existing approaches.
@@ -882,10 +885,45 @@ They are sent to all workers along the axis where the coordinate is not determin
 We see that they all end up together on the worker with the coordinate (2, 0, 0).
 This is where the triangle occurs in the output of the join.
 
-\subsubsubsection{Finding the best hypercube configuration} \label{subsubsubsec:hypercube-configuration}
-% TODO
+\paragraph{Finding the best hypercube configuration}
+The problem of finding the best hypercube configuration is to choose the sizes of its dimensions such that (1) the product of
+all sizes is smaller than the number of available workers and (2) such that the number of tuples to single worker is minimized.
+(2) is backed by the assumption that the number of tuples is a good indicator for the amount of work;
+this assumption is made in all papers discussing the problem~\cite{myria-detailed,shares-proof,shares}.
+Therefore, we want to minimize the number of tuples on each single worker because the slowest worker determines the run-time.
+Next, we discuss existing solutions and decide for one of them.
 
-\subsubsection{Shares is worst-case communication-cost optimal}
+The original Shares paper proposes a none-convex solution which is hard to compute in praxis~\cite{shares}.
+Later, Beame et al. define a linear optimization problem which is solvable but leads to fractional hypercube
+sizes~\cite{shares-proof}.
+Hence, it is not possible to use their solution directly.
+Rounding down would be an obvious solutions but as discussed in~\cite{myria-detailed}, it can lead to highly suboptimal solutions, in
+particular with low numbers of workers.
+Hence, the paper further considers to use a higher number of \textit{virtual} workers and assign these to \textit{physical} workers
+by a one-to-many mapping.
+Anyhow, a higher number of workers lead to more replicated tuples.
+Therefore, this solution does not scale well.
+
+In the end, the paper that integrates Shares and the Tributary join in Myria suggests a practical solution.
+They enumerate all integral hypercube configurations smaller or equal to the number of available workers.
+For each configuration they estimate number of assigned tuples, then they choose the configuration with the lowest estimated workload.
+
+They use the following equation to estimate the workload, where $R$ are all relationships in the query, $var(r)$ gives the variables
+occuring in the relationship $r$, $size(v)$ gives the hypercube size of the dimension for variable $v$.
+\begin{equation}
+    workload = \sum_{r \in R}{|r| \times \frac{1}{prod_{v \in var(r)}{size(v)}}}
+\end{equation}
+The term $\prod_{v \in var(r)}{size(v)}$ gives the numbers of workers that span the hyper-plain over which a relationship $r$ is
+partitioned.
+For example, in~\cref{fig:hypercube} the relationship $(a, b)$ is partitioned over the plain spanned by the dimensions $a$ and $b$ with
+6 workers.
+Each tuple in this relationship has a chance of $\frac{1}{6}$ to be assigned to any of these workers.
+Hence, the workload caused by $(a, b)$ is $|(a, b) \times \frac{1}{6}$.
+
+The paper evaluates this strategy to assign hypercube configurations and finds that it is efficient and practical.
+We choose to use the same solution for our work.
+
+\paragraph{Shares is worst-case communication-cost optimal}
 Shares, as described above, is shown to be worst-case optimal in its communication costs in MapReduce like systems for
 n-ary joins with one shuffle round.
 First, Beame et al. prove that Shares scheme is optimal on databases without skew~\cite{shares-proof}. % skew in parallel
@@ -920,7 +958,7 @@ However, not for clique joins which are important class of joins in our thesis.
 Additionally, they add additonal complexity to the query optimizer, e.g. they require the input query to be represented as
 generalized hypertree decomposition to calculate their intersection width~\cite{gym} or to find many different hypercube
 configurations~\cite{shares-binary,shares-skew,shares-skew-proof} which is not trivial in
-praxis~\cref{subsubsubsect:hypercube-configuration}.
+praxis as discussed in the last paragraph.
 Again, we leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
 The most interesting paper in this direction is~\cite{shares-binary}.
 It develops a multi-round algorithm for n-ary joins on binary relationships as the edge relationship of a graph.
@@ -1004,7 +1042,7 @@ It develops a multi-round algorithm for n-ary joins on binary relationships as t
 
 % multi-round algorithms need heavy hitter knowledge
 
-\subsubsubsection{Shares scalibility proof}\label{subsubsubsec:shares-proof}
+\paragraph{Shares scalibility proof}
 Next, we analyse the scalability of \texttt{HC} on growing graph patterns - that is, joins over a single relationship, the edge relationship of the graph \textit{E} and with two variables per atom.
 In this context, atoms of the join can be seen as the edges of the pattern and variables as vertices.
 In the following we consider the join query represented by the Datalog rule $Q(a_1, ..., a_A) = R_1(a_1, a_2), ..., R_k(a_{A-1}, a_A)$, we call $atoms(Q)$ the set of all atoms in $Q$, $p_1(R)$ and $p_2(R)$ the $p_i$ corresponding to the variables of $R$.
