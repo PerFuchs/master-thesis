@@ -1055,14 +1055,14 @@ That is, self-joins over a single relationship which has two variables.
 In this context, relationships of the join can be seen as the edges of the pattern and variables as vertices.
 
 First, we fix the method to determine the best hypercube configuration $(p_1 \dots p_k)$, given a query.
-For this, we use the method described in above and used in~\cite{myria-detailed}.
+For this, we use the method described above and used in~\cite{myria-detailed}.
 
 Given the hypercube configuration and a query, we can estimate the workload of each worker by the formula~\ref{eqn:estimated-workload}.
 Let $R$ be the set of all atoms in the join\footnote{An atom in a datalog join is the reference to a relationship,
 e.g. $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ has three atoms named $R, S$ and $T$.
 In this section, we differentiate atoms and relationships because multiple atoms can point the same underlying relationship which
 becomes of particular importance.},
-$size1(r)$ and $size2(r)$ be the size of the first respectively second hypercube dimesion for the two variables in atom $r$.
+$size1(r)$ and $size2(r)$ be the size of the first respectively second hypercube dimension for the two variables in atom $r$.
 Then, each worker receives $\sum_{r \in R}{ \frac{|r|}{size1(r) * size2(r)}}$ tuples under the assumption of uniform data distribution
 and good hash functions.
 Our argument is that the tuples of each atom $r$ are divided onto $size1(r) * size2(r)$ workers;
@@ -1075,7 +1075,7 @@ multiple atoms.
 If we apply this optimization, we can predict the probability with which each tuple is assigned to a worker using the Poisson binomial
 distribution.
 The Poisson binomial distribution $\Pr(n, k, u_0, \dots, u_n)$ allows us to calculate the likelihood that $k$ out of $n$ independent,
-binary and differently distributed trials succeed, under the condition that the $i$'th trial succeeds with a probability of $u_i$.
+binary and differently distributed trials succeed, under the condition that the $i$ the trial succeeds with a probability of $u_i$.
 We use $n = |R|$, $k = 0$ and $u_i=1/(size1(r_i) * size2(r_i))$ to calculate the probability that a tuple is not assigned to an
 arbitrary, fixed worker.
 This allows us to predict the number of tuples assigned to each worker by $|E| * (1 - \Pr(|R|, 0, u_0, \dots, u_{|R|})$ with $E$ being
@@ -1104,8 +1104,8 @@ The diamond query used in practice by the Twitter recommendation engine has to r
         \bottomrule
     \end{tabular}
     \caption{Workload on 64 and 128 workers in percentage of tuples of the edge table assigned to each worker estimated by using
-      Poison binominial distribution to estimate the workload and the method from~\cite{myria-detailed}
-      to determine the optimal shares configuration.
+    Poison binominial distribution to estimate the workload and the method from~\cite{myria-detailed}
+    to determine the optimal shares configuration.
     }
     \label{table:shares-workload-estimate}
     % See hc-workload-1.csv computed with a28fc458f4f8959a5af81a65f593ea22dcb8dd44
@@ -1113,22 +1113,22 @@ The diamond query used in practice by the Twitter recommendation engine has to r
 
 The second observation has two reasons.
 First, doubling the number of workers does not allow us to double the dimensions of the hypercube because a hypercube always needs
-product of all dimension sizes  to be built.
+product of all dimension sizes to be built.
 Second, the number of replicated tuples increases with a growing hypercube because each tuple is replicated to more workers;
 namely $\prod_{r \in R / r} size1(r) * size2(r)$ workers.
-This is due to the fact that each tuple binds only two out of all variables.
+This is because each tuple binds only two out of all variables.
 Hence, it is replicated over many dimensions.
 
 In light of the numbers presented in \cref{table:shares-workload-estimate} and in line~\cite{ammar2018distributed},
 we conclude that the communication costs for Shares converge towards a full broadcast for bigger graph patterns and
 scaling becomes increasingly inefficient.
-By this observation and the fact that hypercube shuffling is a optimal scheme (see last paragraph),
+By this observation and the fact that hypercube shuffling is an optimal scheme (see the last paragraph),
 we decide against using any partitioning scheme in our work but replicate the edge relationship on all
 workers.
 
 \subsection{Analysis of public real-world graph datasets}\label{subsec:graph-analysis}
-TODO will include histogram of graph sizes, average outdeegree, maybe clustering coefficient and further interesting metrics, with
-regards to the thesis, for (all?) graphs of the SNAP and Labaratory of Web Algorithms dataset collection.
+TODO will include a histogram of graph sizes, average outdegree, maybe clustering coefficient and further interesting metrics, with
+regards to the thesis, for (all?) graphs of the SNAP and Laboratory of Web Algorithms dataset collection.
 
 \subsection{Compressed sparse row representation}\label{subsec:csr-background}
 Compressed sparse row representation (short CSR) is a well known, low-memory representation for static graphs~\cite{csr,csr-first}.
