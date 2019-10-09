@@ -1126,10 +1126,6 @@ By this observation and the fact that hypercube shuffling is an optimal scheme (
 we decide against using any partitioning scheme in our work but replicate the edge relationship on all
 workers.
 
-\subsection{Analysis of public real-world graph datasets}\label{subsec:graph-analysis}
-TODO will include a histogram of graph sizes, average outdegree, maybe clustering coefficient and further interesting metrics, with
-regards to the thesis, for (all?) graphs of the SNAP and Laboratory of Web Algorithms dataset collection.
-
 \subsection{Compressed sparse row representation}\label{subsec:csr-background}
 Compressed sparse row representation (short CSR) is a well known, low-memory representation for static graphs~\cite{csr,csr-first}.
 To ease its explanation, we assume that the graph's vertices are identified by the numbers from 0 to $|V| - 1$.
@@ -1149,7 +1145,39 @@ Second, the representation is only, roughly, half as big than a simple columnar 
 A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only $|V| + 1 + |E|$, note that for most real-world graph |V|
 << |E| holds (see~\cref{subsec:graph-analysis}).
 
+\subsection{Sizes of public real-world graph datasets} \label{subsec:graph-analysis}
+In this section, we present a short analysis of the sizes of real worl graph datasets.
+For this, we collect data about all graphs from the SNAP and Laboratory of Web Algorithms dataset collection~\cite{snap-datasets,
+labaratory-of-web-algorithms-datasets}.
+The graphs in the Snap dataset are a bit older;
+they have been collected between 2000 and 2010.
+All Labaratory of Web Algorithms graph have been collected between 2007 and 2018.
+Both dataset collections are heavily used and cited in academia~\cite{ammar2018distributed,olddog,myria-detailed,fractal,longbin}.
+Two of these papers are from 2019.
 
+For our size calculation we assume that the graph is stored in compressed sparse row representation (see \cref{subsec:csr-background}) using
+integers for the vertice ID's.
+Then, we determine the storage size in bits by the formulae $32 \times |V| + 32 \times |E|$ with 32 the size of an integer in bits, V the
+set of all vertices in the graph and E the set of all edges in the graph.
+
+\Cref{fig:graph-sizes} shows a histogram of sizes for all 157 graphs from the two datasets.
+104 of these graphs are smaller than 1 GB and only 8 graphs are bigger than 100 GB.
+The biggest graph is the friendship graph of Facebook from the year 2017 with 552.2 GB.
+
+\begin{figure}
+    \centering
+    \includesvg[width=0.7\textwidth]{graph-sizes}
+    \caption{
+      Sizes of all graphs from the SNAP and Labaratory of Web Algorithms dataset collection in giga bytes.
+      The histogram shows graphs up to 100 GB in buckets of 5 GB and in buckets of 50 GB after.
+      In total, we see data collected about 157 graphs.
+    }
+    \label{fig:graph-sizes}
+\end{figure}
+
+We conclude that even the biggest graph can be fitted in main memory of many cluster machines today.
+The vast majority could be fitted in the main memory of a simple desktop machine or laptop.
+This supports our argument to replicate graph data over all machines.
 
 % Parallelism in Spark
 % ====================
