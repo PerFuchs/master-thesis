@@ -807,7 +807,7 @@ The combination of a shuffle algorithm with a \textsc{WCOJ} allows them to distr
 version by running it only on a subset of the data on each worker.
 
 This approach is directly applicable to Spark.
-We could implement a hypercube shuffle for Spark and then choose any \textsc{WCOJ} to run on all partitions.
+We could implement a hypercube shuffle for Spark and then choose any \textsc{WCOJ} to run on each partition.
 However, it is not obvious how well this approach scales because Shares replicates many of its input tuples~\cite{myria-detailed}.
 The experiments on Myria indicate that the combination of Hypercube shuffles and Tributary Join does not scale well.
 They report a speedup of 8 on 64 workers compared to the time it takes on 2 nodes, which, although unlikely to be optimal, is not
@@ -818,7 +818,7 @@ Our main concern is that the number of duplicated tuples in the system increases
 with the number of workers added to the system.
 We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
 of this thesis (\ref{sec:shares-proof}). % TODO mention simulation
-As result of this proof, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
+As result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
 strategy to parallelize a worst-case optimal join.
 
 To conclude, the implementation in Myria and in particular the Shares algorithm is the starting point of this thesis.
@@ -827,24 +827,28 @@ In the coming section, we explain Shares in detail.
 
 We note that a implementation of a distributed worst-case optimal join on Timely Dataflow exists.
 However, it is not applicable to Spark.
-Therefore, we treat it in the related work section of this thesis (\ref{subsec:wcoj-timely-data-flow}).
+Therefore, we treat it in the related work section (\ref{subsec:wcoj-timely-data-flow}) of this thesis.
 
 \subsubsection{Shares}
-Shares partitions the input relationships for a multi-way join over \textit{w} worker nodes, such that, all tuples, which could be joined,
+Shares partitions the input relationships for a multi-way join over worker nodes, such that, all tuples, which could be joined,
 end up on the same worker in a single shuffle round.
 Hence, it allows running any multi-way join algorithm locally after one shuffle round.
 The output of the join is the union of all local results.
+
 The idea is to organize all workers in a logical hypercube, such that each worker can be addressed by it hypercube coordinate.
 Then it is straightforward to find a mapping from the attribute values of a tuple to these coordinates, so that joinable tuples
-arrive on the same worker after one shuffle round.
+arrive on the same worker after one shuffle.
+
 We first explain how to organize the workers in a hypercube and then how to map tuples to these workers.
+Next, we treat the problem of choosing a good hypercube configuration.
 % TODO find best hypercube configuation is not straigthforward.
-Finally, we note that this scheme is communication cost optimal and the implications of this proof.
+Followed, by a summary about optimality of Shares.
+Finally, we provide analysis of the scaling of Shares for graph pattern matching.
 
 A hypercube is characterized by the number of dimensions and the size of each dimension.
 \Cref{fig:hypercube} shows a hypercube with three dimesions labelled $a, b$ and $c$.
-They have the size of 3, 3 and 2 for $a, b$ and $c$ respectively.
-It can be seen as a possible configuration for the triangle query $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ with
+They have the size of 3, 2 and 2 for $a, b$ and $c$ respectively.
+It is a possible configuration for the triangle query $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ with
 12 workers.
 
 \begin{figure}
@@ -855,6 +859,7 @@ It can be seen as a possible configuration for the triangle query $triangle(a, b
     \caption{
       Left: Three aliases of an edge relationship with one triangle.
         The participating tuples are marked in red, green and blue.
+        Their hypercube coordinates are shown below.
       Right: Example of a Shares hypercube configuration for the triangle query for 12 workers with three attributes/dimensions of the sizes
         3, 2, 2.
         The tuples marked in red, green and blue end up on the workers with red, green and blue rhombs respectively.
@@ -868,18 +873,18 @@ We call $v$ the numbers of variables in the query and $p_0, \dots, p_v$ the size
 This allows us to address each worker with a coordinate of the form $(0..p_0, \dots, 0..p_v)$.
 If the product of all dimension sizes is smaller than the number of workers, additional workers are not used.
 The process of finding the best sizes for the dimensions depends on the input query and the input relationships.
-We discuss it in later in~\cref{subsubsubsec:hypercube-configuration}.
+We discuss it in a later paragraph of this section.
 
 With this topology in mind, it is straightforward to find a partitioning for all tuples from all relationships such that tuples that
 could join are sent to the same worker.
-We choose a hash function for each join variable which maps its values in the range of $(0..p_v)$.
+We choose a hash function for each join variable $a$ which maps its values in the range of $[0..p_a]$.
 Then each worker determines where to send the tuples it holds by hashing its values.
 This results in a coordinate in the hypercube which is fixed for all join variables, which occur in the tuple, and unbounded for join
 variables which do not occur in the tuple.
 Then the tuple is sent to all workers with a matching coordinate.
 
 \Cref{fig:hypercube} shows how tuples forming a triangle from three relationships are mapped to the workers.
-The blue, green and red tuple in $S, R$ and $T$ form a triangle.
+The blue, green and red tuple in the relationships form a triangle.
 The green and the red tuple are sent to 2 workers each and the blue tuple to three workers (marked with small rhombs).
 They are sent to all workers along the axis where the coordinate is not determined by a value in the tuple.
 We see that they all end up together on the worker with the coordinate (2, 0, 0).
@@ -910,22 +915,22 @@ For each configuration they estimate number of assigned tuples, then they choose
 
 They use the following equation to estimate the workload, where $R$ are all relationships in the query, $var(r)$ gives the variables
 occuring in the relationship $r$, $size(v)$ gives the hypercube size of the dimension for variable $v$.
-\begin{equation}
-    workload = \sum_{r \in R}{|r| \times \frac{1}{prod_{v \in var(r)}{size(v)}}}
+\begin{equation} \label{eqn:estimated-workload}
+    workload = \sum_{r \in R}{|r| \times \frac{1}{\prod_{v \in var(r)}{size(v)}}}
 \end{equation}
 The term $\prod_{v \in var(r)}{size(v)}$ gives the numbers of workers that span the hyper-plain over which a relationship $r$ is
 partitioned.
 For example, in~\cref{fig:hypercube} the relationship $(a, b)$ is partitioned over the plain spanned by the dimensions $a$ and $b$ with
 6 workers.
 Each tuple in this relationship has a chance of $\frac{1}{6}$ to be assigned to any of these workers.
-Hence, the workload caused by $(a, b)$ is $|(a, b) \times \frac{1}{6}$.
+Hence, the workload caused by $(a, b)$ is $|(a, b)| \times \frac{1}{6}$.
 
 The paper evaluates this strategy to assign hypercube configurations and finds that it is efficient and practical.
 We choose to use the same solution for our work.
 
 \paragraph{Shares is worst-case communication-cost optimal}
 Shares, as described above, is shown to be worst-case optimal in its communication costs in MapReduce like systems for
-n-ary joins with one shuffle round.
+n-ary joins using one shuffle round.
 First, Beame et al. prove that Shares scheme is optimal on databases without skew~\cite{shares-proof}. % skew in parallel
 Later the same authors are able to give a proof that Shares is also an optimal algorithm for skewed databases if one knows the
 \textit{heavy-hitter} tuples and splits the join into a skew free part and residual joins for the heavy hitters using different
@@ -942,26 +947,28 @@ This is mainly because even in the presence of skew the original Shares scheme o
 the lowest bound possible~\cite{shares-skew}. % shares skew
 But also because the skew resilient variant requires to know which tuples are \textit{heavy-hitters} (a definition of skew introducing
 tuples).
-Finally, while first experiments with SharesSkew exists~\textit{shares-skew}, we are not aware of an extensive study verifying it is possible
+Finally, while first experiments with SharesSkew exist~\cite{shares-skew}, we are not aware of an extensive study verifying it is possible
 to integrate SharesSkew into a complete system.
 Hence, we deem it out of scope for this thesis to attempt a full integration.
 
 Some readers might ask if there are better multi-round algorithms which replicate less data.
-Indeed, the authors of multiple Shares related papers raise the same question as future work~\cite{shares-skew-proof}.
-They are able to answer this question for specific joins in~\cite{shares-skew-proof}, e.g. chain-joins and cycle-joins.
-Later, they present an algorithm which is multi-round optimal for acyclic queries~\cite{gym}.
+Indeed, the authors of a Shares related paper raise the same question as future work~\cite{shares-skew-proof}.
+They are able to answer this question for specific join queries in~\cite{shares-skew-proof,shares-skew}, e.g. chain-joins and cycle-joins.
+Later, they present an algorithm which is multi-round optimal for all acyclic queries~\cite{gym} and one for all queries
+over binary relationships~\cite{shares-binary}.
 
-The discussions about multi-round optimal partitioning schemes are rather theoretical.
-To the best of our knowledge, no implementation has been published.
+The papers about about multi-round optimal partitioning schemes are rather theoretical.
+To the best of our knowledge, only one paper provides practical experiments~\cite{shares-skew} but has no dedicated implementation section.
 Also, they have not been shown optimal for general conjunctive join queries but only for special cases.
-However, not for clique joins which are important class of joins in our thesis.
-Additionally, they add additonal complexity to the query optimizer, e.g. they require the input query to be represented as
+Two of the three papers~\cite[shares-skew-proof,gym] cannot handle clique joins which are important class of joins in our thesis.
+Additionally, they add additional complexity to the query optimizer, e.g. they require the input query to be represented as
 generalized hypertree decomposition to calculate their intersection width~\cite{gym} or to find many different hypercube
 configurations~\cite{shares-binary,shares-skew,shares-skew-proof} which is not trivial in
-praxis as discussed in the last paragraph.
-Again, we leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
+praxis and computation intensive as discussed in the last paragraph.
+
+We leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
 The most interesting paper in this direction is~\cite{shares-binary}.
-It develops a multi-round algorithm for n-ary joins on binary relationships as the edge relationship of a graph.
+It develops a multi-round algorithm for n-ary joins on binary relationships like the edge relationship of a graph.
 
 % Skew in parallel query processing -- proofs shares is optimal for databases without skew
 % first mentioning of residual joins for skew -- connection with sharesskew given in related work of shares skew
@@ -1042,32 +1049,47 @@ It develops a multi-round algorithm for n-ary joins on binary relationships as t
 
 % multi-round algorithms need heavy hitter knowledge
 
-\paragraph{Shares scalibility proof}
-Next, we analyse the scalability of \texttt{HC} on growing graph patterns - that is, joins over a single relationship, the edge relationship of the graph \textit{E} and with two variables per atom.
-In this context, atoms of the join can be seen as the edges of the pattern and variables as vertices.
-In the following we consider the join query represented by the Datalog rule $Q(a_1, ..., a_A) = R_1(a_1, a_2), ..., R_k(a_{A-1}, a_A)$, we call $atoms(Q)$ the set of all atoms in $Q$, $p_1(R)$ and $p_2(R)$ the $p_i$ corresponding to the variables of $R$.
-We use the method described in~\cite{myria-detailed} to calculate optimal shares allocation $p_1 ... p_A$.
+\paragraph{Analysis of Shares scalability}
+Next, we analyse the scalability of Shares on growing graph patterns.
+That is, self-joins over a single relationship which has two variables.
+In this context, relationships of the join can be seen as the edges of the pattern and variables as vertices.
 
-Each worker receives $\sum_{R \in atoms(Q)} |R| / (p_1(R) * p_2(R))$ tuples under the assumption of uniform data distribution and good hash functions.
-Our argument is that the tuples of each $R$ are divided onto $p_1(R) * p_2(R)$ workers - the workers that form the hypercube planes of its two variables.
+First, we fix the method to determine the best hypercube configuration $(p_1 \dots p_k)$, given a query.
+For this, we use the method described in above and used in~\cite{myria-detailed}.
 
-In the special case of graph pattern matching where all atoms of the query are pointing to the same relationship, we can optimize \texttt{HC} shuffle such that a tuple is only sent once to a worker, although it might be assigned to it via multiple atoms.
-If we apply this optimization, we can predict the probability with which each tuple is assigned to a worker using the Poisson binomial distribution.
-The Poisson binomial distribution $Pr(n, k, u_0, ..., u_n)$ allows us to calculate the likelihood that $k$ out of $n$ independent, binary and differently distributed trials succeed, under the condition that the $i$'th trial succeeds with a probability of $u_i$.
-We then use $n = |atoms(Q)|$, $k = 0$ and $u_i=1/(p_1(R_i) * p_2(R_i))$ to calculate the probability that a tuple is not assigned to an arbitrary, fixed worker $w$.
-This allows us to predict the number of tuples assigned to each worker by $|E| * (1 - Pr(|atoms(Q)|, 0, u_0, ..., u_{|atoms(Q)|})$.
+Given the hypercube configuration and a query, we can estimate the workload of each worker by the formula~\ref{eqn:estimated-workload}.
+Let $R$ be the set of all atoms in the join\footnote{An atom in a datalog join is the reference to a relationship,
+e.g. $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ has three atoms named $R, S$ and $T$.
+In this section, we differentiate atoms and relationships because multiple atoms can point the same underlying relationship which
+becomes of particular importance.},
+$size1(r)$ and $size2(r)$ be the size of the first respectively second hypercube dimesion for the two variables in atom $r$.
+Then, each worker receives $\sum_{r \in R}{ \frac{|r|}{size1(r) * size2(r)}}$ tuples under the assumption of uniform data distribution
+and good hash functions.
+Our argument is that the tuples of each atom $r$ are divided onto $size1(r) * size2(r)$ workers;
+the workers that form the hypercube plain of its two variables.
 
-\Cref{table:workload} shows the expected percentage of tuples from $E$ assigned to each node for graph patterns of different sizes calculated using Poison binomial distribution and optimal shares assignments according to the method used in~\cite{myria-detailed}.
-As we can see in this table, the number of tuples assigned to each worker grows over linear in the size of the graph pattern and that doubling the number of workers is inefficient to counter this growth.
+In the special case of graph pattern matching where all atoms of the query are pointing to the same relationship,
+we can optimize the hypercube shuffle such that a tuple is only sent once to a worker, although it might be assigned to it via
+multiple atoms.
 
-The second observation has two reasons.
-First, doubling the number of workers does not allow to double the dimensions of the hypercube - a hypercube always needs $p_1 \times ... \times p_A$ workers to be built.
-Second, the number of replicated tuples increases with a growing hypercube because each tuple from $R_i$ is replicated to $\prod_{R_j \in atoms(Q)/R_i} p_1(R_j) * p_2(R_j)$; due to the fact that each tuple binds only two out of $A$ variables the tuple is replicated over many dimensions, e.g. let the bounded varibales be $a_p$ and $a_s$ then we get  $|\{0..p_0\} \times ... a_p ... \times ... a_s... \times \{0..p_A\}|$ matching worker coordinates.
+If we apply this optimization, we can predict the probability with which each tuple is assigned to a worker using the Poisson binomial
+distribution.
+The Poisson binomial distribution $\Pr(n, k, u_0, \dots, u_n)$ allows us to calculate the likelihood that $k$ out of $n$ independent,
+binary and differently distributed trials succeed, under the condition that the $i$'th trial succeeds with a probability of $u_i$.
+We use $n = |R|$, $k = 0$ and $u_i=1/(size1(r_i) * size2(r_i))$ to calculate the probability that a tuple is not assigned to an
+arbitrary, fixed worker.
+This allows us to predict the number of tuples assigned to each worker by $|E| * (1 - \Pr(|R|, 0, u_0, \dots, u_{|R|})$ with $E$ being
+the edge relationship.
 
+\Cref{table:shares-workload-estimate} shows the expected percentage of tuples from the edge relationship assigned to each worker for graph
+patterns of different sizes calculated using Poison binomial distribution and optimal shares assignments according to the method used
+in~\cite{myria-detailed}.
+As we can see in this table, the number of tuples assigned to each worker grows over linear in the size of the graph pattern.
+Furthermore, doubling the number of workers is inefficient to counter this growth.
 
-%First, a hypercube of size $s$ and $A$ dimensions requires $s^A$ workers.
-%Second, the replication increases with $A$ and $s$; we argue that each tuple is replicated to $(s+1)^{A-2}$ workers.
-%Each tuple binds two out of $A$ variables, let's assume these are $a_p$ and $a_s$ then we have $|\{0..s\} \times ... a_p ... \times ... a_s... \times \{0..s\}|$ matching worker coordinates\footnote{The argument can be rephrased as the number of all strings of the length $A-2$ over the alphabet $\{0..s\}$}.
+In particular, already small clique queries of four vertices replicate over half of the tuples on all 64 workers.
+5-clique queries require nearly a full broadcast with each worker holding 82\% or 90\% of all tuples with 128 respectively 64 workers.
+The diamond query used in practice by the Twitter recommendation engine has to replicate far more than half of the tuples to all workers.
 
 \begin{table}[t]
     \centering
@@ -1076,20 +1098,33 @@ Second, the number of replicated tuples increases with a growing hypercube becau
         Pattern  & Edges  & workload [64]/[128] \\ \midrule
         Triangle & 3                 & 0.18 / 0.12    \\
         4-clique & 6                 & 0.59 / 0.44    \\
-        5-clique & 10                & 0.9  /d 0.82    \\
+        5-clique & 10                & 0.90 / 0.82    \\
         House    & 5                 & 0.42 / 0.32    \\
         Diamond  & 8                 & 0.76 / 0.67    \\
         \bottomrule
     \end{tabular}
-    \caption{Workload, on 64 and 128 workers, in percentage of tuples of the edge table assigned to each worker, using Poison binominial distribution to estimate the workload and the method from~\cite{myria-detailed} to determine the optimal shares configuration.}
-    \label{table:workload}
+    \caption{Workload on 64 and 128 workers in percentage of tuples of the edge table assigned to each worker estimated by using
+      Poison binominial distribution to estimate the workload and the method from~\cite{myria-detailed}
+      to determine the optimal shares configuration.
+    }
+    \label{table:shares-workload-estimate}
     % See hc-workload-1.csv computed with a28fc458f4f8959a5af81a65f593ea22dcb8dd44
 \end{table}
 
-In light of the numbers presented in \cref{table:workload} and in line \cite{ammar2018distributed}, we conclude that the communication costs for \texttt{HC} converge towards a full broadcast for bigger graph patterns and scaling becomes increasingly inefficient.
-Anyhow, \texttt{HC} is proven to be communication cost optimal for general multi-way joins in map-reduce like systems in a single round of shuffling in multiple settings~\cite{beame2013,beame2014,beame2016}.
-Therefore, we decide to follow a different direction for distributing WCOJ's which we explain in~\cref{sec:goals}.
+The second observation has two reasons.
+First, doubling the number of workers does not allow us to double the dimensions of the hypercube because a hypercube always needs
+product of all dimension sizes  to be built.
+Second, the number of replicated tuples increases with a growing hypercube because each tuple is replicated to more workers;
+namely $\prod_{r \in R / r} size1(r) * size2(r)$ workers.
+This is due to the fact that each tuple binds only two out of all variables.
+Hence, it is replicated over many dimensions.
 
+In light of the numbers presented in \cref{table:shares-workload-estimate} and in line~\cite{ammar2018distributed},
+we conclude that the communication costs for Shares converge towards a full broadcast for bigger graph patterns and
+scaling becomes increasingly inefficient.
+By this observation and the fact that hypercube shuffling is a optimal scheme (see last paragraph),
+we decide against using any partitioning scheme in our work but replicate the edge relationship on all
+workers.
 
 \subsection{Analysis of public real-world graph datasets}\label{subsec:graph-analysis}
 TODO will include histogram of graph sizes, average outdeegree, maybe clustering coefficient and further interesting metrics, with
