@@ -23,8 +23,7 @@ However, sticking to the more verbose syntax allows us to include labels inside 
 in future extensions, e.g. for our stretch goal of integration with CAPS.
 
 The second parameter to \textit{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
-Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result,
-specify different relationships to be used as input for each edge of the pattern.
+Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result.
 The filters are \textit{distinctFilter}, ensuring that each vertice can occur only as binding for one variable, and
 \textit{smallerThanFilter} to allow only output bindings were the values decrease with regards to the specified variable ordering,
 e.g. the binding \textit{[1, 2, 3]} but not \textit{[2, 1, 3]} for the triangle query above.
@@ -69,7 +68,7 @@ Spark's optimizer is out of scope for this thesis.
 For this section we assume that the reader is familiar with the background section about Catalyst (see \cref{subsubsec:catalyst}) and
 \textsc{LFTJ} (see \cref{subsubsec:leapfrog-triejoin}) where we explain the components of Catalyst planning phase and the requirements
 of a Leapfrog Triejoin.
-In the current section, we outline how to satisfy the requirments of \textsc{LFTJ} within and help of Catalysts structured plans.
+In the current section, we outline how to satisfy the requirements of \textsc{LFTJ} within and help of Catalysts structured plans.
 
 Our baseline implementation of the Leapfrog Triejoin is a sequential implemenation, i.e. it is not distributed.
 Therefore, all representations of the edge relationship have only a single partition which the join operates upon.
@@ -78,18 +77,19 @@ We enforce sequential execution of the complete Spark plan in our experiments by
 
 In the first phases of Catalyst query compilation process, the query plan is represented by logical operators.
 Integration into this phase only requires us to build a logical operator to represent the \textsc{WCOJ} join.
+The only thing that we need to describe for this logical operator are the number of children.
 A \textsc{LFTJ} can have 2 or more children, one for each input relationship.
 
 The logical and physical plan for the triangle query is shown in~\cref{fig:wcoj-catalyst-plan}.
 
 \begin{figure}
-%    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{wcoj-catalyst-logical-plan}}
-%    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{wcoj-catalyst-physical-plan}}
+    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{lftj-logical-catalyst-plan}}
+    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{lftj-physical-catalyst-plan}}
     \caption{Catalyst plans for the triangle query using a Leapfrog Triejoin.}
-    \label{fig:wcoj-catalyst-plan}
+    \label{fig:lftj-catalyst-plan}
 \end{figure}
 
-The strategy to translate the logical plan into a physical plan has to tasks.
+The strategy to translate the logical plan into a physical plan has two tasks.
 First, simply translating the n-ary logical plan into n-ary physical plan that executes the \textsc{LFTJ} with the children as input.
 Second, introducing a physical operator per child which materializes the RDD into a sorted, columnar array representation to support a
 \textit{TrieIterator} interface.
@@ -99,7 +99,7 @@ It simply executes a \textit{LFTJ} over the \textit{TrieIterators} provided by t
 Given that each child has only one partition and there are no parallel operations, the algorithm can be implemented exactly
 as described in~\cref{subsubsec:leapfrog-triejoin}.
 
-The second physical operator translates the linear interator interface of any RDD into a \textit{TrieIterator} interface.
+The second physical operator translates the linear interator interface offered by Spark for RDD's into a \textit{TrieIterator} interface.
 In particular, it needs to offer a \textit{seek} operation in $\mathcal{O} (\log N) $.
 To support this interface the operator requires its children to be sorted;
 this requirement can be fulfilled by Catalyst standard optimization rules.
@@ -113,14 +113,23 @@ The integration of GraphWCOJ is quite similar to the one of \textsc{LFTJ}.
 \Cref{fig:graphWCOJ-catalyst-plan} shows the logical and physical plan constructred by our integration.
 There are three main difference: GraphWCOJ requires only two children for the input relationships, the children materialize the input
 relationships in a CSR data structure (see~\cref{subsec:csr-background}) and we support parallel execution of the join (which requires
-a third child) and broadcasting the CSR data structure.
+a third child) and broadcasting of the CSR data structure.
 We address these differences in order.
+
+\begin{figure}
+    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{graphWCOJ-logical-catalyst-plan}}
+    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{graphWCOJ-physical-catalyst-plan}}
+    \caption{Catalyst plans for the triangle query using GraphWCOJ.}
+    \label{fig:graphWCOJ-catalyst-plan}
+\end{figure}
 
 Our GraphWCOJ operators need only two materialized version of the input relationship.
 This is because in graph pattern matching the joins are self-joins on the edge relationship.
+This relationship has two attributes.
 The \textsc{LFTJ} requires that its input relationships are sorted by an lexicographic sorting over the variable ordering.
 To support all possible variable orderings, we need the edge relationship sorted by $src, dst$ and $dst, src$.
 Hence, we need to separate, materialized versions of the edge relationship.
+However, we never need more materialized relationships because all \textit{TrieIterators} can share the same underlying datastructures.
 
 GraphWCOJ uses a CSR representation of the edge relationship (see~\cref{sec:graphwcoj}).
 % TODO CSR accessible and sorted? definition not given.
@@ -137,7 +146,7 @@ Therefore, the \textit{Indices} arrays of the two CSR structures would differ if
 they could have different length.
 However, if this is the case, it is not possible to use both CSR's together in a single join.
 
-To allow building the CSR's in-tandem, we introduce \textit{AlignedZippedIterator}.
+To allow building the CSR's in-tandem, we introduce an \textit{AlignedZippedIterator}.
 The \textit{next} method of this iterator is shown in~\cref{alg:alignedZippedIterator}.
 It zips two iterators of two-tuple elements and aligns them on the first component, e.g. edges with $src$ as first component and $dst$ as
 second component.
@@ -171,8 +180,9 @@ component in the emitted triple with a placeholder until the first component of 
   \caption{\textit{next} method of an \textit{AlignedZippedIterator}.}
   \label{alg:alignedZippedIterator}
 \end{algorithm}
+% TODO styling
 
-Given an \textit{AlignedZippedIterator} over both input relationships, it is straightforward to build both CSR data structures.
+Given an \textit{AlignedZippedIterator} over both input relationships, it is straightforward to build two CSR data structures.
 We consume the whole \textit{AlignedZippedIterator}, for each element we append the 2nd and 3rd component to \textit{AdjacencyLists} of
 the CSR's;
 while skipping placeholders.

@@ -10,7 +10,7 @@ val df = sparkSession.read
 
 // df needs columns called `edge_id`, `src` and `dst`
 // Use WCOJ to find a triangle pattern
-val triangles = df.find(
+val triangles = df.findPattern(
   """(a) - [] -> (b);
     |(b) - [] -> (c);
     |(a) - [] -> (c)""".stripMargin,
