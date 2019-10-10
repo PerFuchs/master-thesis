@@ -33,9 +33,6 @@ Implementing the possibility to push general filters into the join would be a va
 it a pure engineering task.
 
 \subsection{Integration with Catalyst} \label{ssec:integration-with-catalyst}
-% make clear catalyst ist the only thing we change
-
-
 We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
 Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst (see
 \cref{subsubsec:catalyst}).
@@ -202,8 +199,6 @@ We schedule tasks by using the \textit{mapPartitions} function of this empty RDD
 Foreach partition, we run the \textsc{WCOJ} join backing its \textit{TrieIterator} with the broadcasted CSR's and partition the data
 logical by one of the schemes described in~\cref{sec:worst-case-optimal-join-parallelization}.
 
-
-% Broadcast cache
 One of the main advantages of broadcasting the edge relationship to all workers is that we can reuse the same broadcast for all queries
 over the same graph.
 To support this in Catalyst, we introduce one additional physical operator which we call \textit{ReusedCSRBroadcast} and a CSR broadcast
@@ -211,7 +206,7 @@ variable cache maintained on the Spark master node.
 
 The CSR broadcast variable cache is a simple dictionary with RDD ID's to broadcast variables of CSR structures.
 When, our system builds a broadcasted CSR structure, it registers the broadcast in the cache.
-Everytime, we translate a logical WCOJ plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
+Every time, we translate a logical WCOJ plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
 if so, our strategy reuses this broadcast.
 
 
@@ -222,9 +217,3 @@ if so, our strategy reuses this broadcast.
 
 
 % TODO where whole system overview as one big diagram, and then used to explain the structure? introduction, extra chapter after background.
-
-% TODO move to acknowledgements
-The Spark integration of this work has been inspired by the IndexedDataframes~\cite{indexed-dataframes} work of Alex Uta and the supervisors
-of this thesis.
-
-

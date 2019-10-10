@@ -129,7 +129,7 @@ We show the logical plan for the triangle query in~\cref{fig:triangle-logical-pl
 As we see, the query is represented as tree where the vertices are operators and the edge indicate dataflow from
 one operator to another.
 The leaves of the tree are three aliases of the edge relationship.
-Two of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
+zTwo of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
 The result of this join and the leaf relationship \textit{T} are input to the second join.
 The tuples produced by this join are filtered to fulfil $A < B < C$.
 Finally, at the root of the tree, there is an aggregation to count all results and report the sum.
@@ -438,17 +438,17 @@ This method loops the process of calling the \textit{seek} method of the its sma
 iterator until the smallest and the largest (and therefore all iterators) point to the same value.
 
 \begin{algorithm}[H]
-    \KwData{
-      iters \# sorted array of TrieIterators \;
-      p  \# index of the smallest iterator\;
+    \KwData{\\
+      \textit{iters} sorted array of TrieIterators \\
+      \textit{p} index of the smallest iterator
     }
-   \KwResult{Either atEnd is true or key is set to next key of intersection}
-    maxKey $\leftarrow$ iters[p \% iters.length].key()\;
-   \While{iters[p].key() $\neq$ maxKey}{
+   \KwResult{Either \textit{atEnd} is true or \textit{key} is set to next key of intersection}
+    maxKey $\gets$ iters[p \% iters.length].key()\;
+   \While{\upshape iters[p].key() $\neq$ maxKey}{
      iters[p].seek(maxKey)\;
      \eIf{iters[p].atEnd()} {
        atEnd $\leftarrow$ true\;
-       return\;
+       \Return\;
      } {
        maxKey $\leftarrow$ iters[p].key()\;
        p $\leftarrow$ (p + 1) \% k\;
@@ -491,10 +491,10 @@ in~\cref{table:lftj-state-machine} and describe each action below.
 
 \begin{algorithm}
     \KwData{
-      depth \* the index of the variable to find a binding for, range from -1 to \#variables - 1 *\ \;
-      MAX\_DEPTH \\* the number of variables \\*
-      bindings \\* array holding the current variable bindings or $-1$ for no binding \\* \;
-      action   \\* state of the state machine \\* \;
+      \textit{depth} the index of the variable to find a binding for, ranges from -1 to \#variables - 1\\
+      \textit{bindings} array holding the current variable bindings or $-1$ for no binding \\
+      \textit{MAX\_DEPTH} the number of variables - 1 \\
+      \textit{action} state of the state machine
     }
     \Repeat{!((depth == MAX\_DEPTH \&\& bindings[MAX\_DEPTH] $\neq$ -1)) || atEnd} {
       \Switch{action} {
@@ -1133,7 +1133,8 @@ However, our implementation allows the use of arbitrary vertice identifiers in $
 array of size \textit{|V|}.
 
 CSR uses two arrays to represent the edge relationship of the graph: one of size \textit{|E|} which is a projection of the edge relationship
-onto the \textit{dst} attribute and a second of size \texttt{|V + 1|} which stores indices into the first array.
+onto the \textit{dst} attribute (called \textit{AdjacencyLists}) and a second of size \texttt{|V + 1|} which stores indices into the first
+array (called \textit{Indices}).
 To find all destinations directly reachable from a source \textit{src $\in$ V}, one accesses the second array at \textit{src} for the
 correct index into the first array for a list of destinations.
 % TODO maybe example figure?
