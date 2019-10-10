@@ -2,6 +2,7 @@
 
 \subsection{User interface} \label{ssec:user-interface}
 \begin{listing}[H]
+    \centering
     \inputminted{scala}{code/usage-example.scala}
     \caption{Example usage of a WCOJ to find triangles in graph.}
     \label{lst:usage-example}
@@ -32,19 +33,23 @@ them into the join.
 Implementing the possibility to push general filters into the join would be a valuable addition but we decided against it because
 it a pure engineering task.
 
-
-
-
 \subsection{Integration with Catalyst} \label{ssec:integration-with-catalyst}
-We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
-Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst, this includes a
-\textit{LogicalPlan},
-a \textit{Strategy} to convert this logical operator into a \textit{SparkPlan}, a physical operator to materialize
-RDD's in sorted fashion into a columnar representation that supports a least upper bound operation in $\mathcal{O} (\log n)$ and
-finally a general implementation of Spark's \textit{zipPartition} operation to support more than 5 children.
-We explain these components below; before we outline some limitations of our integration.
+% make clear catalyst ist the only thing we change
 
-% TODO is the right place?
+
+We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
+Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst (see
+\cref{subsubsec:catalyst}).
+First of all this is logical plan representing a worst-case optimal join.
+Then a strategy to convert this logical operator into multiple physical operators.
+One physical operator executes the join.
+In between, this operator and the graph edge relationships, we execute another physical operator that materializes
+the graph edge relationships into a data structure that can support a \textit{TrieIterator} interface
+(see~\cref{subsubsec:leapfrog-triejoin}).
+The integration itself is quite straightforward due to Catalysts extendability.
+We explain it in the next sections.
+First, we highlight some limitations of our integration into Catalyst.
+
 It is not in the scope of this work to integrate WCOJ's into the SQL parser of Spark.
 Hence, WCOJ can only be used by Spark's Scala functional interface and not through Spark's SQL queries.
 
@@ -59,58 +64,157 @@ tackled these problems for the first time.
 The lack of peer-reviewed papers and the high complexity of the arXiv paper clearly illustrate that deeper integration with
 Spark's optimizer is out of scope for this thesis.
 
-%It is established that WCOJ is amendable to cyclic queries but not how strongly to which kind of cyclic query, e.g. dense (clique) or
-%sparse (cycle).
-%Additionally, no runtime measurements for queries bigger than 4-clique have been published.
-To allow the user to call \textit{findPattern} (as defined in~\cref{ssec:user-interface}) on a \textit{Dataset}, we added a new class
-to the package \texttt{org.apache.spark.sql} called \texttt{WCOJFunctions} and an implicit conversion from \textit{Dataset} to
-\texttt{WCOJFunctions}.
-This function parses the pattern - the necessary code is borrowed from GraphFrame~\cite{graphframe} - into a representation of a WCOJ join,
-\texttt{JoinSpecification}, and creates new \texttt{AttributeReferences} named accordingly to the join variables.
 
-Due to our decision not to build optimizer rules to introduce WCOJ's, we have to implement a new \textit{LogicalPlan} to represent WCOJ's.
-This plan has as many children as relationships joined by the WCOJ.
-Its \textit{output} are the \texttt{AttributeReferences} produced by \texttt{findPattern}.
+\subsection{A sequetial linear Leapfrog Triejoin} \label{subsec:spark-integration-seq}
+For this section we assume that the reader is familiar with the background section about Catalyst (see \cref{subsubsec:catalyst}) and
+\textsc{LFTJ} (see \cref{subsubsec:leapfrog-triejoin}) where we explain the components of Catalyst planning phase and the requirements
+of a Leapfrog Triejoin.
+In the current section, we outline how to satisfy the requirments of \textsc{LFTJ} within and help of Catalysts structured plans.
 
-The physical operator for WCOJ's, \texttt{WCOJExec}, is an implementation of the trait \texttt{SparkPlan}.
-It expects as many children as the relationships in the join;
-these children have to support a Trieiterator interface as specified in~\cref{ssec:seq-implementation}.
-The biggest challenge in the implementation of \texttt{WCOJExec} is that Spark does not support to zip the partitions of more than 5 RDD's.
-However, to operate synchronously on the partitions of all children, we need this operation for an arbitrary number of children.
-Fortunately, although, not publicly available, Spark does implement \textit{zipPartitions} in a general manner in
-the abstract class \texttt{ZippedPartitionsBaseRDD}.
-Hence, supporting this functionality is a simple matter of subclassing this class publicly to expose its generality to our code (see
-\texttt{sparkIntegration.GeneralZippedPartitionsRDD}).
+Our baseline implementation of the Leapfrog Triejoin is a sequential implemenation, i.e. it is not distributed.
+Therefore, all representations of the edge relationship have only a single partition which the join operates upon.
+In Spark this partitioning is called \textit{AllTuples}.
+We enforce sequential execution of the complete Spark plan in our experiments by setting the number of executors to 1.
 
-% TODO use 's everywhere for plurals
-We need to materialize the input RDD's for \texttt{WCOJExec}, to support the Trieiterator interface.
-This is done by \texttt{ToTrieIterableRDD}, a \texttt{SparkPlan}, with a single child.
-It iterates over the child and stores all tuples in a columnar representation, a \texttt{ColumnarBatch}\footnote{To all but highly
-experienced Spark developers, the construct used to allow us to create an RDD which controls how its partitions are stored might look
-unintuitive.
-Normally, the type parameter of the \texttt{RDD} class is used to refer to the type of its elements, e.g. Sparks Catalyst module uses
-mostly \texttt{RDD[InternalRow]}.
-However, it is possible - and practised in the Spark project itself - to use this type parameter to give the type of the partitions of an
-RDD.
-This is what we do in the class \texttt{TrieIterableRDD}, which at the same time is a subclass of \texttt{RDD[InternalRow]}, so it can be
-used in Catalyst.}
-\footnote{Later we noticed the RDD function \texttt{glom} which allows to operate on the partitions of RDD's an array.
-However, by then we had already implemented our own solution and decided to keep it for better control.}.
-Furthermore, our Trieiterator implementation demands that the tuples are sorted.
-Therefore, \texttt{ToTrieIterableRDD} requires its child to be ordered using the \texttt{requiredChildOrdering} functionality of Spark.
+In the first phases of Catalyst query compilation process, the query plan is represented by logical operators.
+Integration into this phase only requires us to build a logical operator to represent the \textsc{WCOJ} join.
+A \textsc{LFTJ} can have 2 or more children, one for each input relationship.
 
-The last component of our Spark integration is a simple \texttt{Strategy} to translate a \texttt{WCOJ} logical operator into a
-\texttt{WCOJExec} physical operator.
-This is a one-to-one tranlation from \texttt{WCOJ} to \texttt{WCOJExec} as an implementation of Spark's abstract class
-\texttt{SparkStrategy}.
-Additionally, this \texttt{Strategy} also introduces a \texttt{ToTrieIterableRDD} operation before the WCOJ for every child.
+The logical and physical plan for the triangle query is shown in~\cref{fig:wcoj-catalyst-plan}.
+
+\begin{figure}
+%    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{wcoj-catalyst-logical-plan}}
+%    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{wcoj-catalyst-physical-plan}}
+    \caption{Catalyst plans for the triangle query using a Leapfrog Triejoin.}
+    \label{fig:wcoj-catalyst-plan}
+\end{figure}
+
+The strategy to translate the logical plan into a physical plan has to tasks.
+First, simply translating the n-ary logical plan into n-ary physical plan that executes the \textsc{LFTJ} with the children as input.
+Second, introducing a physical operator per child which materializes the RDD into a sorted, columnar array representation to support a
+\textit{TrieIterator} interface.
+
+The first physical operator is straightforward to implement.
+It simply executes a \textit{LFTJ} over the \textit{TrieIterators} provided by the children.
+Given that each child has only one partition and there are no parallel operations, the algorithm can be implemented exactly
+as described in~\cref{subsubsec:leapfrog-triejoin}.
+
+The second physical operator translates the linear interator interface of any RDD into a \textit{TrieIterator} interface.
+In particular, it needs to offer a \textit{seek} operation in $\mathcal{O} (\log N) $.
+To support this interface the operator requires its children to be sorted;
+this requirement can be fulfilled by Catalyst standard optimization rules.
+Then it takes the sorted linear iterator and materializes it into a column-wise array structure.
+Given this data structure, the \textit{TrieIterator} can be implemented using binary search (as described
+in~\cref{subsubsec:leapfrog-triejoin}).
+
+\subsection{GraphWCOJ} \label{subsec:spark-integration-graphWCOJ}
+% TODO maybe i miss a good connection between variable ordering and sorting and the fact that I need only two tables?
+The integration of GraphWCOJ is quite similar to the one of \textsc{LFTJ}.
+\Cref{fig:graphWCOJ-catalyst-plan} shows the logical and physical plan constructred by our integration.
+There are three main difference: GraphWCOJ requires only two children for the input relationships, the children materialize the input
+relationships in a CSR data structure (see~\cref{subsec:csr-background}) and we support parallel execution of the join (which requires
+a third child) and broadcasting the CSR data structure.
+We address these differences in order.
+
+Our GraphWCOJ operators need only two materialized version of the input relationship.
+This is because in graph pattern matching the joins are self-joins on the edge relationship.
+The \textsc{LFTJ} requires that its input relationships are sorted by an lexicographic sorting over the variable ordering.
+To support all possible variable orderings, we need the edge relationship sorted by $src, dst$ and $dst, src$.
+Hence, we need to separate, materialized versions of the edge relationship.
+
+GraphWCOJ uses a CSR representation of the edge relationship (see~\cref{sec:graphwcoj}).
+% TODO CSR accessible and sorted? definition not given.
+Hence, we need to build two CSR representations.
+One with its \textit{Indices} array build from the $src$ attribute and the \textit{AdjancencyLists} array build from the $dst$ attribute.
+The other, with \textit{Indices} from $dst$ and \textit{AdjacencyLists} from $src$.
+Next, we describe how to build these CSR's from two linear, sorted, row wise iterators as provided by Spark for the two child relationships.
+
+% TODO algorithm to build them
+First, we note that it is necessary to build both compressed sparse row data structures in tandem.
+This is because some vertices in the graph might have no outgoing or incoming edges.
+That means some vertice ID's do not occur in the $src$ or $dst$ attributes of any tuple.
+Therefore, the \textit{Indices} arrays of the two CSR structures would differ if they are build from either $src$ and $dst$, e.g.
+they could have different length.
+However, if this is the case, it is not possible to use both CSR's together in a single join.
+
+To allow building the CSR's in-tandem, we introduce \textit{AlignedZippedIterator}.
+The \textit{next} method of this iterator is shown in~\cref{alg:alignedZippedIterator}.
+It zips two iterators of two-tuple elements and aligns them on the first component, e.g. edges with $src$ as first component and $dst$ as
+second component.
+The zipped iterator emits triples where the first component is the aligned first element of both underlying iterators and the other
+two elements are the second components of both iterators.
+If the two iterators have different numbers of elements with the same first component, we advance only one iterator and fill the missing
+component in the emitted triple with a placeholder until the first component of both iterators aligns again.
+
+\begin{algorithm}
+  \uIf{iter1.hasNext() and iter2.hasNext()} {
+    t1 $\leftarrow$ iter1.peek() \;
+    t2 $\leftarrow$ iter2.peek() \;
+    \uIf {t1[0] == t2[0]} {
+      iter1.next()\;
+      iter2.next()\;
+      \KwRet{(iter1.key()[0], iter1.key()[1], iter2.key()[1])}\;
+    } \uElseIf{t1[0] < t2[0]} {
+      iter1.next()\;
+      \KwRet{(iter1.key()[0], iter1.key()[1], -1)} \;
+    } \Else {
+      iter2.next()\;
+      \KwRet{(iter2.key()[0], -1, iter2.key()[1])} \;
+    }
+  } \uElseIf {iter1.hasNext()} {
+    iter1.next() \;
+    \KwRet{(iter1.key()[0], iter1.key()[1], -1)} \;
+  } \Else {
+    iter2.next() \;
+    \KwRet{(iter2.key()[0], -1, iter2.key()[1])} \;
+  }
+  \caption{\textit{next} method of an \textit{AlignedZippedIterator}.}
+  \label{alg:alignedZippedIterator}
+\end{algorithm}
+
+Given an \textit{AlignedZippedIterator} over both input relationships, it is straightforward to build both CSR data structures.
+We consume the whole \textit{AlignedZippedIterator}, for each element we append the 2nd and 3rd component to \textit{AdjacencyLists} of
+the CSR's;
+while skipping placeholders.
+Whenever the first element of the three tuple changes, we append the current size of the \textit{AdjaencyLists} buffers to the
+\textit{Idices} arrays.
+
+The final difference between the Spark integration for \textsc{LFTJ} and GraphWCOJ is that we build GraphWCOJ such that it can
+be run in parallel.
+
+As argued in former chapters, we broadcast the edge relationship to all workers.
+The broadcast is supported by Spark's broadcast variables (see~\cref{subsubsec:broadcast-variables}) and Catalysts support to broadcast
+the execution of a physical operator.
+
+Parallelism is introduced via the third child of our GraphWCOJ operators.
+It is an empty RDD with as many partitions as the desired level of parallelism.
+We schedule tasks by using the \textit{mapPartitions} function of this empty RDD.
+Foreach partition, we run the \textsc{WCOJ} join backing its \textit{TrieIterator} with the broadcasted CSR's and partition the data
+logical by one of the schemes described in~\cref{sec:worst-case-optimal-join-parallelization}.
+
+
+% Broadcast cache
+One of the main advantages of broadcasting the edge relationship to all workers is that we can reuse the same broadcast for all queries
+over the same graph.
+To support this in Catalyst, we introduce one additional physical operator which we call \textit{ReusedCSRBroadcast} and a CSR broadcast
+variable cache maintained on the Spark master node.
+
+The CSR broadcast variable cache is a simple dictionary with RDD ID's to broadcast variables of CSR structures.
+When, our system builds a broadcasted CSR structure, it registers the broadcast in the cache.
+Everytime, we translate a logical WCOJ plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
+if so, our strategy reuses this broadcast.
+
+
+% TODO disk cache?
+% CSR disk cache  % CSRTrieIterableBroadcast implements that
+
+% connection to distribution, logical partitionings integrated into the GraphWCOJ algorithm
+
+
+% TODO where whole system overview as one big diagram, and then used to explain the structure? introduction, extra chapter after background.
 
 % TODO move to acknowledgements
 The Spark integration of this work has been inspired by the IndexedDataframes~\cite{indexed-dataframes} work of Alex Uta and the supervisors
 of this thesis.
 
-\subsection{Operator to create a CSR from a DataFrame}\label{subsec:csr-spark}
-To be defined and written.
 
-% systems integration?
-%  relationship reordering
