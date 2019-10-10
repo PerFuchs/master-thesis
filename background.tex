@@ -437,21 +437,22 @@ The algorithm of this method is shown in~\cref{alg:leapfrogSearch}.
 This method loops the process of calling the \textit{seek} method of the its smallest input iterator with the key of the largest input
 iterator until the smallest and the largest (and therefore all iterators) point to the same value.
 
-\begin{algorithm}[H]
+
+\begin{algorithm}
     \KwData{\\
-      \textit{iters} sorted array of TrieIterators \\
-      \textit{p} index of the smallest iterator
+      iters \textit{sorted array of TrieIterators} \\
+      p \textit{index of the smallest iterator}
     }
-   \KwResult{Either \textit{atEnd} is true or \textit{key} is set to next key of intersection}
+   \KwResult{\textit{Either} atEnd \textit{is true or} key \textit{is set to next key of intersection}}
     maxKey $\gets$ iters[p \% iters.length].key()\;
    \While{\upshape iters[p].key() $\neq$ maxKey}{
      iters[p].seek(maxKey)\;
-     \eIf{iters[p].atEnd()} {
+     \eIf{\upshape iters[p].atEnd()} {
        atEnd $\leftarrow$ true\;
        \Return\;
      } {
        maxKey $\leftarrow$ iters[p].key()\;
-       p $\leftarrow$ (p + 1) \% k\;
+       p $\leftarrow$ (p + 1) \% iters.length\;
      }
    }
    key $\leftarrow$ iters[p].key()
@@ -459,6 +460,7 @@ iterator until the smallest and the largest (and therefore all iterators) point 
    \label{alg:leapfrogSearch}
 \end{algorithm}
 % TODO styling
+
 
 The \textit{leapfrogNext} method moves the join to its next value.
 Internally, it uses the \textit{next} function of its smallest iterator and then \textit{leapfrogSearch}.
@@ -491,47 +493,47 @@ in~\cref{table:lftj-state-machine} and describe each action below.
 
 \begin{algorithm}
     \KwData{
-      \textit{depth} the index of the variable to find a binding for, ranges from -1 to \#variables - 1\\
-      \textit{bindings} array holding the current variable bindings or $-1$ for no binding \\
-      \textit{MAX\_DEPTH} the number of variables - 1 \\
-      \textit{action} state of the state machine
+      depth \textit{the index of the variable to find a binding for, ranges from -1 to \#variables - 1}\\
+      bindings \textit{array holding the current variable bindings or $-1$ for no binding} \\
+      MAX\_DEPTH \textit{the number of variables - 1} \\
+      action \textit{state of the state machine}
     }
-    \Repeat{!((depth == MAX\_DEPTH \&\& bindings[MAX\_DEPTH] $\neq$ -1)) || atEnd} {
-      \Switch{action} {
-        \Case{NEXT} {
+    \Repeat{\upshape $\neg$ (depth = MAX\_DEPTH $\and$ bindings[MAX\_DEPTH] $\neq$ -1) $\lor$ atEnd} {
+      \Switch{\upshape action} {
+        \Case{\upshape NEXT} {
             leapfrogJoins[depth].leapfrogNext() \;
-            \eIf{leapfrogJoins[depth].atEnd()} {
+            \eIf{\upshape leapfrogJoins[depth].atEnd()} {
                 action $\leftarrow$ UP \;
             } {
                 bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
-                \If{depth == MAX\_DEPTH} {
+                \If{\upshape depth == MAX\_DEPTH} {
                     action $\leftarrow$ NEXT
                 } {
                     action $\leftarrow$ DOWN
                 }
             }
         }
-       \Case{DOWN} {
+       \Case{\upshape DOWN} {
           depth $\leftarrow$ depth + 1 \;
           trieJoinOpen() \;
-          \eIf{leapfrogJoins[depth].atEnd()} {
+          \eIf{\upshape leapfrogJoins[depth].atEnd()} {
             action $\leftarrow$ UP \;
           } {
             bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
-          \eIf{depth == MAX\_DEPTH} {
+          \eIf{\upshape depth = MAX\_DEPTH} {
              action $\leftarrow$ NEXT
           } {
             action $\leftarrow$ DOWN
           }
           }
        }
-        \Case{UP} {
-          \eIf{(depth == 0)} {
+        \Case{\upshape UP} {
+          \eIf{\upshape depth = 0} {
             atEnd $\leftarrow$ true \;
           } {
             depth $\leftarrow$ depth - 1 \;
             trieJoinUp() \;
-            \eIf{leapfrogJoins[depth].atEnd()} {
+            \eIf{\upshape leapfrogJoins[depth].atEnd()} {
                 action $\leftarrow$ UP \;
             } {
                 action $\leftarrow$ NEXT \;

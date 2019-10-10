@@ -153,31 +153,31 @@ If the two iterators have different numbers of elements with the same first comp
 component in the emitted triple with a placeholder until the first component of both iterators aligns again.
 
 \begin{algorithm}
-  \uIf{iter1.hasNext() and iter2.hasNext()} {
+  \uIf{\upshape iter1.hasNext() $\land$ iter2.hasNext()} {
     t1 $\leftarrow$ iter1.peek() \;
     t2 $\leftarrow$ iter2.peek() \;
-    \uIf {t1[0] == t2[0]} {
-      iter1.next()\;
-      iter2.next()\;
-      \KwRet{(iter1.key()[0], iter1.key()[1], iter2.key()[1])}\;
-    } \uElseIf{t1[0] < t2[0]} {
-      iter1.next()\;
-      \KwRet{(iter1.key()[0], iter1.key()[1], -1)} \;
+    \uIf {\upshape t1[0] = t2[0]} {
+      t1 $\leftarrow$ iter1.next()\;
+      t2 $\leftarrow $ iter2.next()\;
+      \KwRet{\upshape (t1[0], t1[1], t2[1])}\;
+    } \uElseIf{\upshape t1[0] < t2[0]} {
+      t $\leftarrow$ iter1.next()\;
+      \KwRet{\upshape (t[0], t[1], -1)} \;
     } \Else {
-      iter2.next()\;
-      \KwRet{(iter2.key()[0], -1, iter2.key()[1])} \;
+      t $\leftarrow$ iter2.next()\;
+      \KwRet{\upshape (t[0], -1, t[1])} \;
     }
-  } \uElseIf {iter1.hasNext()} {
-    iter1.next() \;
-    \KwRet{(iter1.key()[0], iter1.key()[1], -1)} \;
+  } \uElseIf {\upshape iter1.hasNext()} {
+    t $\leftarrow$ iter1.next() \;
+    \KwRet{\upshape (t[0], t[1], -1)} \;
   } \Else {
-    iter2.next() \;
-    \KwRet{(iter2.key()[0], -1, iter2.key()[1])} \;
+    t $\leftarrow$ iter2.next()\;
+    \KwRet{\upshape (t[0], -1, t[1])} \;
   }
   \caption{\textit{next} method of an \textit{AlignedZippedIterator}.}
   \label{alg:alignedZippedIterator}
 \end{algorithm}
-% TODO styling
+
 
 Given an \textit{AlignedZippedIterator} over both input relationships, it is straightforward to build two CSR data structures.
 We consume the whole \textit{AlignedZippedIterator}, for each element we append the 2nd and 3rd component to \textit{AdjacencyLists} of
