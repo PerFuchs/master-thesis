@@ -263,7 +263,6 @@ PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso~\cite{olddog}.
 The broadest study of its performance uses 15 different datasets and 7 queries~\cite{olddog}.
 We conclude that the performance of \textsc{LFTJ} is well established by peer reviewed publications
 as well as industrial usage.
-% TODO find cites for graphlab and Virtuoso
 
 The \textit{NPRR} algorithm has been well analyzed from the theoretical point of view.
 However, we are not able to find any openenly available sources with performance measurements.
@@ -484,7 +483,7 @@ Then it finds the next possible binding by backtracking.
 \Cref{alg:leapfrogTrieJoin-state-machine} shows the backtracking depth-first traversal.
 This traversal needs to stop each time when a complete tuple has been found to support the iterator interface of the join.
 Therefore, it is implemented as a state-machine which stops each time the deepest level is reached and all variables are bound
-(loop condition in line 35). % LINE
+(loop condition in line 33). % LINE
 The next action of the state machine is determined by the outcome of the current action.
 Hence, we can characterize the state machine by describing each possible action and its possible outcomes.
 There are three possible actions: \textit{next}, \textit{down} and \textit{up}.
@@ -501,11 +500,11 @@ in~\cref{table:lftj-state-machine} and describe each action below.
     \Repeat{\upshape $\neg$ (depth = MAX\_DEPTH $\and$ bindings[MAX\_DEPTH] $\neq$ -1) $\lor$ atEnd} {
       \Switch{\upshape action} {
         \Case{\upshape NEXT} {
-            leapfrogJoins[depth].leapfrogNext() \;
+            leapfrogJoins[depth].leapfrogNext() \; \label{line:lftj-leapfrog-next}
             \eIf{\upshape leapfrogJoins[depth].atEnd()} {
-                action $\leftarrow$ UP \;
+                action $\leftarrow$ UP \; \label{line:lftj-next-up}
             } {
-                bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
+                bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \; \label{line:lftj-next-down-or-next}
                 \If{\upshape depth == MAX\_DEPTH} {
                     action $\leftarrow$ NEXT
                 } {
@@ -515,25 +514,25 @@ in~\cref{table:lftj-state-machine} and describe each action below.
         }
        \Case{\upshape DOWN} {
           depth $\leftarrow$ depth + 1 \;
-          trieJoinOpen() \;
+          trieJoinOpen() \; \label{line:lftj-trieJoinOpen}
           \eIf{\upshape leapfrogJoins[depth].atEnd()} {
-            action $\leftarrow$ UP \;
+            action $\leftarrow$ UP \; \label{line:lftj-down-up}
           } {
             bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
           \eIf{\upshape depth = MAX\_DEPTH} {
-             action $\leftarrow$ NEXT
+             action $\leftarrow$ NEXT \label{line:lftj-down-next}
           } {
             action $\leftarrow$ DOWN
           }
           }
        }
         \Case{\upshape UP} {
-          \eIf{\upshape depth = 0} {
+          \eIf{\upshape depth = 0} { \label{line:lftj-atEnd}
             atEnd $\leftarrow$ true \;
           } {
             depth $\leftarrow$ depth - 1 \;
-            trieJoinUp() \;
-            \eIf{\upshape leapfrogJoins[depth].atEnd()} {
+            trieJoinUp() \; \label{line:lftj-trieJoinUp}
+            \eIf{\upshape leapfrogJoins[depth].atEnd()} { \label{line:lftj-up-up-next}
                 action $\leftarrow$ UP \;
             } {
                 action $\leftarrow$ NEXT \;
@@ -546,24 +545,26 @@ in~\cref{table:lftj-state-machine} and describe each action below.
     \label{alg:leapfrogTrieJoin-state-machine}
     % TODO mention triejoinopen and triejoinUP
 \end{algorithm}
-% TODO styling
-The \textit{next} action moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable (line 2). % LINE
-If the \textit{LeapfrogJoin} reached its end, we continue with the \textit{up} action (line 4), % LINE
+
+The \textit{next} action moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable
+(line~\ref{line:lftj-leapfrog-next}).
+If the \textit{LeapfrogJoin} reached its end, we continue with the \textit{up} action (line~\ref{line:lftj-next-up}),
 otherwise we set the binding and continue by another \textit{next} action, if we are at the deepest level or by moving
-to the next deeper level by the \textit{down} action (line 7). % LINE
+to the next deeper level by the \textit{down} action (line~\ref{line:lftj-next-down-or-next}ff).
 
 The \textit{down} action moves to the next variable in the global variable ordering by opening all related \textit{TrieIterators}
-and initializing the corresponding \textit{LeapfrogJoin} (line 20 call to \textit{trieJoinOpen}). % LINE.
-A \textit{down} can be followed by an \textit{up} if the \textit{LeapfrogJoin} is \textit{atEnd} (line 22),
-by a \textit{next} action if the trie join is at its lowest level (line 25), or by another \textit{down} action to reach the deepest level.
+and initializing the corresponding \textit{LeapfrogJoin} (line~\ref{line:lftj-trieJoinOpen} call to \textit{trieJoinOpen}).
+A \textit{down} can be followed by an \textit{up} if the \textit{LeapfrogJoin} is \textit{atEnd} (line~\ref{line:lftj-down-up}),
+by a \textit{next} action if the trie join is at its lowest level (line~\ref{line:lftj-down-next}), or by another \textit{down} action to
+reach the deepest level.
 
 The \textit{up} action can signal the completion of the join if all bindings for the first variable in the global ordering have
 been explored, or in other words, the first \textit{LeapfrogJoin} is \textit{atEnd} (condition
-\textit{depth == 0 $\wedge$ action ==  UP} line 28). % LINE
-Otherwise, all \textit{TrieIterators} corresponding to the current variable are moved upwards by calling \textit{triejoinUp} (line 31)
-which also updates \textit{depth} and \textit{bindings}.  % LINE
+\textit{depth == 0 $\wedge$ action ==  UP} line~\ref{line:lftj-atEnd}).
+Otherwise, all \textit{TrieIterators} corresponding to the current variable are moved upwards by calling \textit{triejoinUp}
+(line~\ref{line:lftj-trieJoinUp}) which also updates \textit{depth} and \textit{bindings}.
 Then, this action is followed by another \textit{up} or a \textit{next} depending on \textit{atEnd} of the current \textit{LeapfrogJoin}
-(lines 32). % LINE
+(lines~\ref{line:lftj-up-up-next}).
 
 \begin{table}[]
     \centering
@@ -819,7 +820,7 @@ Therefore, we decide to analyse the expected scaling behaviour of Shares for gra
 Our main concern is that the number of duplicated tuples in the system increases with the query size (number of vertices) and
 with the number of workers added to the system.
 We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
-of this thesis (\ref{sec:shares-proof}). % TODO mention simulation
+of this thesis (\ref{sec:shares-proof}).
 As result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
 strategy to parallelize a worst-case optimal join.
 
@@ -843,7 +844,6 @@ arrive on the same worker after one shuffle.
 
 We first explain how to organize the workers in a hypercube and then how to map tuples to these workers.
 Next, we treat the problem of choosing a good hypercube configuration.
-% TODO find best hypercube configuation is not straigthforward.
 Followed, by a summary about optimality of Shares.
 Finally, we provide analysis of the scaling of Shares for graph pattern matching.
 
