@@ -1,11 +1,16 @@
 \section{Related Work} \label{sec:related-work}
 
 
-\subsection{Graphs on Spark}
-Due to its generality, widespread acceptance in the industry, the ability to use cloud hardware and its fault tolerance by design, it is an attractive target for big graph processing.
-For example, GraphFrames~\cite{graphframe}, GraphX~\cite{graphx} (a Pregel~\cite{pregel} implementation) or graph query languages as \mbox{G-CORE}~\cite{gcore} and \mbox{openCypher} with their `Cyper for Apache Spark'~\cite{caps} all aim to ease graph processing on Spark.
-The last two technologies translate their graph specific operations to the relational interface of Spark (SparkSQL) to profit from Spark's relational query optimizer Catalyst~\cite{spark-sql}.
-Hence, we believe that the WCOJ's, with their efficiency for analytical graph queries, are a valuable addition to Spark's built-in join algorithms in general and these graph-on-spark systems in particular.
+% papers:
+% Have to
+% fractal
+
+% timely dataflow
+% longbin
+
+% Maybe
+%   CAPs?
+%   semih's work on binary plus other joins
 
 % TODO eventually include binary search papers
 
@@ -50,7 +55,7 @@ Hence, their and our research share the same goals, however, we aim to achieve i
 
 
 
-\subsection{Adaptive Query Exectution}
+%\subsection{Adaptive Query Exectution}
 
 %A novel development in Spark is the ability to generate code to execute queries on the fly, called WholeStage codegeneration, based on a technique used in the Hyper database~\cite{hyper,jira-whole-stage,1m-rows-laptop}.
 %Compiled queries have been shown to be multiple magnitudes faster than interpreted queries traditionally used in most database systems.

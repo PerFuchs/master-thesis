@@ -1,50 +1,247 @@
 \section{Introduction} \label{sec:introduction}
-% TODO add use cases from Graphflow paper three references, three use cases.
-Newly developed worst-case optimal join (WCOJ) algorithms, e.g. Leapfrog Triejoin, turned conventional thinking about join processing on its head because these multi-join algorithms have provably lower complexity than classical binary joins, i.e. join algorithms that join just two tables at-a-time.
-In the areas of data warehousing and OLAP, this finding does not have much impact, though, since the join patterns most commonly encountered are primary-foreign-key joins, which normally take the form of a tree or snowflake and contain no cycles.
+
+
+
+
+
+% main idea?
+% why is the idea great?
+
+
+%
+% maybe
+% snowflake and star join definition?
+
+
+Newly developed worst-case optimal join (WCOJ) algorithms, e.g. Leapfrog Triejoin, turned conventional thinking about join processing
+on its head because these multi-join algorithms have provably lower complexity than classical binary joins,
+i.e. join algorithms that join just two tables at-a-time.
+In the areas of data warehousing and OLAP, this finding does not have much impact, though,
+since the join patterns most commonly encountered are primary-foreign-key joins,
+which normally take the form of a tree or snowflake and contain no cycles.
 The computational complexity of FK-PK joins is by definition linear in size of the inputs.
 In these "conventional" cases, binary joins, e.g. hash joins, work fine.
-However, analytical graph queries often use foreign-foreign-key joins, which can grow over linearly in the size of their inputs, and often contain cycles.
-For these use-cases, worst-case optimal join algorithms excel because matching a pattern consisting of multiple joins causes binary joins to generate a rapidly increasing set of intermediate results, e.g. navigating a social graph with an out-degree in the hundreds, of which many matches are useless and get eliminated by later joins, e.g. the join closing the cycle. 
-These kinds of join patterns are frequently found during graph analysis, e.g. for graph clustering on social network graphs for customer relationship management or recommendation systems and fraud detection in the financial sector~\cite{gcore,gupta2014real}.
+
+However, analytical graph queries often use foreign-foreign-key joins, which can grow over linearly in the size of their inputs,
+and often contain cycles.
+For these use-cases, worst-case optimal join algorithms excel because matching a pattern consisting of multiple joins causes
+binary joins to generate a rapidly increasing set of intermediate results, e.g. navigating a social graph with an out-degree in the
+hundreds, of which many matches are useless and get eliminated by later joins, e.g. the join closing the cycle.
+These kinds of join patterns are frequently found during graph analysis,
+e.g. for graph clustering on social network graphs for customer relationship management or recommendation systems
+and fraud detection in the financial sector~\cite{fraud-detection,twitter-diamond}.
 Worst-case optimal join algorithms avoid large result materialization and hence promise to be orders of magnitude faster than binary joins.
 Therefore, we believe that worst-case optimal join algorithms could be a useful addition to (analytical) graph database systems.
 
+% work example for a bit longer
 We continue with a short example for a cyclic query and compare how this query is evaluated traditionally and with the new WCOJ's in place.
 The simplest example of a cyclical join query enumerates all triangles in a graph.
 This can be formulated as the following datalog query
 \begin{equation}
-    \textit{Q(a, b, c) $\leftarrow$ R(a, b), S(b, c), T(c, a)}
+    \textit{triangle(a, b, c) $\leftarrow$ R(a, b), S(b, c), T(c, a)} \label{eqn:triangle}
 \end{equation} 
  where \textit{R} = \textit{S} = \textit{T} are aliases for the edge relationship.
 Traditionally, this would be processed by using multiple binary joins:
 \begin{equation}
-    R \bowtie S \bowtie T \bowtie R
+    R \bowtie S \bowtie T
 \end{equation}
+% TODO show all join plans
 % TODO after executing how many joins?
-Independent of the chosen order, it can be proven that there exists cases where the intermediary result size is in $\mathcal{O}(n^3)$ with \textit{n}= |\textit{R}| = |\textit{S}| = |\textit{T}|. 
+
+The join above can be solved in 3 different orders: $ (R \bowtie S) \bowtie T$, $ (R \bowtie T) \bowtie S$ and
+$ R \bowtie (T \bowtie S)$.
+Independent of the chosen order, database instances exist where the intermediary result size is in $\mathcal{O}(N^2)$ with
+\textit{N}= |\textit{R}| = |\textit{S}| = |\textit{T}|.
 % TODO put this assumption up and back it by the statement that \textit{R}, \textit{S} and \textit{T} are actually all the same table (edge table).
-However, it is provable that maximal output of this query is in $\mathcal{O}(n^{3/2})$~\cite{agm,skew-strikes-back}. 
-Hence, binary joins materialize huge intermediary results after processing parts of the query, which are much bigger than the final result after applying all joins.
-The described problem has been shown to be a fundamental issue with traditional join-at-a-time approaches~\cite{agm,skew-strikes-back}. 
-Fortunately, worst-case optimal join algorithms can materialize cyclic joins with memory usage linear to their output size by avoiding to produce large intermediary results~\cite{leapfrog,nprr}.
-In practice, these algorithms have been shown to be highly beneficial for cyclic queries in analytical graph workloads in an optimized, single machine system~\cite{leapfrog,olddog} and later in distributed shared-nothing settings~\cite{myria-detailed,ammar2018distributed} - we describe these systems in more detail in~\cref{sec:related-work}.
+However, it is provable that output of this query is guaranteed to be in $\mathcal{O}(n^{3/2})$~\cite{agm,skew-strikes-back}
+for any database instance.
+Hence, binary joins materialize huge intermediary results after processing parts of the query,
+which are much bigger than the final result.
 
+The described problem has been shown to be a fundamental issue with traditional binary join plans~\cite{agm,skew-strikes-back}.
+We call these plans also \textit{join-at-a-time} approach because they process whole joins at the time.
+
+Fortunately, worst-case optimal join algorithms can materialize cyclic joins with memory usage linear to their output size
+by solving the join \textit{variable-at-a-time} which avoids materializing big intermediary results~\cite{leapfrog,nprr}.
+
+In a variable-at-a-time the algorithm finds a binding for the first variable $a$, then one for $b$ and
+finally one for $c$.
+After this they emit the tuple as part of the output.
+Then they find further bindings via backtracking until they enumerated the whole join when all bindings for $a$ have been explored.
+
+A simple example gives an idea why a variable-at-a-time approach is beneficial for cyclic queries.
+In \cref{fig:edge-rel-example}, we see an edge relationship.
+It is repeated three times labelled with different attributes to ease the understanding of the following explanation;
+however, in a systems implementation only one table exist and is used by all joins as input.
+% TODO table
+
+A binary join plan which joins $R$ and $S$ via $b$ first produces $16 + 3$ intermediary results;
+4 times 4 results for $b = 2$ and one for 6, 11, 12 each.
+The next join reduces these 16 results to the three triangle instances; all permutations of the set \{6, 11, 12\}.
+
+A variable-at-a-time approach finds 4 bindings for $a$, namely  $2, 6, 11, 12$;
+the intersections of both columns labelled $a$.
+Once we fixed a binding for $a$, we find one possible binding for $b$ each;
+except the binding $a = 2$ for which we cannot find a matching $b$ value.
+Finally, we find all three instances of the triangle by completing the three $a, b$ bindings with
+the a $c$ binding.
+Apparently we are able to drastically reduce the workload by formulating the join as a problem of
+finding variable bindings using information from all parts of the join, instead of, using only one constraint at the time
+and building it join-by-join.
+
+We do not claim that the example above illustrates the generality of why binary join plans are provably worse than
+\textsc{WCOJ}'s.
+Clearly, the example does not show an intermediary result of $N^2$ as $N = 13$ and the intermediary result has the size of 16.
+% TODO verify below
+However, we note that even in such a simple example all possible binary join orders produce an intermediary result of size 16.
+While all possible variable orderings for a variable-at-a-time approaches eliminate the skewed value (2) after finding no binding
+for the second variable.
+A more general but less concrete and not graph specific example is explained in~\cite{skew-strikes-back}.
+
+% TODO extend.
+In practice, these algorithms have been shown to be highly beneficial for cyclic queries in analytical graph workloads in an optimized,
+single machine system~\cite{leapfrog,olddog}
+and later in distributed shared-nothing settings~\cite{myria-detailed,ammar2018distributed}
+- we describe these systems in more detail in~\cref{sec:related-work}.
+
+% definition of graph pattern matching
+Graph pattern matching is the problem of finding all instances of a specific subgraph in a graph.
+The subgraph to find is described as pattern or query.
+In this thesis, we use datalog queries to define subgraph queries.
+
+For example, \cref{eqn:triangle} shows the datalog query describing a triangle.
+Here we join three atoms $S, R$ and $T$ with two attributes each $a, b$, $b, c$ and $a, c$ respectively.
+The task of enumerating all triangles within the three atoms can be also be described as finding all possible
+bindings for the join variables $a, b$ and $c$ within them.
+
+The translation from datalog queries to graph patterns is straightforward.
+An attribute or a variable refers to a vertice in a graph and an atom to an edge.
+A depiction of the subgraph pattern described by~\cref{eqn:triangle} is shown in~\cref{fig:pattern-triangle}.
+
+In relational terms a graph pattern matching query is an n-ary, conjunctive, self-equi-join on the edge relationship of the graph.
+In this thesis, all join queries discussed belong to this sub category of possible join queries.
+Other join queries can be useful to describe more complex graph patters, e.g. disjuntion for two edge of which only one needs to
+exist or negation to exclude instances that have to many connections.
+Some techniques used in this work can be extended to cover these cases, we mention related literature but do not focus
+our efforts on these extensions.
+
+% example queries the three from my presentation
+% TODO add use cases from Graphflow paper three references, three use cases.
+Graph pattern matching is fundamental to analytical graph analysis workloads~\cite{see longbin and semih and presentation}.
+We show two graph patterns which are used in practice below and explain the use-cases.
+
+\Cref{fig:pattern-diamond} shows the diamond query which is used by Twitter to recommend their users new people to follow.
+The idea is that if a user $a$ is following multiple accounts $c_1, \dots, c_k$ who all follow a person $b$ then it is likely that
+$b$ would be interesting to follow for $a$ as well.
+In the figure, we see the diamond query for $k = 2$.
+This is the diamond query as discussed in most papers in academia~\cite{oldog,myria-detailed,mhedhbi2019}, although,
+Twitter uses $k = 3$ in production~\cite{twitter-diamond}.
+
+Our second concrete use-case example, is the n-cycle.
+As explained in~\cref{fraud-detection}, cycles can be used to detect bank fraud.
+A typical bank-fraud often involves so called \textit{fraud-rings}.
+These are two or more people who combine their legitimate contact information in new ways to craft multiple false identities.
+For example, two people share real phone numbers and addresses to craft four fake identities (all combinations possible with two pieces
+of information).
+They open accounts under wrong names with real contact information, use these accounts normally to build trust with the bank and
+build up bigger credit lines.
+At a certain data the use all credit lines to the maximum and disappear.
+The phone numbers are dropped and the actual people living at the addresses deny ever knowing the identities that opened the accounts.
+
+This scheme can be detected using graph pattern matching.
+Let us assume, we have a graph database in which customers of the bank, their addresses and phone numbers are all vertices and the
+relationship of an address or phone number belonging to a customer are edges.
+Then, the case described above forms an 8-cycle of 4 persons (fake identities) connected by the shared use of phone numbers and
+addresses.
+
+% spark and graphs
+Due to its generality, widespread acceptance in the industry, the ability to use cloud hardware and its fault tolerance by design,
+it is an attractive target for big graph processing.
+For example, GraphFrames~\cite{graphframe}, GraphX~\cite{graphx} (a Pregel~\cite{pregel} implementation) or graph query languages
+as \mbox{G-CORE}~\cite{gcore} and \mbox{openCypher} with their `Cyper for Apache Spark'~\cite{caps} all aim to ease graph processing on
+Spark.
+The last two technologies translate their graph specific operations to the relational interface of Spark (SparkSQL)
+to profit from Spark's relational query optimizer Catalyst~\cite{spark-sql}.
+Hence, we believe that the WCOJ's, with their efficiency for analytical graph queries, are a valuable addition to Spark's
+built-in join algorithms in general and these graph-on-spark systems in particular.
+
+% research questions
 We identify two challenging, novel directions for our research.
-First, although, all of the systems cited above focus on queries widely used in graph pattern matching, e.g. clique finding or path queries, they use WCOJ's which are developed for general multi-way joins, however, graph pattern matching uses only self-joins on a relationship with two attributes, namely the edge relationship of the graph. 
-This raises the question if WCOJ's can be optimized by specializing them for graph pattern matching - which is so far the only use-case that has been shown to benefit from WCOJ's in the literature.
-Second, while the communication costs for worst-case optimal joins in map-reduce like systems (an excellent definition of the term is given in~\cite{hypercube}) is well-understood~\cite{hypercube,myria-detailed}, their scalability has not been studied in depth.
-Given the high complexity of worst-case optimal joins used and the fact that their only integration in a map-reduce like system~\cite{myria-detailed} exhibits a speedup of 8 on 64 nodes (an efficiency of 0.125), leads us to the conclusion that designing a scalable, distributed WCOJ for a map-reduce like system is an unsolved challenge.
-We believe it is time to investigate how these algorithms scale in the probably most widely used, general-purpose big data processing engine: Spark.
-To the best of our knowledge, this would be also the first time a WCOJ is integrated with an industrial-strength cluster computing model.
-We detail our research questions and goals in \cref{sec:goals} and explain how to address challenges in~\cref{sec:approach}.
+First, all of the systems cited above focus on queries widely used in graph pattern matching, e.g. clique finding or path queries.
+As explained above, graph pattern matching uses only self-joins on a single relationship with two attributes;
+namely the edge relationship of the graph.
+However, all systems use worst-case optimal joins developed for general n-ary joins.
+This raises the question if and how \textsc{WCOJ}'s can be specialized for graph pattern matching.
 
+Second, while the communication costs for worst-case optimal joins in MapReduce like systems\footnote{
+An excellent definition of the term MapReduce like systems is given in~\cite{shares}}
+is well-understood~\cite{shares,shares-skew,shares-proof,shares-skew-proof},
+their scalability has not been studied in depth.
+Given that the only integration in a MapReduce like system exhibits a speedup of 8 on 64 nodes over two workers(an efficiency of 0.125)
+~\cite{myria-detailed},
+we find that designing a scalable, distributed \textsc{WCOJ} for a MapReduce like system is an unsolved challenge.
+It is time to investigate how these algorithms scale in the probably most widely used, general-purpose big data processing engine: Spark.
+To the best of our knowledge, this is also the first time a worst-case optimal join is integrated with an industrial-strength cluster
+computing model.
+We detail our research questions below.
+% TODO one sentence about CSR?
+\begin{enumerate}
+    \item Can we gain performance in \textsc{WCOJ}’s by specializing them to graph pattern matching?
+    \begin{enumerate}
+        \item How much performance can we gain by using compressed sparse row representations to back the iterators of \textsc{WCOJ}?
+        \item Can we exploit the low average out degree of most real-world graphs for the intersections build in a Leapfrog Triejoin?
+    \end{enumerate}
+    \item How well do \textsc{WCOJ}’s scale in Spark when used for graph pattern matching?
+    \begin{enumerate}
+        \item How well does Shares scale as a logical partitioning scheme?
+        \item How to integrate scalable work-stealing into Spark to counter tuple replication and skew?
+    \end{enumerate}
+\end{enumerate}
+
+
+Towards answering our research questions, we make the following contributions.
+
+\begin{enumerate}
+    \item We integrate a sequential, general worst-case optimal join, the Leapfrog Triejoin.
+      This implementation serves as baseline for our \textsc{WCOJ} optimized to graph pattern matching.
+    \item We design and implement \textit{GraphWCOJ} which is a worst-case optimal join specialized to graph pattern matching.
+       It is backed by a compressed sparse row representation of the graph which reduces its memory footprint and speeds up execution
+       by TODO over a normal \textsc{LFTJ} because it acts as an index. % NUMBER
+       Furthermore, we exploit the typical low out degree of most graphs to by specializing the \textsc{LFTJ} for small intersections,
+       gaining further TODO x of execution time. % NUMBER
+    \item We analyse how many tuples Shares replicates for typical graph pattern matching queries.
+      From this analysis and the fact that Shares is an optimal partitioning scheme, we follow that we should replicate the graph
+      on all workers for parallelization.
+    \item Based on a replicated edge relationship, we design \textit{logical} Shares.
+      This is a Shares partitioning which is integrated direclty into the \textsc{WCOJ}.
+      We measure a speedup of TODO on 48 workers for some queries and the aforementioned speedup of Myria by TODO.
+      The results show that Shares is good in dealing with skew but requires to much replicated work to scale well.
+    \item Therefore, we abandon static \textit{logical} partitioning and apply work-stealing.
+       We show that workstealing can scale linear on some input queries and beats \textit{logical} Shares for
+       all levels for 3-cliques and 5-cliques on three different datasets.
+    \item We run experiments on TODO datasets, TODO queries, for up to 96 workers in Spark's local mode using Spark's build in hash join,
+       a general Leapfrog Triejoin and our specialize GraphWCOJ.
+\end{enumerate}
+
+% TODO limitations
+% Only local mode
+
+
+
+% TODO results
+
+
+% structure
 
 % Also introduce cached edge table, ref related work for why communication does not work
 % and goals for explanation of why we think caching is helpful
 % use mcsherry, other guy here?  --> read them
 
-%These academic systems are not very usable nor used, nor is LogicBlox on the market as a database system. For all practical senses and purposes, there are no %systems available that implement WCOJs. Apache Spark is currently the most popular analytical data processing system. It does not implement WCOJs yet and has %multiple popular graph processing APIs or subsystems, among which GraphFrames, CAPS (neo4j's Cypher on Apache Spark) and the recent LDBC effort to implement the G-%CORE query language on Apache Spark. All of these APIs could potentially benefit greatly from a WCOJ algorithm.
+% These academic systems are not very usable nor used, nor is LogicBlox on the market as a database system.
+% For all practical senses and purposes, there are no %systems available that implement WCOJs. Apache Spark is currently the most popular
+% analytical data processing system. It does not implement WCOJs yet and has %multiple popular graph processing APIs or subsystems, among
+% which GraphFrames, CAPS (neo4j's Cypher on Apache Spark) and the recent LDBC effort to implement the G-%CORE query language on Apache
+% Spark. All of these APIs could potentially benefit greatly from a WCOJ algorithm.
 % TODO include, just ask.
 
 %Spark offers a well optimized Relational interface [SparkSQL] [Catalsyst]
