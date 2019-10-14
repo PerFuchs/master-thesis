@@ -210,13 +210,6 @@ Once sent, they are cached once per executor~(see also~\cref{subsubsec:spark-arc
 They are cached in deserialized form in memory but can be spilled to disk if they are too big.
 In this thesis, we use broadcast variables to cache the edge relationship of the graph on all workers.
 
-\subsection{Graph pattern matching}
-% Definition of graph pattern matching
-% Important queries can be covered by full, conjugutive E1 formulaes
-% Worst-Case Optimal Algorithms for Parallel Query Processing, contains great background on conjugutive queries
-%  or equijoins
-%
-
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query
 is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
@@ -832,7 +825,7 @@ We note that a implementation of a distributed worst-case optimal join on Timely
 However, it is not applicable to Spark.
 Therefore, we treat it in the related work section (\ref{subsec:wcoj-timely-data-flow}) of this thesis.
 
-\subsubsection{Shares}
+\subsubsection{Shares}\label{subsubsec:shares}
 Shares partitions the input relationships for a multi-way join over worker nodes, such that, all tuples, which could be joined,
 end up on the same worker in a single shuffle round.
 Hence, it allows running any multi-way join algorithm locally after one shuffle round.
