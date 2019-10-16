@@ -22,14 +22,75 @@
 
 % LOG 1.3.
 A second distributed version of worst-case optimal joins was published in 2018 based on a Timely Data Flow system~\cite{ammar2018distributed,naiad}.
-In Timely Data Flow, shuffling is a streaming, asynchronous operation which requires no disk access\footnote{The most commonly used cluster computing engines (Hadoop and Spark) implement shuffling as a synchronizing operation that requires to write and read all tuples from disk.}.
+In Timely Data Flow, shuffling is a streaming, asynchronous operation which requires no disk access\footnote{The most commonly used cluster computing
+engines (Hadoop and Spark) implement shuffling as a synchronizing operation that requires to write and read all tuples from disk.}.
 Therefore, the number of shuffle operations is less important than in Hadoop or Spark.
 The authors take advantage of this fact by using a uniform, non-replicating partitioning scheme for their relationships.
 Then they implement a worst-case optimal join using distributed data flow operators~\cite{naiad}, e.g. min and intersection.
-Similar to us, the authors focus on scalability and efficiency in their work but due to the use of a streaming, in memory shuffles and a fine-grained batched processing scheme their approach is unlikely to be successful in Spark.
+Similar to us, the authors focus on scalability and efficiency in their work but due to the use of a streaming,
+in memory shuffles and a fine-grained batched processing scheme their approach is unlikely to be successful in Spark.
 Hence, their and our research share the same goals, however, we aim to achieve it in a more restrictive, but widely used and industrial accepted, system.
 
+% Index structure
+% same index structure as us, forward and backward index of the whole graph but additionally memory pressure due to prefixes,
+% tackled by batches but this is one more thing to configure
+% they store the whole index on all workers but could evenly divide it.
+
+% Algorithm explained, concentrate on BigJoin but mention other two
+% description of how algorithm works
+
+% three algorithms: BiGJoin static workload, Delta-BigJoin insertion only (communication optimal),
+%BigJoin-S (not implemented(
+% BigJoin is cumulative worst-case optimal and on real-world datasets gives good workbalance and low
+%per worker memory, but inputs that let a single worker do most of the work exists
+% BigJoin-S guaruntues worst-case optimal computation, communication, work-balance on all queries, also guarutus
+% IN/w memory cost per worker
+
+
+% Our guaruantues?
+% computational given by LFJT
+% communication cost, none after broadcast (O(IN)), w \times IN
+% memory costs: same as communication costs
+
+
+% how much better can they do by distributing their indices?
+% currently w \times IN, complete index on each worker
+% they can reach IN \ w when using the same hash function for each variable --> heavy skew
+% different hash functions lead to \sum_v IN \ w - overlap
+
+% N = v, p = (1/w) (assigned), k=0 (no succeess) show for increasing v, gives percentages of IN per worker given w
+
+% What are their communication costs?
+
+% Not for Spark
+% in spark communication rounds of v(2r+1), quite high
+% compare with binary joins
+% batching engineering challenge
+% also broadcasted indices, at least prepared indices on all workers
+% Spark is none streaming
+
+% General comparision?
+% rather not
+% but if so, state tracked, number of prefixes in the system at any time,
+% our system is monolith, theirs is built of simple operators
+
+% Experiments
+% Scaling of BigJoin not given, cannot be compared
+% Single threaded on twitter graph (big one) (need to double check which) and LJ, LJ needs 6.5s
+% BigJoin 8 workers 16 cores each, takes 3.4 s to find all triangles in LJ
+% BigJoin 10 machines 16 cores each 4-clique, house, 5-clique. they do not report dataset, maybe i can find the dataset int
+% seed paper
+% no experiment regarding communication costs
+
+% Implemenation: https://github.com/frankmcsherry/dataflow-join
+
+
+
+% read comparision with Shares
+
 % TODO longbins paper
+
+
 
 
 \subsection{Semih's work on worst-case optimal join for different queries}\label{subsec:wcoj-binary-joins}
