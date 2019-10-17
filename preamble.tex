@@ -54,13 +54,16 @@
 	linktoc=all
 }
 
-\usepackage[
-backend=biber,
-bibwarn=true,
-bibencoding=utf8,
-sortlocale=en_US,
-style=numeric,
-]{biblatex}
+\usepackage[backend=biber,
+natbib=true,
+maxcitenames=3,
+maxbibnames=99,
+firstinits=true,
+isbn=false,
+doi=false,
+abbreviate=false,
+style=numeric]{biblatex}
+\renewbibmacro{in:}{}
 \usepackage[linesnumbered,noend,lined,algoruled]{algorithm2e}
 \DontPrintSemicolon
 % TODO no et al in bibliography use maxbibnames
