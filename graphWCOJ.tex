@@ -203,10 +203,22 @@ We estimate the size of the intersection by the size of the smallest iterator an
 The carefully chosen operations explained above are faster than the original \textit{LeapfrogJoin}
 algorithm for two reasons.
 
-First, although, the original algorithm uses an asymptotical better n-way intersection, multiple
-binary intersections are preferable with the rather small adjacency lists of graph workloads.
-In particular, in our situation where the size of the first binary intersection is already
-very close to the size of the final intersection.
+First, the number of \textit{seek} calls to each iterator is limited by the size of the smallest iterator.
+This is because the first in-tandem intersection moves the smallest iterator in each intersection
+by at least one value.
+All later binary intersections cause at most as many \textit{seek} calls as the size of the intermediary.
+
+In the original algorithm, the smallest iterator is only moved every $\frac{1}{|iterators|}$ times.
+Hence, the limit of \textit{seek} calls
+
+This is due to better cache usage.
+Most of the searches in the adjacency lists are linear searches;
+our binary search falls back to a linear search if the remaining list is small.
+Materializing the intersections means repeating linear searches for increasing elements on the same
+two arrays until they are fully processed.
+While the original algorithm repeats linear searches over all adjacency lists, interupted from filtering
+against first level iterators and does so only until one value is found;
+it then has to return to the same lists for the next elements.
 
 Second, the \textit{Leapfrog join} generates a single value, then yields control to other parts
 of the \textit{LeapfrogTriejoin} algorithm and later touches the same adjacency lists again to generate the next value.
