@@ -9,7 +9,7 @@
 % longbin
 
 % Maybe
-%   CAPs?
+%   CAPs?a
 %   semih's work on binary plus other joins
 
 % TODO eventually include binary search papers
@@ -43,7 +43,7 @@ guarantees given by them and us.
 \textit{BigJoin} encodes a \textit{Generic Join} (see~\cref{subsec:worst-case-optimal-join-algorithm}) into multiple
 timely dataflow operators.
 
-In short, timely dataflow operators are distributed over multiple workers and each of them takes a stream of input data, operates
+In short, Timely Dataflow operators are distributed over multiple workers and each of them takes a stream of input data, operates
 on it and sends it to the next operator which can be processes on a different worker.
 Examples for operators are \textit{map} functions, \textit{filters} \textit{count} or \textit{min}.
 It is important to note that sending the output to a different operator is a fast, streaming operation, as opposed to,
@@ -136,11 +136,11 @@ Then we have the likelihood that a tuple is not assigned given by $\mathcal{B} (
 so the fraction of the indices assigned to each worker is $1 - \mathcal{B} (V, 0, \frac{1}{w})$.
 We show a plot of this function for different numbers of workers in~\cref{fig:indices}.
 
-\subsubsetion{Theoretical guarantees}
-\textit{BigJoin} guarantues computational and communication worst-case optimality.
+\subsubsection{Theoretical guarantees}
+\textit{BigJoin} guarantees computational and communication worst-case optimality.
 However, the communication optimality does not take into account how the indices are generated on each worker.
 If they are sent to each worker, this would be not worst-case optimal.
-The extensions \textit{BigJoin-S} additionally gives work-balance and low memory usage in $\matcal{O} (\frac{IN}{w})$.
+The extensions \textit{BigJoin-S} additionally gives work-balance and low memory usage in $\mathcal{O} (\frac{IN}{w})$.
 
 GraphWCOJ guarantees computational worst-case optimality which it inherits from \textsc{LFTJ}.
 Worst-case optimal communication is given by the fact that we do not communicate.
@@ -161,7 +161,7 @@ GraphWCOJ's memory footprint does not depend on the size of the input to the joi
 Its memory usage is given by the size of the Java objects used which depend on the query.
 However, this size should be neglectful small for any normally size machine.
 
-\subsection{Conclusion}
+\subsubsection{Conclusion}
 We conclude that our approach is the better fit for Spark because it requires less shuffling and no batching.
 GraphWCOJ gives nearly the same theoretical guarantees as \textit{BigJoin}.
 While they can distribute their indices we cannot;
@@ -225,9 +225,9 @@ of their approach.
 %Compiled queries have been shown to be multiple magnitudes faster than interpreted queries traditionally used in most database systems.
 %Interpreted queries are most commonly implemented using the Volcano model~\cite{volcano}.
 %This model provides a simple and composable interface for algebraic operators; basically every operator would provide an iterator interface.
-%This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on, until the next calls reach the scanning operators at the bottom of the query execution tree. 
-%These would provide a single tuple which would then be "pulled" upwards through the query tree and processed by all operators. 
-%When it reaches the root operator, the result is delivered to the user. 
+%This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on, until the next calls reach the scanning operators at the bottom of the query execution tree.
+%These would provide a single tuple which would then be "pulled" upwards through the query tree and processed by all operators.
+%When it reaches the root operator, the result is delivered to the user.
 %This happens for every tuple; hence, the approach can be described as tuple-at-a-time. % TODO wording
 %Although, this interface is simple yet powerful due to its composability, it is also quite computation intensive mainly due to the high number of calls to the next function, which is often a virtual function call.
 %This high number of virtual function call is not only CPU intensive but also makes bad use of CPU registers (they are spilled on every function call) and hinders compiler optimizations.
@@ -237,6 +237,6 @@ of their approach.
 %We are not aware of any published efforts to speed up worst-case optimal joins via code generation.
 
 %We aim to combine the research on worst-case optimal join algorithm and Spark's extensible optimizer Catalyst to speed up graph processing for all Spark users.
-%In particular, this work will be based on either of the two distributed versions of worst-case optimal join algorithms mentioned above. 
+%In particular, this work will be based on either of the two distributed versions of worst-case optimal join algorithms mentioned above.
 %We hope to further their work by evaluating which approach (shuffle + local join or timely data flow) works best on a MapReduce based processing engine as well as proving that worst-case optimal join algorithms
 %can improve performance on a complex, optimized, existing platform that has not been built with them in mind originally, albeit their high additional cost (e.g. for sorting and need for special data structures).
