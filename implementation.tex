@@ -6,18 +6,11 @@
 \subsubsection{Optimizations}
 % TODO micro benchmark linear search
 A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \texttt{BroadcastHashjoin} on any other query than the triangle query.
-Hence, we spent roughly 2 weeks to optimize our first implementation.
+Hence, we report on how to optimize the join.
 After, we are able to beat Spark's \texttt{BroadcastHashjoin} on nearly all queries and datasets.
-In this section, we discuss the implemented optimization and give a rough estimate of how important each of these is.
-In total, we improved the WCOJ running time from 248.2 seconds to 44.5 seconds on the unfiltered 5-clique query on the
-\texttt{Amazon-0602} dataset.
-We list all optimizations in~\cref{table:optimizations-seq} and label them `very important', `important' and `minor' based on the performance improvement directly after applying it.
-
-It is not helpful to give more detailed information on the effect of single optimization because they are not independent of each other.
-Hence, they might have a hugely different effect when applied in a different order, e.g. we first applied an optimization to the binary search and then
-optimized the \textit{LeapfrogJoin.next} method to avoid many searches
-Hence, giving detailed runtime measurements for the binary search optimization would overestimate its value.
-It is out of the scope of this work to study the dependency and order of the optimization to gain correct runtime measurements.
+We report measured run-times for the unfiltered 5-clique on the Amazon0601 dataset for different optimizations
+in~\cref{table:lftj-optimizations}.
+In total, we improved the WCOJ running time from 316.5 seconds to TODO seconds.
 
 We discuss the optimization in categories: Leapfrog Triejoin specific, binary search specific, Spark related, Scala related and general.
 We conclude the section with some changes we tried that do not improve performance.
@@ -26,39 +19,30 @@ Binary search specific optimizations become a category on its own because the so
 According to profiler sessions, the join spends more than 70\% of its time in this method. % TODO exact time
 This result is in line with the observation that `in the Tributary join algorithm, the most expensive step is the binary search' from~\cite{myria-detailed}.
 
-\begin{table}[]
-\begin{tabular}{@{}lp{12cm}l@{}}
-\toprule
-Category                       & Optimization                                                                           & Impact         \\ \midrule
-\multirow{2}{*}{\textbf{LFTJ}} & \textit{LeapfrogJoin.init} avoid sorting iterators                                               & very important \\
-& \textit{ArrayTrieIterable.next} in $\mathcal{O} (1)$ for deepest level                               & very important \\
-\hline
-\multirow{2}{*}{\textbf{Binary search}} & linear search for short search spaces                                                  & important      \\
-& avoiding unnecessary conditions                                                        & important      \\
-\hline
-\textbf{Spark}                  & direct use of arrays instead of \texttt{ColumnVector}                                           &
-important
 
-\\
-\hline
-\multirow{4}{*}{\textbf{Scala}}         & use \textit{while} instead of \textit{map}, \textit{foreach}, \textit{exists}, etc     & very important \\
-& use \textit{Array} instead of Scala's collections                                      & very important \\
-& use of \textit{private{[}this{]}}                                                      & minor          \\
-& enable compiler optimization                                                           & minor          \\
-\hline
-\multirow{3}{*}{\textbf{General}}& remove array lookups from the critical path \textit{column(depth)(position) $\rightarrow$ currentColumn(position)} & very important \\
-& use \textit{Array} instead of \textit{Map} if keys are integers and dense              & important      \\
-
-& strength reduction \textit{(i + 1) \% 5} $\rightarrow$ \textit{if (i == 4) 0 else i+ 1}         & important      \\ \bottomrule
-
-\end{tabular}
-\caption{Summary of all optimizations used for \textit{seq} and an estimate of their impact. }
-\label{table:optimizations-seq}
+\begin{table}
+    \begin{tabular}{llr}
+        \toprule
+        Category & Optimization & Runtime \\ \midrule
+        NA & Baseline     & 316.5   \\
+        Scala & Custom insertion sort instead of Scala's \textit{sort} method & 310.6 \\
+        Scala & Maps instead of linear lookup of \textit{LJ}'s and \textit{TI}'s in \textit{LFTJ} & 171.6 \\
+        General & Factor out computed values which are reused in \textit{TI} & 153.7 \\
+        Binary Search & Linear search after galloping and binary search & 138.0 \\
+        Scala & Arrays instead of maps for \textit{LJ}'s and \textit{TI}'s in \textit{LFTJ} & 100.5 \\
+        Scala & while loop instead of foreach loop in \textit{LFTJ} & 85.7 \\
+        Scala & use of \textit{private[this]}                     & 84.3 \\
+        Scala & use of \textit{@inline} annotation                & 82.4 \\
+        Spark & direct array access of input relationships       & 76.9 \\
+        General & strength reduction of modulo operations           & 68.9 \\
+        Binary search & linear search shortcut before galloping search and binary search & 64.0 \\
+        Binary search & less branches in binary search & 58.9 \\
+        Binary search & removing galloping search      & 56.4 \\
+        LFTJ          & no sorting in \textit{LF} \textit{init} method &  54.1 \\
+        \bottomrule
+   \end{tabular}
 \end{table}
-
-We applied two Tributary join specific optimizations.
-The first in the class \texttt{leapfrogTriejoin.LeapfrogJoin} (see also~\cref{lst:leapfrog-join}) and the second
-in the \texttt{leapfrogTriejoin.ArrayTrieIterable.TrieIteratorImpl}.
+We applied one \textsc{LFTJ} specific optimizations.
 
 The \textit{LeapfrogJoin.init} method is origingally described in~\cite{leapfrog} to sort its \textit{TrieIterators}.
 However, the method can be improved by avoiding to sort the \textit{TrieIterators} (line 11).  % LINE
@@ -76,14 +60,6 @@ implementation of Scala's array sort for objects is slow
 because it copies the array twice and casts the values to \textit{Java.Object} such that it can use Java's sorting methods.
 Before we applied the sorting optimization above, we replaced Scala's sort
 method with an optimized insertion sort, which was faster than Scala's sorting method - the \textit{iterator} array contains normally at most 20 items.}.
-
-The second Leapfrog Triejoin specific optimization is to change the \texttt{ArrayTrieIterable.TrieIteratorImpl.next} method.
-This method moves the iterator to the next value on the same level of the trie.
-Hence, it generally runs in $\mathcal{O} (\log n)$, $n$ being the number of tuples in the
-relationship, because it needs to find the least upper bound of \textit{key + 1}.
-However, under the assumption that all tuples are unique - which is fulfilled for the use-case of an edge relationship -
-the last level of the trie is unique.
-Hence, we can move to the next value by simply increasing the position by one, which is an operation in $\mathcal{O} (1)$.
 
 The binary search is the most expensive operation of the Leapfrog Triejoin.
 Hence, special attention needs to be paid while implementing it.
@@ -111,8 +87,8 @@ This is likely due to saving virtual function calls in the hottest part of our c
 The implementation is straightforward and can be found in our repository in \texttt{leapfrogTriejoin.ExposedArrayColumnVector}; we implemented it only for the \texttt{Long} datatype.
 
 We found many standard optimizations and Scala specific optimizations to be really useful.
-Most likely these are the optimizations that brought the biggest performance improvements.
-However, they are well-known, so we mention them only in the~\cref{table:optimizations-seq}.
+These are the optimizations that brought the biggest performance improvements.
+However, they are well-known, so we mention them only in the~\cref{table:lftj-optimizations}.
 For Scala specific optimizations one can find good explanations at~\cite{databricks-scala-guide}.
 
 Apart from the aforementioned very useful optimizations, we investigated multiple other avenues in hope for performance improvements
@@ -125,8 +101,6 @@ which did not succeed, we list these approaches here to save others the work of 
     \item predicating the \textit{action} variable in \textit{LeapfrogTriejoin.moveToNextTuple}
 \end{itemize}
 
-
-% TODO future work?
 Finally, we believe that code generation for specific queries that combines the functionality of \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
 and \textit{ArrayTrieIterator} into one query specific function would lead to noticeable performance improvements.
 The reason for this belief is that our implementation takes about 3.46 seconds for a triangle query on the Twitter social circle dataset
