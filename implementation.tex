@@ -1,13 +1,10 @@
 \section{Implementation}\label{sec:implementation}
 
-\subsection{General sequential version (\textit{seq})}\label{ssec:seq-implementation}
-
-
 \subsubsection{Optimizations}
 % TODO micro benchmark linear search
-A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \texttt{BroadcastHashjoin} on any other query than the triangle query.
+A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \textit{BroadcastHashjoin} on any other query than the triangle query.
 Hence, we report on how to optimize the join.
-After, we are able to beat Spark's \texttt{BroadcastHashjoin} on nearly all queries and datasets.
+After, we are able to beat Spark's \textit{BroadcastHashjoin} on nearly all queries and datasets.
 We report measured run-times for the unfiltered 5-clique on the Amazon0601 dataset for different optimizations
 in~\cref{table:lftj-optimizations}.
 In total, we improved the WCOJ running time from 316.5 seconds to TODO seconds.
@@ -41,10 +38,16 @@ This result is in line with the observation that `in the Tributary join algorith
         LFTJ          & no sorting in \textit{LF} \textit{init} method &  54.1 \\
         \bottomrule
    \end{tabular}
+    \caption{Optimizations to the \textsc{LFTJ} algorithm in Scala and their runtimes on the unfiltered 5-clique query on
+       the Amazon0601 dataset.
+       \textit{LFTJ}, \textit{LF} and \textit{TI} refers to the \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
+       and \textit{TrieIterator} component of the Leapfrog Triejoin algorithm.
+    }
+    \label{table:lftj-optimizations}
 \end{table}
 We applied one \textsc{LFTJ} specific optimizations.
 
-The \textit{LeapfrogJoin.init} method is origingally described in~\cite{leapfrog} to sort its \textit{TrieIterators}.
+The \textit{LeapfrogJoin.init} method is origingally described in~\cite{lftj} to sort its \textit{TrieIterators}.
 However, the method can be improved by avoiding to sort the \textit{TrieIterators} (line 11).  % LINE
 We can start moving the \textit{TrieIterator} without sorting them and arrive at an ordered array in $\mathcal{O} (n)$ steps - $n$ defined as the size of \textit{iterators}.
 This approach improves over the original algorithm in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection immediately without sorting them first and
@@ -79,16 +82,18 @@ cannot be found in the search space.
 This obviously circumvents the main loop of the linear search;
 additionally, it simplifies the loop condition to \textit{array(i) > key}.
 
-The Spark infrastructure uses the interface \texttt{ColumnVector} to represent columns of relationships.
-The implementation \texttt{OnHeapColumnVector} is a simple wrapper around an array of the correct type with support for \textit{null} values and \textit{append} operations.
+% TODO less cody
+The Spark infrastructure uses the interface \textit{ColumnVector} to represent columns of relationships.
+The implementation \textit{OnHeapColumnVector} is a simple wrapper around an array of the correct type with support for \textit{null} values and \textit{append} operations.
 First, we used this data structure to represent our columns but we could see a clear increase in performance by replacing it by an implementation that exposes the array
 to allow the binary search to run on the array directly.
 This is likely due to saving virtual function calls in the hottest part of our code.
-The implementation is straightforward and can be found in our repository in \texttt{leapfrogTriejoin.ExposedArrayColumnVector}; we implemented it only for the \texttt{Long} datatype.
+The implementation is straightforward and can be found in our repository in \textit{leapfrogTriejoin.ExposedArrayColumnVector}; we
+implemented it only for the \textit{Long} datatype.
 
 We found many standard optimizations and Scala specific optimizations to be really useful.
 These are the optimizations that brought the biggest performance improvements.
-However, they are well-known, so we mention them only in the~\cref{table:lftj-optimizations}.
+However, they are well-known, so we mention them only in tabular form~\ref{table:lftj-optimizations}.
 For Scala specific optimizations one can find good explanations at~\cite{databricks-scala-guide}.
 
 Apart from the aforementioned very useful optimizations, we investigated multiple other avenues in hope for performance improvements

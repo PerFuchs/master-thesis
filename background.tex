@@ -815,7 +815,7 @@ Therefore, we decide to analyse the expected scaling behaviour of Shares for gra
 Our main concern is that the number of duplicated tuples in the system increases with the query size (number of vertices) and
 with the number of workers added to the system.
 We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
-of this thesis (\ref{sec:shares-proof}).
+of this thesis (\ref{subsubsec:shares}).
 As result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
 strategy to parallelize a worst-case optimal join.
 
@@ -1145,8 +1145,8 @@ A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only 
 
 \subsection{Sizes of public real-world graph datasets} \label{subsec:graph-analysis}
 In this section, we present a short analysis of the sizes of real worl graph datasets.
-For this, we collect data about all graphs from the SNAP and Laboratory of Web Algorithms dataset collection~\cite{snap-datasets,
-labaratory-of-web-algorithms-datasets}.
+For this, we collect data about all graphs from the SNAP and Laboratory of Web Algorithms dataset collection~\cite{snapnets,
+law}.
 The graphs in the Snap dataset are a bit older;
 they have been collected between 2000 and 2010.
 All Labaratory of Web Algorithms graph have been collected between 2007 and 2018.

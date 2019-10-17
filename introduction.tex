@@ -21,7 +21,7 @@ the output size.
 \textsc{WCOJ}'s avoid large result materialization and hence promise to be orders of magnitude faster than binary
 joins.
 Therefore, we believe that worst-case optimal join algorithms could be a useful addition to (analytical) graph database systems.
-We aim to integrate a scalable, \textsc{WCOJ} algorithm in Spark which is used by some modern graph engines~\cite{caps,g-core,graphFrame}.
+We aim to integrate a scalable, \textsc{WCOJ} algorithm in Spark which is used by some modern graph engines~\cite{caps,gcore,graphframe}.
 Due to time constraints, we built our system for Spark local mode only.
 This mode allows to run queries in parallel using all cores of one machine but does not allow to distribute queries over multiple machines.
 We address the extensions to Spark's cluster modes in future work (\cref{subsec:future-work}).
@@ -67,11 +67,11 @@ We show two graph patterns which are used in practice below and explain the use-
 The idea is that if a user $a$ is following multiple accounts $c_1, \dots, c_k$ who all follow a person $b$ then it is likely that
 $b$ would be interesting to follow for $a$ as well.
 In the figure, we see the diamond query for $k = 2$.
-This is the diamond query as discussed in most papers in academia~\cite{oldog,myria-detailed,mhedhbi2019}, although,
+This is the diamond query as discussed in most papers in academia~\cite{olddog,myria-detailed,mhedhbi2019}, although,
 Twitter uses $k = 3$ in production~\cite{twitter-diamond}.
 
 Our second concrete use-case example is the n-cycle.
-As explained in~\cref{fraud-detection}, cycles can be used to detect bank fraud.
+As explained in~\cref{figure:graph-patter-example-bank-fraud}, cycles can be used to detect bank fraud.
 A typical bank-fraud often involves so-called \textit{fraud-rings}.
 These are two or more people who combine their legitimate contact information in new ways to craft multiple false identities.
 For example, two people share real phone numbers and addresses to craft four fake identities; all combinations possible with two pieces
@@ -120,7 +120,7 @@ The described problem is a fundamental issue with traditional binary join plans~
 We call these plans also \textit{join-at-a-time} approach because they process whole joins at the time.
 
 Fortunately, worst-case optimal join algorithms can materialize cyclic joins with memory usage linear to their output size
-by solving the join \textit{variable-at-a-time} which avoids materializing big intermediary results~\cite{leapfrog,nprr}.
+by solving the join \textit{variable-at-a-time} which avoids materializing big intermediary results~\cite{lftj,nprr}.
 
 In a variable-at-a-time the algorithm finds a binding for the first variable $a$, then one for $b$ and
 finally one for $c$.
@@ -226,7 +226,7 @@ A more general but less concrete example is explained in~\cite{skew-strikes-back
 
 % WCOJ's in practice
 In practice, these worst-case optimal join algorithms are highly beneficial for cyclic queries in analytical graph
-workloads in an optimized, single machine system~\cite{leapfrog,olddog}.
+workloads in an optimized, single machine system~\cite{lftj,olddog}.
 \cite{olddog} compares a system using \textsc{WCOJ}'s against multiple general-purpose database
 systems using binary joins and some graph pattern matching engines on 15 datasets and 7 queries and
 finds that worst-case optimal joins can beat all other systems in the vast majority of queries

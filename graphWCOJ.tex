@@ -1,11 +1,12 @@
 \section{Graph\textsc{WCOJ}} \label{sec:graphwcoj}
 
-\subsubsection{Combining \textsc{LFTJ} with \textsc{CSR}}
+\subsection{Combining \textsc{LFTJ} with \textsc{CSR}} \label{subsec:graphWCOJ-csr}
 For our graph pattern matching specialized Leapfrog Triejoin version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
 This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
 In this section, we shortly describe the implementation of a \textsc{CSR} based \textit{TrieIterator}, point out the differences between
-this new version and a column based \textit{TrieIterator} (as described in~\cref{ssec:seq-implementation}) and conclude with an experiment demonstrating the power of this optimization.
+this new version and a column based \textit{TrieIterator} (as described in~\cref{subsubsec:leapfrog-triejoin}) and conclude with an experiment demonstrating
+the power of this optimization.
 
 The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward except for one design change: instead of using
 the vertice identifier from the graph directly, we use their indices in the \textsc{CSR} representation.
@@ -57,7 +58,7 @@ index into the array.
 
 To resolve the assumption of no empty outgoing adjacency lists, we adapt \textit{open}, \textit{next} and \textit{seek} to skip source
 positions without outgoing edges.
-This is easy to detect because then \textit{Indices\[x\] == Indices\[x + 1\]}.
+This is easy to detect because then $Indices[x] = Indices[x + 1]$.
 We can skip these cases by simple linear search until we find a valid position.
 This solution is sufficient because there are only a few vertices with no outgoing edges in real-world graphs.
 Therefore, this linear search does not majorly influence the run time.
@@ -86,17 +87,17 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 \label{fig:wcoj-vs-graphWCOJ}
 \end{figure}
 
-\subsubsection{Exploiting low average outdegrees}
+\subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
 % TODO study in backgrounda
 
-In our study of real-world graphs (\cref{sec:graph-analysis}), we show that most real-world graphs have a small, average outdegree.
+In our study of real-world graphs (\cref{subsec:graph-analysis}), we show that most real-world graphs have a small, average outdegree.
 The outdegree over all graphs is TODO and the maximum average outdegree of a single graph
 is TODO at TODO.
 These results lead to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 
 We can exploit this fact by materializing the intersections in the \textit{LeapfrogJoins} directly
 in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
-original paper~\cite{leapfrog}.
+original paper~\cite{lftj}.
 % TODO rename reference to leapfrog-triejoin
 This is beneficial because it makes better use of data locality; we elaborate this statement in a later
 paragraph.
@@ -176,7 +177,7 @@ close to the final size.
 These insights translate into two design decisions.
 
 First, we start with the smallest iterator\footnote{We take advantage of the fact that CSR allows us
-to determine the size of iterators cheaply (see~\cref{ssec:csr-impl})}.
+to determine the size of iterators cheaply (see~\cref{subsec:csr-background})}.
 However, we do not take the sizes of any other iterators into account because the effort for
 sorting the iterators by size would not pay off.
 

@@ -60,7 +60,7 @@ tackled these problems for the first time.
 The lack of peer-reviewed papers and the high complexity of the arXiv paper clearly illustrate that deeper integration with
 Spark's optimizer is out of scope for this thesis.
 
-
+% TODO graphWCOJ everywhere without \textit
 \subsection{A sequetial linear Leapfrog Triejoin} \label{subsec:spark-integration-seq}
 For this section we assume that the reader is familiar with the background section about Catalyst (see \cref{subsubsec:catalyst}) and
 \textsc{LFTJ} (see \cref{subsubsec:leapfrog-triejoin}) where we explain the components of Catalyst planning phase and the requirements
@@ -77,7 +77,7 @@ Integration into this phase only requires us to build a logical operator to repr
 The only thing that we need to describe for this logical operator are the number of children.
 A \textsc{LFTJ} can have 2 or more children, one for each input relationship.
 
-The logical and physical plan for the triangle query is shown in~\cref{fig:wcoj-catalyst-plan}.
+The logical and physical plan for the triangle query is shown in~\cref{fig:lftj-catalyst-plan}.
 
 \begin{figure}
     \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{lftj-logical-catalyst-plan}}

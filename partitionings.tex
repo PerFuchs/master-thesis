@@ -1,7 +1,7 @@
 \section{Worst-case optimal join parallelization}\label{sec:worst-case-optimal-join-parallelization}  % TODO header
 % TODO rename to parallelism in general and not partitioning for work-stealing
 Based on the fact that Shares is an optimal partitioning scheme for n-ary joins in MapReduce like systems~\cite{shares} and
-our analysis that Shares converges to a full broadcast of the graph edges (see \cref{shares-proof}), we decided
+our analysis that Shares converges to a full broadcast of the graph edges (see \cref{subsubsec:shares}), we decided
 to forego physical partitioning of the graph.
 We cache the graph in memory such that each Spark task can access the whole graph.
 Then, we experiment with multiple \textit{logical} partitioning schemes which ensure that each task processes
@@ -13,19 +13,19 @@ Arranging the data into suitable data structures and shuffling data is a one-off
 
 This design allows us to implement a new flavour of the Shares partitioning in which we filter the vertices of the
 graph on-the-fly while processing it with our \textit{GraphWCOJ} algorithm.
-We describe this contribution in \cref{ssec:shares-logical}.
+We describe this contribution in \cref{subsec:shares-logical}.
 
 Furthermore, we consider a work-stealing based partitioning which does not replicate any work and produces less
 skew than Shares. % TODO is that always correct.
 This comes at the price of implementing work-stealing on Spark.
-The design of work-stealing in Spark is described in \cref{ssec:work-stealing}
+The design of work-stealing in Spark is described in \cref{subsec:work-stealing}.
 
-\subsection{Logical Shares} \label{ssec:shares-logical}
+\subsection{Logical Shares} \label{subsec:shares-logical}
 Shares has been developed as an optimal shuffle for n-ary joins on MapReduce like systems.
 So, it is used to physical partition the tables participating in the join overall workers of the system.
 Then, each worker works only on the tuples it holds in its partition.
-This has been implemented in Myria to be used with a \textsc{WCOJ}~\cite{myria-detailed} and for Haddoop~\cite{TODO}.
-We describe the Shares and Myria in more detail in~\cref{ssec:myria} and assume that the reader is familiar
+This has been implemented in Myria to be used with a \textsc{WCOJ}~\cite{myria-detailed} and for Hadoop~\cite{hadoop}.
+We describe the Shares and Myria in more detail in~\cref{subsec:myria} and assume that the reader is familiar
 with this section.
 
 The idea of Shares can also be used for a \textit{logical} partitioning scheme.
@@ -66,7 +66,8 @@ We hypothesize that this is the case because the original \textit{next} and \tex
 by a linear search for a matching value.
 Furthermore, many of these values are later dropped in the intersection of the \textit{LeapfrogJoin} which
 can also be seen as a filter over the values of the \textit{TrieIterators}.
-As we know from~\cref{ssec:leapfrog-materialization}, the \textit{LeapfrogJoin} is a rather selective filter.
+% TODO forward reference
+As we know from~\cref{subsec:graphWCOJ-materalization}, the \textit{LeapfrogJoin} is a rather selective filter.
 It does not make sense to push a less selective filter below a more selective filter.
 
 With this idea in mind, we build a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
@@ -90,7 +91,7 @@ We note that the exhaustive algorithm could be optimized easily and it would be 
 a cache for common configurations.
 Due to time constraints, we leave this to future work and keep our focus on the scaling behaviour of Shares.
 
-To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and report our results in \cref{ssec:graphWCOJ-scaling}.
+To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and report our results in \cref{subsec:scaling-graphWCOJ}.
 We cannot improve on the main weakness of Shares that it duplicates a lot of work.
 Indeed, our design filters tuples only after the \textit{LeapfrogJoin}.
 Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search of the first variable.
@@ -168,7 +169,7 @@ We conclude the section with an evaluation of the limitations of this integratio
 Before, we remember that we built our solution for the Spark \textit{local-mode} (see~\cref{subsubsec:spark-architecture}).
 Hence, the Spark master and all executors are threads within the same JVM process.
 This is important because it allows us to share data structures between multiple Spark tasks as normal JVM objects.
-We discuss how the design can be extended Spark's \textit{cluster-mode} in future work (\cref{subsec:cluster-mode}) and
+We discuss how the design can be extended Spark's \textit{cluster-mode} in future work (\cref{subsubsec:cluster-mode}) and
 related work (\cref{subsec:fractal}).
 
 The first design decision is the definition of a work-stealing task.
