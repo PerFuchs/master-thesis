@@ -51,6 +51,12 @@ The translation from datalog queries to graph patterns is straightforward.
 An attribute or a variable refers to a vertice in a graph and an atom to an edge.
 A depiction of the subgraph pattern described by~\cref{eqn:triangle} is shown in~\cref{fig:pattern-triangle}.
 
+\begin{figure}
+    \includesvg[width=0.2\textwidth]{triangle}
+    \caption{Depiction of the triangle subgraph query.}
+    \label{fig:pattern-triangle}
+\end{figure}
+
 In relational terms, a graph pattern matching query is an n-ary, conjunctive, self-equijoin on the edge relationship of the graph.
 In this thesis, all join queries discussed belong to this subcategory of possible join queries.
 Other join queries can be useful to describe more complex graph patterns, e.g. disjunction for two edges of which only one needs to
@@ -70,6 +76,13 @@ In the figure, we see the diamond query for $k = 2$.
 This is the diamond query as discussed in most papers in academia~\cite{olddog,myria-detailed,mhedhbi2019}, although,
 Twitter uses $k = 3$ in production~\cite{twitter-diamond}.
 
+\begin{figure}
+    \includesvg[width=0.2\textwidth]{diamond}
+    \caption{The dimaond query is used by Twitter. The vertices are users and the edges follower relationships.
+      In the example, they could recommend $A$ to follow $D$ because $A$ follows $B_1$ and $B_2$ which both follow $C$.
+    }
+\end{figure}
+
 Our second concrete use-case example is the n-cycle.
 As explained in~\cref{figure:graph-patter-example-bank-fraud}, cycles can be used to detect bank fraud.
 A typical bank-fraud often involves so-called \textit{fraud-rings}.
@@ -83,7 +96,7 @@ The phone numbers are dropped and the actual people living at the addresses deny
 
 % TODO figure
 This scheme can be detected using graph pattern matching.
-Let us assume, we have a graph database in which customers of the bank, their addresses and phone numbers are all vertices and the
+Let us assume, we have a graph database in which customer of the bank, their addresses and phone numbers are all vertices and the
 relationship of an address or phone number belonging to a customer are edges.
 Then, the case described above forms an 8-cycle of 4 persons (fake identities) connected by the shared use of phone numbers and
 addresses.
@@ -98,6 +111,7 @@ to graph pattern matching queries in practice.
 
 The simplest example of a cyclical join query enumerates all triangles in a graph.
 This can be formulated as the following datalog query
+% TODO equation needs to be shifted to the chapter before
 \begin{equation}
     \textit{triangle(a, b, c) $\leftarrow$ R(a, b), S(b, c), T(c, a)} \label{eqn:triangle}
 \end{equation}

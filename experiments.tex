@@ -104,23 +104,40 @@ Patterns and filters might be used in all possible combinations, we name the res
 pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
 
 \begin{table}[]
+    \centering
     \begin{tabular}{@{}lcccp{6cm}@{}}
         \toprule
-        Name     & Parameters                 & Vertices & Edges             & Example pattern
+        Name     & Parameters                 & Vertices & Edges
 
         \\ \midrule
-        \texttt{triangle} & NA                          & $3$        & 3                 & a $\rightarrow$ b; a $\rightarrow$ c; b $\rightarrow$ c                                                                                                \\
-        \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ & see above                                                                                                                                              \\
-        \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 & a $\rightarrow$ b; b $\rightarrow$ c; c $\rightarrow$ z; z $\rightarrow$ a                                                                             \\
-        \texttt{n-s-path} & \# edges / selectivity  & $n$       & $n - 1$             & a $\rightarrow$ b; b $\rightarrow$ c; c $\rightarrow$ z                                                                                                \\
-        \texttt{house}    & NA                         & $5$        & $9$                 & a $\rightarrow$ b; a $\rightarrow$ c; a $\rightarrow$ d; b $\rightarrow$ c; b $\rightarrow$ d; c $\rightarrow$ d; c $\rightarrow$ e; d $\rightarrow$ e \\
-        \textbf{Filters}   &                            &          &                   &                                                                                                                                                        \\
-        \texttt{distinct} &                            &          &                   & a $\neq$ b; a $\neq$ c; a $\neq$ d; b $\neq$ c; ...                                                                                                                    \\
-        \texttt{lt}       &                            &          &                   & a \textless b; b \textless c; c \textless d; ...                                                                                                       \\ \bottomrule
+        \texttt{triangle} & NA                          & $3$        & 3                 \\
+        \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ \\
+        \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 \\
+        \texttt{n-s-path} & \# edges / selectivity  & $n$       & $n - 1$                 \\
+    \texttt{kite}  & NA                         & $4$        & $5$                    \\
+        \texttt{house}    & NA                         & $5$        & $9$                 \\
+        \texttt{diamond}  & NA                         & $4$        & $4$                 \\
+        \textbf{Filters}   &                            &          &                   \\
+        \texttt{distinct}  &                            &          &                   \\
+        \texttt{less-than} &                            &          &                   \\ \bottomrule
     \end{tabular}
     \caption{Summary of patterns and filters used.}
     \label{table:patterns}
 \end{table}
+
+\begin{figure}
+    \centering
+    \subfloat[triangle]{\includesvg[width=0.2\textwidth]{triangle}}
+    \subfloat[4-clique]{\includesvg[width=0.2\textwidth]{4clique}}
+    \subfloat[5-clique]{\includesvg[width=0.2\textwidth]{5clique}}
+    \subfloat[4-cycle]{\includesvg[width=0.2\textwidth]{4cycle}}\\
+    \subfloat[5-cycle]{\includesvg[width=0.2\textwidth]{5cycle}}
+    \subfloat[diamond]{\includesvg[width=0.2\textwidth]{diamond}}
+    \subfloat[kite]{\includesvg[width=0.2\textwidth]{kite}}
+    \caption{Queries used in our experiments.}
+\end{figure}
+
+
 % TODO add kite query
 For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
 Then we search for all path of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all

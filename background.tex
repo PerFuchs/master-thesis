@@ -618,7 +618,6 @@ lists.
 The metric takes three factors into account.
 First, the size adjacency lists.
 
-% TODO tailed triangle query, all other query pics for experiments
 Second, the number of intermediate matches.
 The concept of intermedieate matches is best understood by a simple example;
 we see the tailed-triangle query in~\cref{fig:tailed-triangle}.
@@ -627,6 +626,13 @@ The ones that start on $v_4$ and find all 2-paths of the graph;
 and vertice orderings that start with $v_1, v_2, v_3$ in any order which close the triangle first.
 Clearly, there are more 2-paths in any graph than triangles.
 Hence, the second category produces far less intermediate matches.
+
+\begin{figure}
+    \centering
+    \includesvg[width=0.2\textwidth]{tailed-triangle}
+    \caption{The tailed triangle; an example for the cost of intermediate matches.}
+    \label{fig:tailed-triangle}
+\end{figure}
 
 Finally, they implement an intersection cache in their system which takes advantage of the fact that some queries can reuse already
 constructed intersections.

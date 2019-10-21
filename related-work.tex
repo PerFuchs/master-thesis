@@ -23,7 +23,7 @@ In their paper they introduce three algorithms: \textit{BigJoin}, \textit{Delta-
 They implement only the first two algorithms.
 
 \textit{BigJoin-S} is only described but comes with stronger theoretical guarantees.
-Namely all three of their algorithms are worst-case optimal in computation and communication with respect to the output size of the query
+Namely, all three of their algorithms are worst-case optimal in computation and communication with respect to the output size of the query
 given by the AGM bound.
 However, only \textit{BigJoin-S} can guarantee work balance.
 Moreover, it achieves optimality and work-balance while using low amounts of memory on all workers;
@@ -44,7 +44,7 @@ guarantees given by them and us.
 timely dataflow operators.
 
 In short, Timely Dataflow operators are distributed over multiple workers and each of them takes a stream of input data, operates
-on it and sends it to the next operator which can be processes on a different worker.
+on it and sends it to the next operator which can be processed on a different worker.
 Examples for operators are \textit{map} functions, \textit{filters} \textit{count} or \textit{min}.
 It is important to note that sending the output to a different operator is a fast, streaming operation, as opposed to,
 Spark's shuffles which are synchronous and slow because the involve disk writes and reads.
@@ -55,13 +55,13 @@ In use-case of graph pattern matching, this means that each worker holds an inde
 
 Their algorithm runs in multiple rounds;
 one per variable in the join query.
-In each round they bind one variable.
-So a round takes prefixes of a complete join result as input and fixes one more binding.
+In each round, they bind one variable.
+So each round takes the prefixes of a complete join result as input and fixes one more binding.
 
 A single round starts with all prefixes from the former round distributed among all workers arbitrarily.
 Then they find join relation that offers the smallest set of extensions for each prefix.
 This is done in steps with one step per relationship.
-In each step the prefix is sent to a worker by the hash of the attributes bound in the relationship of that step.
+In each step, the prefix is sent to a worker by the hash of the attributes bound in the relationship of that step.
 When the relationship offers less possible values for the new binding then the current minimum, i.e. the size of its matching adjacency
 list is smaller, we remember it as the new minimum for the given prefix.
 
@@ -70,16 +70,16 @@ distribute the tuples over all workers.
 Then, each worker produces all possible extensions for each prefix.
 
 Finally, each round ends with filtering out all extensions that are not in the intersection of extensions offered by each relationship.
-This again takes one filter step per relationship in the join.
+This again takes one filtering step per relationship in the join.
 
 This is a simple instance of the \textit{Generic Join} implemented in data flow operators.
 
 The algorithm described so far can build a high amount of possible extensions in each round.
-This keeps it from keeping worst-case optimal guarantues for memory usage.
+This keeps it from keeping worst-case optimal guarantees for memory usage.
 The authors fix this problem by batching the work by allowing only a certain number of prefixes in the system.
 They defer building new prefixes until the current batch of prefixes has been completed.
 
-\subsubsection{Applicability to Spark and comparision to GraphWCOJ}
+\subsubsection{Applicability to Spark and comparison to GraphWCOJ}
 \textit{BigJoin} is not suitable for Spark.
 This has multiple reasons.
 
@@ -87,7 +87,7 @@ Most importantly, it uses too many shuffle rounds.
 Each round and each step the round requires communication and therefore a shuffle.
 In total, the algorithm uses $2R \times V$ rounds for a query with $R$ relations and $V$ variables.
 As pointed out before this is no big problem in Timely Dataflow because shuffles are fast and asynchronous.
-However, in Spark this is not the case.
+However, in Spark, this is not the case.
 
 We would like to point out that binary join plans can solve the same queries in $R - 1$ shuffle rounds.
 
@@ -100,17 +100,17 @@ Additionally, it would be hard to define a great user interface over a batched q
 
 \textit{GraphWCOJ} does not have the same problem because it processes at most as many prefixes as workers in the system concurrently.
 Therefore, we do not have the problem of memory pressure for many prefixes.
-This is because the \textsc{LFTJ} algorithm is an unmaterialized representation of the join.
-When the Leapfrog Triejoin is executed, it changes it state such that the state always represents the unmaterialized
+This is because the \textsc{LFTJ} algorithm is a none materialized representation of the join.
+When the Leapfrog Triejoin is executed, it changes its state such that the state always represents the none materialized
 part of the join;
 the state is encoded in the positions of the \textit{TrieIterators}.
-In other words, the \textsc{LFTJ} performs a depth first search of all possible bindings while the \textit{BigJoin}
+In other words, the \textsc{LFTJ} performs a depth-first search of all possible bindings while the \textit{BigJoin}
 performs a batched breadth-first search.
 
 \subsubsection{Indices used by \textit{BigJoin} and GraphWCOJ}
 The index structures used in their and our solutions are the same; one forward and one backward index over the whole graph on each
 worker.
-As noted before, it is theoretical possible to distribute the index of \textit{BigJoin} such that each worker holds only a part
+As noted before, it is theoretically possible to distribute the index of \textit{BigJoin} such that each worker holds only a part
 of the index.
 This is because each worker needs to hold only the possible extensions for the prefixes that map to it for each relationship.
 We analyse this in the next paragraph.
@@ -120,13 +120,13 @@ For graph pattern matching this is one or zero attributes;
 the edge relationship has two attributes and one is a new, yet unbound variable in the prefix.
 
 We can reach a distribution of the indices such that each worker holds $\frac{I}{w}$ with $I$ the size of the indices.
-For that we choose the same hash function for each variable such that always the same values match to the same worker.
-However, this solution is likely to lead to high skew and work imbabalance because if a value is a heavy hitter the
+For that, we choose the same hash function for each variable such that always the same values match to the same worker.
+However, this solution is likely to lead to high skew and work imbalance because if a value is a heavy hitter the
 worker needs to process it for each binding over and over.
 
 It is better to use different hash functions per variable.
-In this case we can estimate the percentage of the whole index hold by each worker by the binominial distribution.
-This distribution models the probability that from $N$ independent trials $k$ succeed with the likelhood of $p$ for a single trial
+In this case, we can estimate the percentage of the whole index hold by each worker by the binomial distribution.
+This distribution models the probability that from $N$ independent trials $k$ succeed with the likelihood of $p$ for a single trial
 to succeed.
 We model the event of a key from the index being assigned to a worker as trial.
 The likelihood is $\frac{1}{w}$.
@@ -135,6 +135,7 @@ We are interested in the case that the tuple is not assigned by any of the varia
 Then we have the likelihood that a tuple is not assigned given by $\mathcal{B} (V, 0, \frac{1}{w})$;
 so the fraction of the indices assigned to each worker is $1 - \mathcal{B} (V, 0, \frac{1}{w})$.
 We show a plot of this function for different numbers of workers in~\cref{fig:indices}.
+% TODO figure
 
 \subsubsection{Theoretical guarantees}
 \textit{BigJoin} guarantees computational and communication worst-case optimality.
@@ -144,22 +145,22 @@ The extensions \textit{BigJoin-S} additionally gives work-balance and low memory
 
 GraphWCOJ guarantees computational worst-case optimality which it inherits from \textsc{LFTJ}.
 Worst-case optimal communication is given by the fact that we do not communicate.
-This is if we do not take the distribution of the indices into account which is inline with the analysis of the discussed paper.
+This is if we do not take the distribution of the indices into account which is in line with the analysis of the discussed paper.
 
 If we take the distribution of indices into account, our algorithm is not worst-case optimal.
 During our setup, we broadcast the indices used.
 This is not optimal for a single query;
 Shares would be optimal.
 However, it amortizes quickly over multiple queries;
-we have shown that Shares converges to a broadcast for big queries.
+we have shown that Shares converges to broadcasting for big queries.
 
-We can not guarantue work-balance.
+We can not guarantee work-balance.
 However, we get close by using work-stealing.
-With work-stealing we are optimal within the size of a single task.
+With work-stealing, we are optimal within the size of a single task.
 
 GraphWCOJ's memory footprint does not depend on the size of the input to the join nor of the output of the join.
 Its memory usage is given by the size of the Java objects used which depend on the query.
-However, this size should be neglectful small for any normally size machine.
+However, this size should be neglectful small for any normal size machine.
 
 \subsubsection{Conclusion}
 We conclude that our approach is the better fit for Spark because it requires less shuffling and no batching.
@@ -191,7 +192,7 @@ of their approach.
 
 \subsection{Survey and experimental analysis of distributed subgraph matching}
 On the 28th July 2019, L. Lai et al. published a survey with experiments for multiple
-distributed graph pattern matching algoritms~\cite{longbin}\footnote{The survey was published 5 month after we started our thesis in
+distributed graph pattern matching algoritms~\cite{longbin}\footnote{The survey was published 5 months after we started our thesis in
 February
 on
 arXiv}.
@@ -201,20 +202,20 @@ All of their algorithms are implemented in Timely Dataflow;
 so far they are not open-source.
 They ran the all algorithms on 9 different queries over 8 datasets mostly on a cluster of 10 machines
 and 3 workers per machine.
-Below we first summarize the most important design decissions for each algorithm, then
+Below we first summarize the most important design decisions for each algorithm, then
 highlight their most interesting findings and finally compare their results with ours.
 
 \textit{BigJoin} is implemented as described above but uses a \textsc{CSR} data structure,
 triangle indexing and a specific form of compression as optimization.
 
 The Shares algorithm is configured as described in~\cref{subsec:shares} and uses
-\textit{DualSim} as local algorithm.
+\textit{DualSim} as the local algorithm.
 \textit{DualSim} is a specialized subgraph matching algorithm.
 The authors show that it beats the worst-case optimal join used in \textit{EmptyHeaded}~\cite{emptyheaded}
 which is a form of the \textit{Generic Join} (see \cref{subsec:worst-case-optimal-joins}).
 
 The survey also covers our strategy of fully replicating the graph on all machines.
-The choose \textit{DualSim} as local algorithm and a round robin partitioning on the
+The choose \textit{DualSim} as a local algorithm and a round-robin partitioning on the
 second join variable.
 
 Finally, they implement the binary joins as hash join and use a sophisticated query optimizer
@@ -224,7 +225,7 @@ The most important finding of this work is that fully replicating the graph on a
 is the best option if the graph fits into memory even in Timely Dataflow with its deeply
 optimized and asynchronous communication routines.
 They establish that fully replicating the graph is nearly always the fastest strategy,
-has the lowest memory footprint\footnote{Shares replicates to much data,
+has the lowest memory footprint\footnote{Shares replicates too much data,
 \textit{BigJoin} needs to hold many prefixes in memory and binary joins incur intermediary results}, no
 further
 communication costs and scales better
@@ -237,26 +238,26 @@ They establish that it takes longer than the other strategies on nearly all quer
 Furthermore, it shows the weakest ability to scale.
 
 They report that \textit{BigJoin} or binary joins are the best option if fully
-replicating the graph is out of question.
+replicating the graph is out of the question.
 Binary joins can be used for star and clique joins if it is possible to index all triangles in
 the graph and keep this index in memory.
-Otherwise, \textit{BigJoin} is the preferable in most cases.
+Otherwise, \textit{BigJoin} is preferable in most cases.
 
 Finally, they study the communication costs of the binary joins, Shares and \textit{BigJoin}.
 They find that graph pattern matching is computation bound problem when 10 Gb switches are used
-for networking but communication costs dominate in 1Gb switched networks.
+for networking but communication, costs dominate in 1Gb switched networks.
 The experiments they draw their conclusions from are run on a 10Gb network.
 
-Interestingly, Shares incurs less communication costs than \textit{BigJoin}.
+Interestingly, Shares incurs fewer communication costs than \textit{BigJoin}.
 
 Their paper differs from our thesis in multiple ways.
 However, they come to the same conclusions, namely that fully replicating is the preferred strategy
 when the graph fits into main memory and that Shares is not a good strategy for graph pattern matching.
 
-We implement our system in Spark which has wide-spread usage in industry and a sourounding eco-system
+We implement our system in Spark which has wide-spread usage in industry and a surrounding eco-system
 of graph pattern matching systems (see \cref{subsec:graphs-on-spark}).
 
-We give a comparision between a column store, binary search based Leapfrog Triejoin and
+We give a comparison between a column store, binary search based Leapfrog Triejoin and
 our \textsc{CSR} based GraphWCOJ.
 They do not report on the benefits of \textsc{CSR} in the context of \textsc{WCOJ}.
 
@@ -268,7 +269,7 @@ Their scheme does not replicate any work but does not actively counter skew.
 The skew-resilience of their scheme is based on the fact that partitions the work on the second
 binding.
 Hence, it distributes skew of the first binding equally.
-However, as we see with our work-stealing approach this does not guarantue skew freeness for
+However, as we see with our work-stealing approach this does not guarantee skew freeness for
 bigger queries (see \cref{subsec:scaling-graphWCOJ}).
 
 Their scheme could be applied to our system.
