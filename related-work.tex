@@ -11,11 +11,6 @@
 % Maybe
 %   CAPs?a
 %   semih's work on binary plus other joins
-
-
-\subsection{Fractal a graph pattern mining system on Spark} \label{subsec:fractal}
-TODO
-
 \subsection{\textsc{WCOJ} on Timely Data Flow}\label{subsec:wcoj-timely-data-flow}
 
 Mc Sherry et al. published a distributed worst-case optimal join based on Timely Data Flow in 2018~\cite{ammar2018distributed,naiad}.
@@ -275,29 +270,123 @@ bigger queries (see \cref{subsec:scaling-graphWCOJ}).
 Their scheme could be applied to our system.
 It is simpler than work-stealing but less resilient to skew.
 
-%Below we analyse the scalability of \texttt{HC} in the context of analytical graph queries.
-%First, we point out some simple implications of our use-case, then we analyse how a growing number of variables influences the number of tuples per server, the number of servers needed to build the hypercube and the number of replicated tuples in the system.
-
-%We are discussing multi-join processing in the context of graph pattern matching; this implies that variables correspond to the number of nodes in the pattern and relations to the number of edges.
-%Hence, we have at least as many relations in each join as we have variables, so the pattern is connected, e.g. as many relations as variables for a path query or $n * (n - 1) / 2$ relations for a n-clique.
-%Another implication is that the join ranges only over a single relationship: the edge relationship of the graph.
-%When all input relationships are of the same size, the optimal choice for shares in \texttt{HC} are $p_1 = ... = p_{A-1}$~\cite{myria-detailed}.
-%In the following, we call this number the size $s$ of the hypercube.
-%The third ramification of our use-case is that each relationship has exactly two attributes.
-%This means each tuple has two fixed components in its coordinate while the rest is unbounded.
-%In the next paragraph, we show how this knowledge helps us to understand how many tuples are sent to each node.
 
 
-%Each node receives $R * |E| / s^2$ tuples with $R$ the number of relationships in the join.
-%Our argument is that each relationship $r_i$ is divided onto $s^2$ nodes (the workers that form the planes of its two attributes) and all $r_i$ are of size $|E|$.
-%If a node holds $|E|$ or more tuples after the shuffle, it would have been as good or better to broadcast \textit{E} to all nodes.
-%Hence, $s^2$ needs to be bigger than \textit{R} and therefore bigger than \textit{A} (see implications above) to beat the communication costs of a shuffle in our case.
-% Extent to unique tuples only
+\subsection{Fractal a graph pattern mining system on Spark} \label{subsec:fractal}
+Fractal is a general-purpose graph pattern mining system built on top of Spark published in
+a paper of SIGMOD'19~\cite{fractal}.
+We first describe the relevant aspects of their system.
+Then we compare it to our approach.
+
+Graph pattern mining includes the problem of graph pattern matching (as defined in~\cref{subsec:graph-pattern-matching}).
+Additionally, it includes problems such as frequent subgraph mining or keyword-based subgraph search.
+
+To support all these problems in a single system, the authors describe their own programming interface made
+off initialization operators, workflow operators and output operators.
+Each workflow is described as a sequence of these operators.
+All workflows are based around extending a subgraph starting from a single edge, vertex or a user-described
+pattern.
+This makes for three initialization operators one to start from a vertex, edge or pattern each.
+
+The workflow operators work on a subgraph induced by the initialization operators.
+They can expand the subgraph, e.g. if the subgraph is vertex induces one expand step adds all neighbouring
+vertices to the subgraph.
+
+Another workflow operator is to filter the subgraph instances.
+
+Then it is possible to aggregate subgraphs by computing a key, a value and possibly a reduction.
+
+Finally, these workflow steps can be looped to be repeated multiple times.
+
+To execute the workflow the user can use one out of two output operators: \textit{subgraphs} and
+\textit{aggregation} to list all matching subgraphs or aggregate all matching subgraphs respectively.
+
+For example, the workflow $vertexInduced().filter(sg => fully connected).subgraphs()$ enumerates
+all cliques in a graph.
+
+Fractal maps these workflows to Spark by splitting them into \textit{fractal steps} on
+synchronization points, e.g. an aggregation which results is required in the next step.
+Each step maps to a Spark job which is scheduled by the Spark scheduler.
+Fractal schedules the \textit{fractal steps} in the correct order and waits for them to complete
+before starting the next one.
+
+A typical problem of graph pattern mining is the high amount of memory needed to keep partial matches;
+the state of the algorithm.
+Fractal counters this problem by enlisting subgraphs with a depth-first strategy.
+For each step, it starts computing all subgraphs from scratch instead of keeping them in
+memory between the steps;
+it only keeps the results of the aggregations to be used by the next step.
+
+Another problem in graph pattern mining is work-balance because some parts of the graph are
+more work-intensive than others.
+Fractal tackles this problem with work-stealing.
+They use a hierarchical work-stealing approach.
+First, each thread tries to steal work from another thread within the same Spark executor.
+Only if this is not possible, they request work from another machine.
+
+The local work-stealing is implemented by sharing the same subgraph enumerators;
+an iterator-like data structure that saves the state of the subgraph matching algorithm in a prefix
+match.
+The subgraph enumerator offers a thread-safe method to generate the next prefix.
+Hence, a thread can steal work simply by using the enumerator of another thread.
+
+The second hierarchy of work-stealing is between multiple Spark workers.
+The authors support that by using Akka to implement a simple message passing interface between
+all Spark workers.
+
+Their experiments show near-linear scaling for the described work-stealing strategy up to 280
+execution threads over 10 machines.
+
+Fractal is similar to our system in some aspects.
+They also solve graph pattern matching on Spark, inspired our approach to work-stealing and
+choose a depth-first subgraph enumeration approach.
+We discuss these similarities below and outline the differences.
+
+Like us, Fractal solves the problem of graph pattern matching.
+However, they offer the ability to solve multiple other common subgraph related problems as well.
+The biggest difference is that they directly support aggregation over subgraphs, which, for example,
+allows them to solve frequent subgraph mining.
+
+They build an independent system on top of Spark's infrastructure which comes with their own
+imperative query language.
+We integrate a single algorithm deeply into Spark's query optimizer.
+Therefore, our contribution can be easily integrated into graph systems building on Spark, e.g.
+G-Core~\cite{gcore} or CAPS~\cite{caps}.
+These systems would offer a declarative interface to our worst-case optimal joins.
+
+The work-stealing approach of Fractal inspired our approach.
+We also use a shared object to steal work within a single Spark executor.
+Anyhow, our approach is simpler and less fine-grained.
+They allow stealing work at every level of the depth-first enumeration of all subgraphs.
+We only share work on the first level.
+This makes there approach strictly more fine-grained and likely to work better on big
+queries.
+We discuss this issue in our future work section~\ref{subsubsec:work-stealing}.
+
+Fractal is built for Spark in cluster mode.
+Hence, they allow processes to steal work from different workers.
+GraphWCOJ is currently limited to a single worker.
+However, their message-passing based solution is directly applicable to our system if
+we extend to multiple workers.
+Again, we talk about this in more depth in future work (\ref{subsubsec:cluster-mode}).
+In short, we could use the same message-passing implementation but instead of stealing
+from a subgraph enumerator, the work would be taken from the queue on each worker.
+
+Both systems enlist the subgraphs in a depth-first like fashion.
+In both systems, this is highly beneficial to memory usage;
+the problem has been discussed for \textit{BigJoin} in the last section (\ref{subsec:wcoj-timely-data-flow}).
 
 
+To conclude, Fractal is a complete system with its own query interface.
+This makes it more powerful than our system but also less integrated into Spark.
+Hence, it forces the user to adapt to their imperative language and hinders
+integration with declarative approaches.
+We are inspired by their work-stealing approach and used a similar system in our work.
+Both systems recognize and demonstrate the advantages of a depth-first approach.
 
 %\subsection{Adaptive Query Exectution}
 
+% Code generation
 %A novel development in Spark is the ability to generate code to execute queries on the fly, called WholeStage codegeneration, based on a technique used in the Hyper database~\cite{hyper,jira-whole-stage,1m-rows-laptop}.
 %Compiled queries have been shown to be multiple magnitudes faster than interpreted queries traditionally used in most database systems.
 %Interpreted queries are most commonly implemented using the Volcano model~\cite{volcano}.
