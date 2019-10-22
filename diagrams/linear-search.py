@@ -7,11 +7,10 @@ from diagrams.base import *
 
 dataset_location = DATASET_FOLDER + "final/linear-search/"
 THRESHOLDS_SNB = [1, 50, 100, 200, 400, 800, 1600]
-
+THRESHOLDS_TWITTER = [1, 400, 800, 1600]
 
 def read_dataset_and_tag(dataset_path, threshold):
   data = pd.read_csv(dataset_path, sep=",", comment="#")
-  # fix_count(data)
 
   data["threshold"] = threshold
   return data
@@ -67,3 +66,6 @@ def bar_chart(datasetname, data, thresholds):
 
 data = get_data_for_dataset("snb-1", THRESHOLDS_SNB)
 bar_chart("snb", data, THRESHOLDS_SNB)
+
+data = get_data_for_dataset("twitter", THRESHOLDS_TWITTER)
+bar_chart("twitter", data, THRESHOLDS_TWITTER)

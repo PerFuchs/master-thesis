@@ -1,0 +1,11 @@
+# Dataset: TwitterSnapEgo 1768135 file:////export/scratch2/per/datasets/snap-twitter-ego-combined
+# Repetitions: 3
+# Batchsize: List(1)
+# Git commit: 62292f2a890d08d912ba9817721182e539301f38
+# Machine: diamonds3.scilens.private
+# Materializing Leapfrogjoins: Enabled (for GraphWCOJ only, WCOJ run without materializing)
+# Comment: 
+Query,Algorithm,Partitioning,Parallelism,Count,Start,End,Copy,Materialization,AlgoStart,WCOJTime-0,Scheduled-0,AlgoEnd-0
+5-clique,WCOJ,AllTuples(),1,00071.813.452,1571737168958,1571737408964,0.00,0.99,1571737169690,0.00,1571737181523,1571737408889
+5-clique,WCOJ,AllTuples(),1,00071.813.452,1571737409405,1571737656708,0.00,0.96,1571737409862,0.00,1571737421981,1571737656635
+5-clique,WCOJ,AllTuples(),1,00071.813.452,1571737657090,1571737891733,0.00,0.96,1571737657485,0.00,1571737670417,1571737891689
