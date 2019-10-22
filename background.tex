@@ -352,33 +352,39 @@ in the case of the triangle query, there are two levels: one for $a$ and one for
 Each level is made of all possible values for its attribute.
 All tuples of the relationship can be enumerated by a depth-first traversal of the trie.
 
-The \textit{TrieIterator} component offers six methods shown in~\cref{table:trieIterator-interface}.
+The \textit{TrieIterator} component offers six methods shown in~\cref{table:lftj-interfaces}.
 The \textit{open} and \textit{up} methods control the level the iterator is positioned at;
 \textit{open} moves it one level down and \textit{up} moves it one level up.
 Additionally, \textit{open} places the iterator at the first value for the next level and the up
 method returns to the value of the upper level that was current when the deeper level was opened.
 We call these two methods the vertical component of the \textit{TrieIterator} interface.
 
-% TODO use textit for functions
 \begin{table}
     \centering
     \begin{tabular}{@{}ll@{}}
         \toprule
         Method         & required complexity    \\
         \midrule
+        \textit{\textbf{TrieIterator}} &        \\
         int key()      &  $\mathcal{O}(1)$       \\
         bool atEnd()   &  $\mathcal{O}(1)$       \\
         void up()      &  $\mathcal{O}(\log_N)$  \\
         void open()    &  $\mathcal{O}(\log_N)$  \\
         void next()    &  $\mathcal{O}(\log_N)$  \\
+        void seek(key) &  $\mathcal{O}(\log_N)$  \\\midrule
+        \textit{\textbf{LeapfrogJoin}} &         \\
+        int key()      &  $\mathcal{O}(1)$       \\
+        bool atEnd()   &  $\mathcal{O}(1)$       \\
+        void init()    &  $\mathcal{O}(\log_N)$  \\
+        void next()    &  $\mathcal{O}(\log_N)$  \\
         void seek(key) &  $\mathcal{O}(\log_N)$  \\
         \bottomrule
     \end{tabular}
     \caption{
-      The \textit{TrieIterator} interface with required complexity.
+      The interfaces of \textit{TrieIterator} and \textit{LeapfrogJoin} with required complexity.
       $N$ is the size of relationship represented by the iterator.
     }
-    \label{table:trieIterator-interface}
+    \label{table:lftj-interfaces}
 \end{table}
 
 The other four methods are called linear component.
@@ -395,35 +401,13 @@ Therefore, it operates on the linear component of all \textit{TrieIterators} of 
 \Cref{fig:lftj-layers} for the triangle query shows three \textit{LeapfrogJoin} instances (for $a, b$ and $c$);
 each of them uses two \textit{TrieIterators}.
 
-The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:leapfrogJoin-interface}, with their required asymptopical
+The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:lftj-interfaces}, with their required asymptopical
 performance.
 In the following paragraphs, we explain each of them.
 In short, the join offers an iterator interface over the intersection of its input iterators.
 This intersection is found by repeatingly seeking the value of the largest input iterator in the smallest input iterator.
 This process resemples a frog taking a leap which gives the join its name.
 When all iterators point to the same value leapfrogging stops and the value is emitted as part of the intersection.
-
-% TODO use textit for functions
-\begin{table}
-    \centering
-    \begin{tabular}{@{}ll@{}}
-        \toprule
-        Method         &  required complexity    \\
-        \midrule
-        int key()      &  $\mathcal{O}(1)$       \\
-        bool atEnd()   &  $\mathcal{O}(1)$       \\
-        void init()    &  $\mathcal{O}(\log_N)$  \\
-        void next()    &  $\mathcal{O}(\log_N)$  \\
-        void seek(key) &  $\mathcal{O}(\log_N)$  \\
-        \bottomrule
-    \end{tabular}
-    \caption{
-    The \textit{LeapfrogJoin} interface with required complexity.
-    $N$ is the size of relationship represented by the iterator.
-    }
-    \label{table:leapfrogJoin-interface}
-\end{table}
-
 
 The \textit{init} operation sorts the input iterator by their current key and finds the first value of the intersection.
 To find the first value it uses the private method \textit{leapfrogSearch} which is the work-horse of the whole join.
@@ -453,8 +437,6 @@ iterator until the smallest and the largest (and therefore all iterators) point 
    \caption{leapfrogSearch()}
    \label{alg:leapfrogSearch}
 \end{algorithm}
-% TODO styling
-
 
 The \textit{leapfrogNext} method moves the join to its next value.
 Internally, it uses the \textit{next} function of its smallest iterator and then \textit{leapfrogSearch}.
@@ -465,7 +447,6 @@ to find the upper bound of this key.
 
 Finally, the functions \textit{key} and \textit{atEnd} return the current key or if the intersection is complete respectively.
 
-% TODO line numbers
 The last layer of the whole algorithm is a single \textit{LeapfrogTriejoin} instance.
 It interacts with both lower layers to enumerate all possible bindings for the join.
 For this it aquires one binding for the first variable from the corresponding \textit{LeapfrogJoin}.
