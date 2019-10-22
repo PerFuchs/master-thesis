@@ -1,6 +1,5 @@
 \section{Optimizing a Leapfrog Triejoin in Scala}\label{sec:lftj-optimizations}
 
-% TODO micro benchmark linear search
 A simple, idiomatic Scala implementation of the Tributary join is not able to beat Spark's \textit{BroadcastHashjoin}
 on any other query than the triangle query.
 Hence, we report on how to optimize the join.

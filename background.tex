@@ -415,7 +415,6 @@ The algorithm of this method is shown in~\cref{alg:leapfrogSearch}.
 This method loops the process of calling the \textit{seek} method of the its smallest input iterator with the key of the largest input
 iterator until the smallest and the largest (and therefore all iterators) point to the same value.
 
-
 \begin{algorithm}
     \KwData{\\
       iters \textit{sorted array of TrieIterators} \\
@@ -437,7 +436,6 @@ iterator until the smallest and the largest (and therefore all iterators) point 
    \caption{leapfrogSearch()}
    \label{alg:leapfrogSearch}
 \end{algorithm}
-
 The \textit{leapfrogNext} method moves the join to its next value.
 Internally, it uses the \textit{next} function of its smallest iterator and then \textit{leapfrogSearch}.
 
@@ -517,9 +515,11 @@ in~\cref{table:lftj-state-machine} and describe each action below.
         }
       }
     }  
-    \caption{LeapfrogTrieJoin state machine}
+    \caption{LeapfrogTrieJoin state machine.
+        \textit{trieJoinUp} and \textit{trieJoinOpen} move all \textit{TrieIterators} that involve
+        the current variable a level up respectively down.
+    }
     \label{alg:leapfrogTrieJoin-state-machine}
-    % TODO mention triejoinopen and triejoinUP
 \end{algorithm}
 
 The \textit{next} action moves the \textit{LeapfrogJoin} at the current depth to the next possible binding for its variable
@@ -568,7 +568,6 @@ Then, this action is followed by another \textit{up} or a \textit{next} dependin
     \label{table:lftj-state-machine}
 \end{table}
 
-% TODO positioning
 \paragraph{TrieIterator implementation, backing data structure}
 While we can implement the \textit{LeapfrogJoin} and \textit{LeapfrogTriejoin} component of the Leapfrog Triejoin from the
 algorithmic description given above, we are missing some details for a concrete implementation of the
@@ -577,7 +576,7 @@ Mainly, we need to decide for a datastructure to back the \textit{TrieIterator}.
 
 We choose to use sorted arrays as described in~\cite{myria-detailed}.
 One array is used per column of the input relationship and binary search on these arrays allows us to implement the \textit{TrieIterator}
-interface with the required asymptopical complexities (see~\cref{table:trieIterator-interface}).
+interface with the required asymptotic complexities (see~\cref{table:lftj-interfaces}).
 
 %We briefly compare a B-tree v.s. array-based implementation of
 %the LFTJ API. The main API function is seek(v), which fetches the next value v’ of the current attribute Ai s.t. v’ > v: in a B-tree this can be computed in amortized time O(1), while our implementation uses a binary search on the remaining part of the array at a cost per operation of O(log n). Thus, TJ is at most a factor log n slower than LFTJ, and, in particular, it is also worst case optimal (up to log n). In practice, the dominating cost of TJ is given by the sorting phase (which, as explained, is unavoidable), hence our choice to use a sorted array instead of a B-tree, because sorting is cheaper than computing a B-tree.
@@ -695,7 +694,7 @@ need to be redesigned completely.
 %Our Leapfrog Triejoin is implemented in three components which we explain in order below: \textit{LeapfrogJoin}, \textit{ArrayTrieIterable} and
 %\textit{LeapfrogTriejoin}.
 %
-%The Leapfrog join is a variant of the sort-merge join for unary relationships, originally described in~\cite{leapfrog1,leapfrog2}. % TODO see LFTJ paper 4 and 7
+%The Leapfrog join is a variant of the sort-merge join for unary relationships, originally described in~\cite{leapfrog1,leapfrog2}.
 %To join $k$ unary relations $A_1(x)$, $A_2(x)$, \dots, $A_k(x)$ it takes one iterator per input relations and offers an iterator
 %interface that yields the intersection of all relations.
 %It requires that it's input iterators offer a \textit{key} method in $\mathcal{O}(1)$, a \textit{next} method and
