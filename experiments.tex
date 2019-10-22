@@ -168,9 +168,10 @@ binary search for GraphWCOJ.
 We do so for the 5-clique query on the SNB-1 and on the Twitter dataset.
 
 The results are shown in \cref{fig:linear-search-threshold-snb} and~\ref{fig:linear-search-threshold-twitter}.
-The optimum for LFTJ is around 200 while GraphWCOJ shows the best performance when it executes only linear
-searches;
-a threshold of 1600 triggers no binary search in either of the datasets.
+The optimum for LFTJ is around 200 while GraphWCOJ shows the best performance at 1600 and 800 for
+SNB-1 respectively Twitter.
+This means that GraphWCOJ performs best when there are nearly no binary searches.
+A threshold of 1600 triggers no binary search in either of the datasets.
 
 We also note that the effect on the performance of the Leapfrog Triejoin is bigger.
 
@@ -201,8 +202,10 @@ However, we note that no huge performance gain can be measured.
 This is most likely because the runtime is dominated by the searches on the first level.
 For simplicity, we do not use two different thresholds for \textsc{LFTJ} in any further experiments.
 
-From this experiment, we conclude that the optimal threshold for \textsc{LFTJ} is 200 and 1600
+From this experiment, we conclude that the optimal threshold for \textsc{LFTJ} is 200 and 800
 for GraphWCOJ.
+We choose 800 for GraphWCOJ because it is on the safe site:
+a binary search performance degrades less than the one of a linear search.
 We set these values accordingly in the all further experiments.
 
 

@@ -7,7 +7,7 @@ from diagrams.base import *
 
 dataset_location = DATASET_FOLDER + "final/linear-search/"
 THRESHOLDS_SNB = [1, 50, 100, 200, 400, 800, 1600]
-THRESHOLDS_TWITTER = [1, 400, 800, 1600]
+THRESHOLDS_TWITTER = [1, 200, 400, 800, 1200, 1600]
 
 def read_dataset_and_tag(dataset_path, threshold):
   data = pd.read_csv(dataset_path, sep=",", comment="#")
