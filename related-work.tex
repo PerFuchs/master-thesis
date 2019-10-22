@@ -122,8 +122,19 @@ We have as many tries as variables in the join $N = V$.
 We are interested in the case that the tuple is not assigned by any of the variables, so $k = 0$.
 Then we have the likelihood that a tuple is not assigned given by $\mathcal{B} (V, 0, \frac{1}{w})$;
 so the fraction of the indices assigned to each worker is $1 - \mathcal{B} (V, 0, \frac{1}{w})$.
-We show a plot of this function for different numbers of workers in~\cref{fig:indices}.
-% TODO figure
+
+We show a plot of this function for different numbers of workers in~\cref{fig:big-join-indices}.
+The split of the indices hold by each worker decreases drastically with the numbers of workers in
+the system.
+Hence, this partitioning scheme scales relatively well.
+
+\begin{figure}
+    \centering
+    \includesvg[width=0.5\textwidth]{big-join-indices}
+    \caption{Expected split of the indexes hold on each worker for different numbers of workers used
+      and variables in the query.
+    }
+\end{figure}
 
 \subsubsection{Theoretical guarantees}
 \textit{BigJoin} guarantees computational and communication worst-case optimality.
