@@ -144,8 +144,69 @@ Then we search for all path of a certain length according to the \textit{edges} 
 paths between two randomly selected, fixed sets of vertices of length 4 - the sets of nodes contain roughly 10\% of all input nodes and are not guaranteed to be intersection free.
 % TODO do I want them to be intersection free?
 
-\subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}}
+\subsection{Linear search threshold}\label{subsec:linear-search-threshold}
 
+We run \textsc{LFTJ} and GraphWCOJ with different settings for the \textit{linear search threshold}.
+As explained in \cref{subsubsec:leapfrog-triejoin}, we use a binary search to implement the \textit{seek}
+method of the \textit{TrieIterators};
+it is also used for GraphWCOJ.
+It is well known, that a binary search can be optimized by ending it with a linear search on small
+search spaces because linear memory access patterns are cheaper than random accesses.
+The threshold gives the size of the search space from which to use a linear search instead of
+a binary search, e.g. a threshold of 40 means that the algorithm switches to a linear search
+once the search space is 40 numbers or less.
+
+We note that \textsc{LFTJ} and GraphWCOJ could behave differently for the same threshold.
+This is because Leapfrog Triejoin uses a binary search for both levels of its \textit{TrieIterators},
+while GraphWCOJ only uses the binary search for the second levels;
+the first level is indexed in a \textsc{CSR}.
+
+In this experiment, we vary the threshold between 1 and 1600 to determine the best value.
+These values are chosen such that 1 does not trigger any linear search and that 1600
+does not improve the performance anymore (for \textsc{LFTJ}) and triggers no
+binary search for GraphWCOJ.
+We do so for the 5-clique query on the SNB-1 and on the Twitter dataset.
+
+The results are shown in \cref{fig:linear-search-threshold-snb} and~\ref{fig:linear-search-threshold-twitter}.
+The optimum for LFTJ is around 200 while GraphWCOJ shows the best performance when it executes only linear
+searches;
+a threshold of 1600 triggers no binary search in either of the datasets.
+
+We also note that the effect on the performance of the Leapfrog Triejoin is bigger.
+
+\begin{figure}
+    \centering
+    \subfloat[SNB-1\label{fig:linear-search-threshold-snb}]{\includesvg[width=0.5\textwidth]{linear-search-threshold-snb}}
+%    \subfloat[Twitter\label{fig:linear-search-threshold-twitter}]{\includesvg[width=0.5\textwidth]{linear-search-twitter}}
+    \caption{Runtime of \textsc{WCOJs} with different settings for the linear search thresholds.}
+\end{figure}
+
+We explain the observations as follows: \textsc{LFTJ} does use searches on the first
+and second level of the \textit{TrieIterators} while GraphWCOJ uses it only on the second
+level.
+Hence, the impact is bigger.
+
+The optimal values are different because data of the levels is differently distributed.
+The first level lists nearly all vertices while the second level is made of adjacency lists which are more
+sparse.
+Hence, we assume that the linear searches on the first level are generally longer than
+the one on the second level;
+note that the threshold only gives an maximum length for linear searches but this is not
+necessarily a good indicator for the length of the performed search.
+
+We tried to use different threshold values for the two levels in \textsc{LFTJ}.
+We choose the values 200 for the first level and 1600 for the second level because these
+are the optimal values according to our experiments.
+However, we note that no huge performance gain can be measured.
+This is most likely because the runtime is dominated by the searches on the first level.
+For simplicity, we do not use two different thresholds for \textsc{LFTJ} in any further experiments.
+
+From this experiment, we conclude that the optimal threshold for \textsc{LFTJ} is 200 and 1600
+for GraphWCOJ.
+We set these values accordingly in the all further experiments.
+
+
+\subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}}
 % TODO use uniform spelling for broadcasthashjoin
 In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation, \texttt{seq}, with the runtime of Spark's \texttt{BroadcastHashjoin}.
 Towards, this goal we ran all queries from~\cref{table:patterns} on our three main datasets: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
