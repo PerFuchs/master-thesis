@@ -91,17 +91,16 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 \subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
 % TODO study in backgrounda
 
-In our study of real-world graphs (\cref{subsec:graph-analysis}), we show that most real-world graphs have a small, average outdegree.
-The outdegree over all graphs is TODO and the maximum average outdegree of a single graph
-is TODO at TODO.
-These results lead to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
+It is well-known that most real-world graphs have a low average outdeegree, mostly far below 200.
+This leads to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 
 We can exploit this fact by materializing the intersections in the \textit{LeapfrogJoins} directly
 in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
 original paper~\cite{lftj}.
 % TODO rename reference to leapfrog-triejoin
-This is beneficial because it makes better use of data locality; we elaborate this statement in a later
-paragraph.
+We believe this to be beneficial because it allows us to employ a simpler intersection algorithm which builds
+the intersections touching each adjacency list only once, instead of, multiple times with yielding like the original
+\textit{LeapfrogJoin} (see~\cref{alg:leapfrogSearch}).
 
 We structure the remainder of this section as follows.
 First, we shortly reiterate the most important facts about \textit{LeapfrogJoins} for this chapter.
@@ -111,12 +110,11 @@ Third, we explain the algorithm we chose based on the analysis.
 Fourth, we point out differences to the original Leapfrog Triejoin.
 Finally, we present a short experiment showing the performance gains of this optimization.
 
-% TODO synchronize with new Leapfrog section
 \textit{LeapfrogJoins} build the intersection between multiple adjacency lists.
-This is done in an iterator-like fashion in their \textit{leapfrog\_next} method by repeatedly finding the upper-bound for the largest
+This is done in an iterator-like fashion in their \textit{leapfrog\_search} method by repeatedly finding the upper-bound for the largest
 value in the lowest iterator.
 This algorithm is asymptotically optimal for the problem of n-way intersections.
-However, we claim that it is (1) to complex for small intersections and (2) should generate all values at once instead of one-by-one to
+However, we believe that it is (1) to complex for small intersections and (2) should generate all values at once instead of one-by-one to
 improve performance on real-world adjacency lists.
 
 To determine the best algorithms to build the n-way intersection in the \textit{LeapfrogJoins},
@@ -125,8 +123,6 @@ Towards this goal, we log the size of the full intersection, the size of the sma
 and the size of the largest intersection between the smallest iterator and any other iterator on 5-clique queries on \texttt{SNB-sf-1}.
 \Cref{fig:intersection-workload} depicts these metrics as cumulative histograms.
 In the next paragraphs, we point out the most important observations in each of these graphs.
-
-% TODO why is that faster, deeper in maybe on jit code or perf
 
 \Cref{fig:intersection-workload-smallest} shows the size distribution of the smallest iterator, as to be expected for a social network
 graph, the outdegree is between 1 and 200.
@@ -169,8 +165,8 @@ smallest iterator participating in \texttt{5-clique} on \texttt{SNB-sf-1}.}
 
 In the coming paragraphs, we detail how to build the n-way intersection of multiple adjacency list
 such that we gain performance by better use of data-locality than original the \textit{LeapfrogJoin}.
-We choose to use pairwise intersections over multi-way intersection algorithms for their simpler,
-linear memory access patterns.
+We choose to use pairwise intersections over multi-way intersection algorithms for their simpler memory access patterns;
+they touch only two lists at-a-time instead of all lists interchangly.
 
 From our analysis, we conclude that the final intersection size is strongly dependent on the
 smallest iterator and that the intersection of the smallest iterator with any other iterator is
@@ -185,8 +181,7 @@ sorting the iterators by size would not pay off.
 Second, we use two different tactics to build the pairwise intersections.
 The first intersection between two iterators is built \textit{in-tandem},  where we seek
 the upper bound of the higher value in the smaller iterator.
-This algorithm guarantees to find the intersection between two iterators in the asymptotical fastest
-way.
+
 After this first intersection, the intermediary result is quite small.
 Therefore, we use the simpler scheme of linearly iterating the intermediary and probing
 the iterator by binary search with fall-back to linear search.
@@ -202,18 +197,19 @@ Instead of deleting elements, we replace them with a special value.
 We estimate the size of the intersection by the size of the smallest iterator and reuse the array whenever possible. We use a sentry element to mark the end of the array.
 \end{itemize}
 
-The carefully chosen operations explained above are faster than the original \textit{LeapfrogJoin}
-algorithm for two reasons.
+\Cref{fig:mat-nomat-short.svg} shows that the new algorithm performance slightly better than
+the original on fast running queries on the \texttt{SNB-sf1} dataset.
+We believe that this has three possible reasons.
 
-First, the number of \textit{seek} calls to each iterator is limited by the size of the smallest iterator.
-This is because the first in-tandem intersection moves the smallest iterator in each intersection
-by at least one value.
-All later binary intersections cause at most as many \textit{seek} calls as the size of the intermediary.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth]{svg/mat-nomat-short}
+    \caption{Runtimes of \texttt{GraphWCOJ} with and without \textit{LeapfrogJoin} materialization
+    enabled for different queries on \texttt{SNB-sf1}.}
+    \label{fig:mat-vs-nomat}
+\end{figure}
 
-In the original algorithm, the smallest iterator is only moved every $\frac{1}{|iterators|}$ times.
-Hence, the limit of \textit{seek} calls
-
-This is due to better cache usage.
+First, due to better cache usage.
 Most of the searches in the adjacency lists are linear searches;
 our binary search falls back to a linear search if the remaining list is small.
 Materializing the intersections means repeating linear searches for increasing elements on the same
@@ -222,29 +218,13 @@ While the original algorithm repeats linear searches over all adjacency lists, i
 against first level iterators and does so only until one value is found;
 it then has to return to the same lists for the next elements.
 
-Second, the \textit{Leapfrog join} generates a single value, then yields control to other parts
+Second, the \textit{LeapfrogJoin} generates a single value, then yields control to other parts
 of the \textit{LeapfrogTriejoin} algorithm and later touches the same adjacency lists again to generate the next value.
 Our approach touches the adjacency lists exactly once per \textit{LeapfrogJoin} initialization and
 condenses the intersection into a much smaller array.
 This array is more likely to stay cached while the other parts of the \textit{LeapfrogTriejoin} do their work.
 
-\Cref{fig:mat-vs-nomat} shows that a materialized \textit{LeapfrogJoin} out-performance better than
-the original algorithm.
-As expected, the optimization is more powerful for bigger queries because they work with more
-adjacency lists per \textit{LeapfrogJoin}, e.g. for a triangle each \textit{LeapfrogJoin} intersects
-only two iterators while for a 5-clique each join handles 5 adjacency lists.
-Anyhow, even for the triangle query, we see a small but clear improvement.
+Third, by starting with the smallest adjacency list of the intersection we get less \textit{seek}
+calls to iterators over bigger adjacency lists.
 
-We refer the reader to our experiment section (\ref{sec:experiments}) for further experiments on
-our graph specialized \textsc{wcoj} and detailed descriptions of the datasets and queries used.
-
-\begin{figure}[H]
-\centering
-% TODO more queries
-% TODO add amazon graph
-% TODO rename dataset to materialization and no materialization or such
-\includesvg[width=0.5\textwidth]{svg/mat-graph-bar-snb-sf1}
-\caption{Barchart showing \texttt{GraphWCOJ} with and without \textit{Leapfrog join} materialization
-enabled for different queries on \texttt{SNB-sf1}.}
-\label{fig:mat-vs-nomat}
-\end{figure}
+We show the results of more experiments in \cref{subsec:lftj-vs-graphWCOJ}.
