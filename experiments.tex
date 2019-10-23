@@ -23,18 +23,19 @@ all necessary data into main memory.
 
 In our experiments we use 4 different join algorithms.
 Two of them are worst-case optimal joins.
-That is our Leapfrog Triejoin implementation, \textit{LFTJ}, and a graph-pattern matching
-specialized Leapfrog Triejoin developed in this thesis: \textit{Graph\textsc{WCOJ}}.
-\textit{LFTJ} is only run as sequential algorithm as a baseline against \textit{GraphWCOJ}.
-We compare these to algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
+That is our Leapfrog Triejoin implementation and a graph-pattern matching
+specialized Leapfrog Triejoin developed in this thesis: Graph\textsc{WCOJ}.
+LFTJ is only run as sequential algorithm as a baseline against GraphWCOJ.
+We compare these two algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
 
-The other two algorithms are Spark's versions of \textit{BroadcastHashJoin} and \textit{SortmergeJoin}.
-We compare them against the sequential version of \textit{LFTJ} and \textit{GraphWCOJ} in \cref{subsec:seq-vs-spar}
-and their scaling with \textit{GraphWCOJ} in \cref{subsec:graphWCOJ-vs-spark}.
-We adjust the \texttt{"spark.sql.autoBroadcastJoinThreshold"} parameter to control if Spark is using a \texttt{BroadcastHashJoin} or a \texttt{SortMergeJoin}.
+The other two algorithms are Spark's binary joins: \textit{BroadcastHashJoin} and \textit{SortmergeJoin}.
+We compare them against the sequential version of \textsc{LFTJ} and GraphWCOJ in \cref{subsec:seq-vs-spark}.
+
+We adjust the \texttt{"spark.sql.autoBroadcastJoinThreshold"} parameter to control
+if Spark is using a \textit{BroadcastHashJoin} or a \textit{SortMergeJoin}.
 
 \subsubsection{Datasets}
-We run the majority of our experiments on two datasets from different use-cases, social networks and product co-purchase.
+We run the our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
 We motivate our choice in the next paragraph.
 \Cref{table:datasets} includes a list of all graph datasets mentioned throughout the thesis.
 
@@ -46,34 +47,32 @@ We motivate our choice in the next paragraph.
         \textbf{Amazon}      & 0302    & 262,111     &  1,234,877     & \cite{snapnets} \\
                              & 0601    & 403,394     &  3,387,388     & \cite{snapnets} \\
         \textbf{Twitter}     & sc-d    & 81,306      &  1,768,135     & \cite{snapnets} \\
-                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
+%                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
         \textbf{LiveJournal} &         & 4,847,571   & 68,993,773     & \cite{snapnets} \\
         \textbf{Orkut}       &         & 3,072,441   & 117,185,083    & \cite{snapnets} \\ \bottomrule
     \end{tabular}
-    \caption{A summary of all datasets mentioned in the thesis.
-    Explanation of them and for the variants is given in running text.
-    }
+    \caption{A summary of all datasets mentioned in the thesis.}
     \label{table:datasets}
 \end{table}
 
- TODO add Vertices and edges numbers
-
 The SNB benchmark~\cite{snb} generates data emulating the posts, messages and friendships in a social network.
 For our experiments, we only use the friendships relationship (\texttt{person\_knows\_person.csv}) which is an undirected relationship.
-After generation only edges of the kind \textit{src $<$ dst} exist, we generate the opposing edges before loading the dataset, such
+Only edges of the kind \textit{src $<$ dst} exist, we generate the opposing edges before loading the dataset, such
 that the edge table becomes truly undirected.
+
 The benchmark comes with an extensively parameterizable graph generation engine
 which allows us to experiment with sizes as small as 1GB and up to 1TB for big experiments and different levels of selectivity.
 The different sizes are called scale-factor or \texttt{sf}, e.g. \texttt{SNB-sf1} refers to a Social network benchmark dataset generated with
 default parameters and scale-factor 1.
-We include the exact parameter used for generation in our repository under \texttt{experiments/snb/params.txt}. % CODEREF TODO include
 
 The Amazon co-purchasing network contains edges between products that have been purchased together and hence are closely related to each other~\cite{snapnets}.
 This is a directed relationship from the product purchased first to the product purchased second, both directions of an edge can exist if the order in which
 products have been purchased varies.
+
 The Snap dataset collection contains multiple Amazon co-purchase datasets, each of them containing a single day of purchases.
-We choose the smallest and biggest dataset from the 2nd of March and the 1st of June 2003, we call them \texttt{Amazon-0302} and
+We choose the smallest and biggest dataset from the 2nd of March and the 1st of June 2003 which we call them \texttt{Amazon-0302} and
 \texttt{Amazon-0601}.
+
 We pick co-purchase datasets for evaluation because former work often concentrated on social networks and web crawl based
 graphs~\cite{myria-detailed,ammar2018distributed} but~\cite{salihoglu2018} points out that the biggest graphs are actually graphs like
 the aforementioned Amazon graph containing purchase information.
@@ -81,27 +80,28 @@ the aforementioned Amazon graph containing purchase information.
 To allow comparisons with former work, we run a subset of our experiments on the Twitter social circle network from~\cite{snapnets}.
 This dataset includes the follower relationship of one thousand Twitter users; each of these follows 10 to 4.964 other users and
 relationships between these are included.
-The graph is originally directed but for some experiments, we add reversed edges to make the graph undirected - again for comparison with former work.
-We call this graph \texttt{Twitter-sc-d} and \texttt{Twitter-sc-u} for the directed respectively undirected variant.
 
-The \textit{LiveJournal} graph represents the friendship relationship of a medium sized social network.
+The \texttt{LiveJournal} graph represents the friendship relationship of a medium sized social network.
 
 \subsubsection{Graph patterns}
 
 In this section, we detail the graph patterns used throughout our experiments.
 Most of the queries are cyclic because that has been shown to be the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
-WCOJ's also have been successfully applied to selective path queries in~\cite{olddog}; however, this result have not been reproduced by any
-other paper.
+WCOJ's also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
 
-To most of our queries, we apply a filter to make them more realistic, e.g. a clique query does make more sense if it is combined with a
+We apply filters to most of our queries to make them more realistic, e.g. a clique query does make more sense if it is combined with a
 smaller-than filter, which requires that the attributes are bound such that \textit{a} smaller than \textit{b}, smaller than \textit{c}.
-Because otherwise, one gets the same clique in all possible orders in the output, which not only takes much more time but is also most
+Otherwise, one gets the same clique in all possible orders, which not only takes much more time but is also most
 likely not the result a user would want.
+
 We ensure that filters can be pushed down through or in the join by Spark as well as by the WCOJ to compare both algorithms on an equal basis.
 A complete list of all queries and filters used is shown in~\cref{table:patterns}.
-The less known queries are also detailed in text.
-Patterns and filters might be used in all possible combinations, we name the resulting query \textit{\textless
-pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
+\Cref{fig:all-queries} shows depiction of all graph patterns.
+
+Patterns and filters are combined as follows.
+Cliques and the \texttt{kite} query use smaller than filters which require the bindings to increase
+in value according to the variable ordering.
+All other queries are run with a filter such that each of their binding must be distinct.
 
 \begin{table}[]
     \centering
@@ -135,14 +135,14 @@ pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
     \subfloat[diamond]{\includesvg[width=0.2\textwidth]{svg/diamond}}
     \subfloat[kite]{\includesvg[width=0.2\textwidth]{svg/kite}}
     \caption{Queries used in our experiments.}
+    \label{fig:all-queries}
 \end{figure}
 
-
-% TODO add kite query
 For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
-Then we search for all path of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all
-paths between two randomly selected, fixed sets of vertices of length 4 - the sets of nodes contain roughly 10\% of all input nodes and are not guaranteed to be intersection free.
-% TODO do I want them to be intersection free?
+Then we search for all paths of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all
+paths between two randomly selected, fixed sets of vertices of length 4.
+The sets of nodes contain roughly 10\% of all input nodes and are
+not guaranteed to be intersection free.
 
 \subsection{Linear search threshold}\label{subsec:linear-search-threshold}
 
@@ -211,23 +211,23 @@ We set these values accordingly in the all further experiments.
 
 \subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}}
 % TODO use uniform spelling for broadcasthashjoin
-In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation, \texttt{seq}, with the runtime of Spark's \texttt{BroadcastHashjoin}.
-Towards, this goal we ran all queries from~\cref{table:patterns} on our three main datasets: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
-The clique patterns are combined with the less-than filter, \texttt{n-clique-lt}, and the cycle pattern with the distinct filter,
-\texttt{n-cycle-distinct}.
-These seem to be the most realistic setups because cliques are fully symmetric and one wants to avoid redundant results.
-For cycles, the less-than filter is too restrictive because it excludes cycles for which $a < b > c$.
+In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation with the runtime of Spark's \texttt{BroadcastHashjoin}.
+Towards, this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
+and
+\texttt{SNB-sf1}.
+
+
 We show our results in~\cref{table:seq-vs-bhj} and in barcharts (\cref{fig:seq-bar-ama-0302}, \ref{fig:seq-bar-ama-0601} and \ref{fig:seq-bar-snb-sf1}).
 \Cref{sssec:seq-analysis} analyzes the results.
 
-Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and \texttt{seq}.
+Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and
+\textsc{LFTJ}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
 For \texttt{seq}, we report setup time and the time, it takes to run the join, separately.
-Setup time includes the sorting, materialization and copying the results of our join from a Scala \texttt{Array} into the \texttt{UnsafeInternalRow} format
-expected by Spark.  TODO sorting not yet (data is presorted in files)
+Setup time includes the sorting and materialization.  TODO sorting not yet (data is presorted in files)
 This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
 
-\subsubsection{Experiment Rationale}\label{sssec:seq-experiment-rational}
+\subsubsection{Experiment Setup}\label{sssec:seq-experiment-rational}
 \textbf{Question:} Why do we compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMergeJoin}? \\
 \textbf{Answer:} Because even when all data is arranged in a single partition, for simple sequential processing, Spark
 schedules its \texttt{SortMergeJoin} to use a shuffle.
@@ -238,25 +238,20 @@ We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{t
 We assume that Spark is able to optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
 \textbf{Question:} Why do we exclude setup times from the WCOJ times?\\
-\textbf{Answer:} Because our final implementation \texttt{dist} is meant to cache the readily sorted and formatted edge tables and reuse it for multiple queries.
-We anticipate that this is necessary to benefit from WCOJ's in general.
-Furthermore, we optimize the setup times in later implementation.
-Hence, the current setup code is much slower than the one we expect to use for later implementations.
-% TODO can I write that this is in line with former research?
+\textbf{Answer:} Because system is meant to cache the readily sorted and formatted as \textsc{CSR}'s and reuse it for multiple queries.
+We anticipate that this is necessary to benefit from \textsc{WCOJ}'s in general.
 
-\textbf{Question:} Why is the time to copy results into \texttt{UnsafeInternalRow} format for WCOJ counted as setup time?\\
-\textbf{Answer:} It is time solely spent for integration with Spark and not Leapfrog Triejoin specific.
-Furthermore, it could be avoided by working directly on the \texttt{UnsafeInternalRow} format within our \texttt{seq} implementation.
-However, this would require us to work with unmanaged memory (the \texttt{UnsafeInternalRow} interface is slower than working on \texttt{Arrays})
-and we deem this as an unnecessary engineering overhead.
+%\textbf{Question:} Why is the time to copy results into \texttt{UnsafeInternalRow} format for WCOJ counted as setup time?\\
+%\textbf{Answer:} It is time solely spent for integration with Spark and not Leapfrog Triejoin specific.
+%Furthermore, it could be avoided by working directly on the \texttt{UnsafeInternalRow} format within our \texttt{seq} implementation.
+%However, this would require us to work with unmanaged memory (the \texttt{UnsafeInternalRow} interface is slower than working on \texttt{Arrays})
+%and we deem this as an unnecessary engineering overhead.
 
-\textbf{Question:} Is Spark's code generation a huge advantage for the \texttt{BroadcastHashjoin}?
-\textbf{Answer:} Yes, we ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for \texttt{triangle} and
-\texttt{5-clique}: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16.
+\textbf{Question:} Is Spark's code generation a huge advantage for the \texttt{BroadcastHashjoin}?\\
+\textbf{Answer:} Yes, we ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for the \texttt{triangle}
+query and \texttt{5-clique}: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
 
 \subsubsection{Analysis}\label{sssec:seq-analysis}
-For now, we settle to simply point out the most important observations and postpone deeper analysis, e.g. influence of dataset size and characteristics,
-to experiments run against our later implementations, i.e. \texttt{seq-graph-pattern} and \texttt{dist}.
 
 We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
 Generally, we see that for \texttt{n-clique} patterns the speedup over Spark decreases for bigger $n$.
@@ -265,9 +260,8 @@ e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to
 
 The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
 decreasing speedup on \texttt{Amazon-0302}.
-Unfortunately, we are (TODO currently) not able to provide \texttt{n-cycle} results for the \texttt{SNB-sf1} dataset, due to the fact that
-\texttt{BroadcastHashjoin}'s take more than 22 hours for the \texttt{6-cycle} which blocked our experiments.
-\texttt{5-cycle} runs at the moment.
+% TODO n-cycle results for snb
+% TODO rerun on diamonds
 
 The \texttt{House} and \texttt{5-clique} pattern seem to be quite similiar - the \texttt{House} is a \texttt{5-clique} with two missing
 edges.
@@ -282,17 +276,20 @@ This might be due to the different selectivity; it is extremely high on the co-p
 benchmark.
 This different in selectivity is not surprising given that the \texttt{SNB} network fulfills the small world property, while the
 \texttt{Amazon} dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
-We will run the path queries with a different selectivity on the two input vertice sets to confirm this hypothesis.
+
+% TODO maybe run path query with different selectivity
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
 in the characteristics of the datasets themselves.
+
 In particular, it becomes clear that co-purchase datasets and social network datasets must have very different characteristics.
 Although, \texttt{SNB-sf1} is much smaller than \texttt{Amazon-0601}, queries on it take a similar or even much more time,
-e.g. \texttt{5-clique-lt} takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much
+e.g. \texttt{5-clique} takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much
 smaller on \texttt{SNB-sf1};
-\texttt{4-cycles-distinct} takes roughly 8 times longer on the small dataset and has a much bigger result set.
+\texttt{4-cycles} takes roughly 8 times longer on the small dataset and has a much bigger result set.
 In general, we see a higher speedup on \texttt{SNB-sf1}
-% TODO include filter names in query names
+
+
 \begin{figure}
     \centering
     \includesvg{svg/seq-bar-ama0302}
@@ -351,13 +348,13 @@ We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
       \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601-long}
     }\\
     \subfloat[SNB-1]{
-%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
-%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb-long}
+    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
+    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb-long}
     }\\
-%    \subfloat[]{
-%    \includesvg[width=0.4\textwidth]{svg/lftj-graphWCOJ-twitter}
-%    \includesvg[width=0.2\textwidth]{svg/lftj-graphWCOJ-twitter-long}
-%    }
+    \subfloat[]{
+    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
+%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
+    }
     \caption{WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.}
     \label{fig:lftj-graphWCOJ}
 \end{figure}
