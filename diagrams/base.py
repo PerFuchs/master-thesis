@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 DATASET_FOLDER = "../data/"
-FIGURE_PATH = "../"
+FIGURE_PATH = "../svg/"
 GENERATED_PATH= "../generated/"
 
 WORKSTEALING = "FirstVariablePartitioningWithWorkstealing"
