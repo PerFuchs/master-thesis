@@ -127,13 +127,13 @@ pattern\textgreater-\textless filter\textgreater}, e.g. \textit{triangle-lt}.
 
 \begin{figure}
     \centering
-    \subfloat[triangle]{\includesvg[width=0.2\textwidth]{triangle}}
-    \subfloat[4-clique]{\includesvg[width=0.2\textwidth]{4clique}}
-    \subfloat[5-clique]{\includesvg[width=0.2\textwidth]{5clique}}
-    \subfloat[4-cycle]{\includesvg[width=0.2\textwidth]{4cycle}}\\
-    \subfloat[5-cycle]{\includesvg[width=0.2\textwidth]{5cycle}}
-    \subfloat[diamond]{\includesvg[width=0.2\textwidth]{diamond}}
-    \subfloat[kite]{\includesvg[width=0.2\textwidth]{kite}}
+    \subfloat[triangle]{\includesvg[width=0.2\textwidth]{svg/triangle}}
+    \subfloat[4-clique]{\includesvg[width=0.2\textwidth]{svg/4clique}}
+    \subfloat[5-clique]{\includesvg[width=0.2\textwidth]{svg/5clique}}
+    \subfloat[4-cycle]{\includesvg[width=0.2\textwidth]{svg/4cycle}}\\
+    \subfloat[5-cycle]{\includesvg[width=0.2\textwidth]{svg/5cycle}}
+    \subfloat[diamond]{\includesvg[width=0.2\textwidth]{svg/diamond}}
+    \subfloat[kite]{\includesvg[width=0.2\textwidth]{svg/kite}}
     \caption{Queries used in our experiments.}
 \end{figure}
 
@@ -177,8 +177,8 @@ We also note that the effect on the performance of the Leapfrog Triejoin is bigg
 
 \begin{figure}
     \centering
-    \subfloat[SNB-1\label{fig:linear-search-threshold-snb}]{\includesvg[width=0.5\textwidth]{linear-search-threshold-snb}}
-    \subfloat[Twitter\label{fig:linear-search-threshold-twitter}]{\includesvg[width=0.5\textwidth]{linear-search-threshold-twitter}}
+    \subfloat[SNB-1\label{fig:linear-search-threshold-snb}]{\includesvg[width=0.5\textwidth]{svg/linear-search-threshold-snb}}
+    \subfloat[Twitter\label{fig:linear-search-threshold-twitter}]{\includesvg[width=0.5\textwidth]{svg/linear-search-threshold-twitter}}
     \caption{Runtime of \textsc{WCOJs} with different settings for the linear search thresholds.}
 \end{figure}
 
@@ -295,21 +295,21 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
 % TODO include filter names in query names
 \begin{figure}
     \centering
-    \includesvg{seq-bar-ama0302}
+    \includesvg{svg/seq-bar-ama0302}
     \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0302}}
     \label{fig:seq-bar-ama-0302}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includesvg{seq-bar-ama0601}
+    \includesvg{svg/seq-bar-ama0601}
     \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0601}}
     \label{fig:seq-bar-ama-0601}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includesvg{seq-bar-snb-sf1}
+    \includesvg{svg/seq-bar-snb-sf1}
     \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{SNB-sf1}}
     \label{fig:seq-bar-snb-sf1}
 \end{figure}
@@ -333,6 +333,34 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
     % TODO align and remove headers
 \end{table}
 
+\subsection{\textsc{LFTJ} vs GraphWCOJ} \label{subsec:lftj-vs-graphWCOJ}
+
+In this experiment, we compare sequentials runs of the Leapfrog Triejoin and GraphWCOJ
+on the \texttt{Amazon}, \texttt{SNB-1} and \texttt{Twitter} datasets.
+We do not show the run-time of \texttt{Path} queries because GraphWCOJ is not able to run
+graph queries\footnote{\texttt{Path} queries require us to filter the input relationship before
+the join. This has not been implemented for GraphWCOJ due to time constraints.}.
+
+We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
+
+
+\begin{figure}
+    \subfloat[Amazon-0302]{\includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon}}
+    \subfloat[Amazon-0601]{
+      \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601}
+      \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601-long}
+    }\\
+    \subfloat[SNB-1]{
+%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
+%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb-long}
+    }\\
+%    \subfloat[]{
+%    \includesvg[width=0.4\textwidth]{svg/lftj-graphWCOJ-twitter}
+%    \includesvg[width=0.2\textwidth]{svg/lftj-graphWCOJ-twitter-long}
+%    }
+    \caption{WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.}
+    \label{fig:lftj-graphWCOJ}
+\end{figure}
 
 \subsection{Scaling of \textit{Graph\textsc{WCOJ}}} \label{subsec:scaling-graphWCOJ}
 
@@ -356,12 +384,12 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
 \begin{figure}
     \centering
     \subfloat[Twitter dataset\label{fig:graphWCOJ-scaling-twitter}]
-      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-twitter}}
+      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-twitter}}
     \subfloat[LiveJournal dataset\label{fig:graphWCOJ-scaling-livej}]
-      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-livej}}
+      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-livej}}
     \newline
     \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
-      {\includesvg[width=0.5\textwidth]{graphWCOJ-scaling-orkut}}
+      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
     \caption{Scaling behaviour of Shares and work-stealing on three different datasets
       and two different queries.
       The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:

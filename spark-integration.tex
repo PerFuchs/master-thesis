@@ -80,8 +80,8 @@ A \textsc{LFTJ} can have 2 or more children, one for each input relationship.
 The logical and physical plan for the triangle query is shown in~\cref{fig:lftj-catalyst-plan}.
 
 \begin{figure}
-    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{lftj-logical-catalyst-plan}}
-    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{lftj-physical-catalyst-plan}}
+    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{svg/lftj-logical-catalyst-plan}}
+    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{svg/lftj-physical-catalyst-plan}}
     \caption{Catalyst plans for the triangle query using a Leapfrog Triejoin.}
     \label{fig:lftj-catalyst-plan}
 \end{figure}
@@ -114,8 +114,8 @@ a third child) and broadcasting of the CSR data structure.
 We address these differences in order.
 
 \begin{figure}
-    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{graphWCOJ-logical-catalyst-plan}}
-    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{graphWCOJ-physical-catalyst-plan}}
+    \subfloat[Logical plan]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-logical-catalyst-plan}}
+    \subfloat[Physical plan]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-physical-catalyst-plan}}
     \caption{Catalyst plans for the triangle query using GraphWCOJ.}
     \label{fig:graphWCOJ-catalyst-plan}
 \end{figure}

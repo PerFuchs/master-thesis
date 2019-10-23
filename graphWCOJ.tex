@@ -82,10 +82,11 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 
 \begin{figure}
 \centering
-\includegraphics[width=0.5\textwidth]{wcoj-vs-graph-wcoj.png}
+%\includegraphics[width=0.5\textwidth]{wcoj-vs-graph-wcoj.png}
 \caption{Barchart comparing join time of \texttt{WCOJ} and \texttt{GraphWCOJ} on multiple queries on \texttt{SNB-sf1}}
 \label{fig:wcoj-vs-graphWCOJ}
 \end{figure}
+% TODO graph from new numbers
 
 \subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
 % TODO study in backgrounda
@@ -242,7 +243,7 @@ our graph specialized \textsc{wcoj} and detailed descriptions of the datasets an
 % TODO more queries
 % TODO add amazon graph
 % TODO rename dataset to materialization and no materialization or such
-\includesvg[width=0.5\textwidth]{mat-graph-bar-snb-sf1}
+\includesvg[width=0.5\textwidth]{svg/mat-graph-bar-snb-sf1}
 \caption{Barchart showing \texttt{GraphWCOJ} with and without \textit{Leapfrog join} materialization
 enabled for different queries on \texttt{SNB-sf1}.}
 \label{fig:mat-vs-nomat}
