@@ -398,12 +398,12 @@ Both systems recognize and demonstrate the advantages of a depth-first approach.
 %This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on, until the next calls reach the scanning operators at the bottom of the query execution tree.
 %These would provide a single tuple which would then be "pulled" upwards through the query tree and processed by all operators.
 %When it reaches the root operator, the result is delivered to the user.
-%This happens for every tuple; hence, the approach can be described as tuple-at-a-time. % TODO wording
+%This happens for every tuple; hence, the approach can be described as tuple-at-a-time.
 %Although, this interface is simple yet powerful due to its composability, it is also quite computation intensive mainly due to the high number of calls to the next function, which is often a virtual function call.
 %This high number of virtual function call is not only CPU intensive but also makes bad use of CPU registers (they are spilled on every function call) and hinders compiler optimizations.
 %Compiled queries avoid these costs by generating code specific to each query consisting mainly out of multiple, tight for-loops following each other.
 %This speeds up processing by keeping data in the CPU registers as long as possible and avoiding materilization and function calls.
-%Furthermore, it allows compiler optimizations, such as loop unrolling or ~\cite{hyper}% TODO one more.
+%Furthermore, it allows compiler optimizations, such as loop unrolling or ~\cite{hyper}
 %We are not aware of any published efforts to speed up worst-case optimal joins via code generation.
 
 %We aim to combine the research on worst-case optimal join algorithm and Spark's extensible optimizer Catalyst to speed up graph processing for all Spark users.

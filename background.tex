@@ -1120,7 +1120,49 @@ onto the \textit{dst} attribute (called \textit{AdjacencyLists}) and a second of
 array (called \textit{Indices}).
 To find all destinations directly reachable from a source \textit{src $\in$ V}, one accesses the second array at \textit{src} for the
 correct index into the first array for a list of destinations.
-% TODO maybe example figure?
+
+\Cref{fig:csr-example} shows an example for a table and its \textsc{CSR}.
+
+First, we note that vertices are not represented by their original ID but as numbers from
+0 to |V| which gives the offset into the \textit{Indices} array where to find the offset into
+the \textit{AdjacencyLists} array for their neighbours, e.g. vertex $2$ is represented by $1$ which
+points to the offset $1$ in the \textit{Indices} array which in turn points to the adjacency
+list of $2$ in \textit{AdjacencyLists}.
+
+Additionally, we point out that the 3rd entry in the \textit{Indices} array is the same as the second.
+This is because vertex $3$ has no outgoing edges.
+Hence, it has no adjacency list to point to.
+Therfore, it points to the same offset as the entry for $2$.
+
+
+\begin{figure}
+    \centering
+    \subfloat{
+        \begin{tabular}{rr}
+            \toprule
+            a  &  b \\\midrule
+            1  &  2 \\
+            2  &  3 \\
+            2  &  4 \\
+            2  &  5 \\
+            2  &  6\\
+            4  &  2 \\
+            5  &  2 \\
+            5  &  6 \\
+            6 &   5 \\\bottomrule
+        \end{tabular}
+    }
+    \hspace{1.5cm}
+    \subfloat{
+        \includesvg[width=0.5\textwidth]{svg/csr-example}
+    }
+    \caption{Example of a table and its compressed sparse row representation.
+      The \textit{Indices} array gives offsets into the \textit{AdjacencyLists} array.
+      The vertices are represented as the indexes into the indices array, e.g. vertex id
+      $2$ is represented as $1$.
+    }
+\end{figure}
+
 
 The CSR format has two beneficial properties in the context of this thesis.
 First, it allows locating all destinations for a source vertice by one array lookup;
