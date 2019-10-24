@@ -97,7 +97,6 @@ This leads to the hypothesis that the intersection of multiple adjacency lists i
 We can exploit this fact by materializing the intersections in the \textit{LeapfrogJoins} directly
 in one go; instead of, generating one value at-the-time in an iterator like fashion as described in the
 original paper~\cite{lftj}.
-% TODO rename reference to leapfrog-triejoin
 We believe this to be beneficial because it allows us to employ a simpler intersection algorithm which builds
 the intersections touching each adjacency list only once, instead of, multiple times with yielding like the original
 \textit{LeapfrogJoin} (see~\cref{alg:leapfrogSearch}).

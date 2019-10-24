@@ -259,7 +259,6 @@ e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to
 The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
 decreasing speedup on \texttt{Amazon-0302}.
 % TODO n-cycle results for snb
-% TODO rerun on diamonds
 
 The \texttt{House} and \texttt{5-clique} pattern seem to be quite similiar - the \texttt{House} is a \texttt{5-clique} with two missing
 edges.
@@ -356,12 +355,12 @@ We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
 
 \subsection{Scaling of \textit{Graph\textsc{WCOJ}}} \label{subsec:scaling-graphWCOJ}
 
-In this section, we aim to analyse and compare the scaling of \textit{Graph\textsc{WCOJ}} using different
+In this section, we aim to analyse and compare the scaling of Graph\textsc{WCOJ} using different
 partitioning schemes.
-Towards this goal, we run \textit{Graph\textsc{WCOJ}} on datasets of different size namely Twitter,
-LiveJournal and Orkut.
-We compare two partitioning schemes: Shares and \textit{work-stealing}.
-These are the two most promising schemed identified in \cref{ssec:partitionings}.
+Towards this goal, we run Graph\textsc{WCOJ} on datasets of different size namely \texttt{Twitter},
+\texttt{LiveJournal} and \texttt{Orkut}.
+We compare two partitioning schemes: Shares and work-stealing.
+These are the two most promising schemed identified in \cref{sec:worst-case-optimal-join-parallelization}.
 The experiment is performed on 3-clique and 5-clique.
 3-clique is the smallest of our queries.
 Therefore, it is most difficult to scale.
@@ -386,8 +385,6 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
       and two different queries.
       The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
       50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
-      Measurements for 5-clique for low levels of parallelism are missing for LiveJournal and Orkut due to the time it would take
-      to collect the results.
     }
     \label{fig:graphWCOJ-scaling}
 \end{figure}
@@ -410,7 +407,7 @@ If we do not use all cores on a socket, each used core can use a bigger share of
 Negatively because each socket is in a different NUMA zone and the graph is not guarantued to be chached in all
 NUMA zone.
 Indeed, Spark shares the broadcasts for all tasks on a single executor.
-So there is only one copy in memory. % TODO double check
+So there is only one copy in memory.
 
 Additionally, we run on an Intel processor with hyperthreading.
 Hence, we can not expect linear speedup above 48 workers because after multiple threads will share resources and cannot be
@@ -445,17 +442,16 @@ Nevertheless, \textit{work-stealing} beats Shares on both queries and all levels
 
 Additionally, we see two strange scaling behaviours for LiveJournal.
 First, super-linear scaling for 3-clique and \textit{work-stealing}.
-We hypothize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
+We hypnotize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
 120 MB of L3 cache while a single process can use only 30 MB of L3 cache.
-To confirm this we rerun the experiment with 1, 8, 16 and 32 workers while using \textit{taskset} to bind the application
-to the first 8, 16 or 32 cores.
-This rules out the use of more than 1, 2 or 3 sockets respectively.
-In this experiment, we measure speedup of 8.6, 16.6 and 32.9 for 8, 16 and 32 workers.
-This is significantly lower than the speedup measurements without \textit{taskset}.
-We conclude that this confirms our hypothesis and believe that the slight super-linear
-scaling that remains arises from the bigger amount of L1 and L2 cache in the system.
+%To confirm this we rerun the experiment with 1, 8, 16 and 32 workers while using \textit{taskset} to bind the application
+%to the first 8, 16 or 32 cores.
+%This rules out the use of more than 1, 2 or 3 sockets respectively.
+%In this experiment, we measure speedup of 8.6, 16.6 and 32.9 for 8, 16 and 32 workers.
+%This is significantly lower than the speedup measurements without \textit{taskset}.
+%We conclude that this confirms our hypothesis and believe that the slight super-linear
+%scaling that remains arises from the bigger amount of L1 and L2 cache in the system.
 % TODO run with perf counter
-% TODO footnote taskset
 % TODO note why do we have locallity in data accesses?
 
 Second, Shares exhibits lower speedup of 12.1 for 64 workers which is
@@ -475,44 +471,28 @@ adds more workers along the first axis.
 However, the scaling only increases marginally by 0.1 from 32 workers which is quite disappointing given
 that the number of threads increased by a threefold.
 
-% TODO should be in partitionings instead.
 One could argue that we should use a different definition of \textit{best} hypercube configuration.
 As we see, it is not necessarily efficient to distribute the computation along the last axis.
-We implemented version of the configuration finder that considers only the first \textit{i} axes and
-call this partitioning scheme \textit{i-prefixShares}.
-TODO report results
-However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
-in our further experiments.
-% TODO why?
+% TODO prefix shares
+%We implemented version of the configuration finder that considers only the first \textit{i} axes and
+%call this partitioning scheme \textit{i-prefixShares}.
+%However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
+%in our further experiments.
 
-The Orkut and LiveJournal datasets lead to highly similiar scaling results:
-strong linear scaling for \textit{work-stealing} up to 32 workers,
-\textit{work-stealing} scales significantly better than Shares for 3-clique but
-not for 5-clique and Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
-% TODO run on 48 cores,
-% TODO reevaluate similarity with LiveJournal
-
-% TODO most important open question 1: Shares faster than workstealing? clique 5 bad scaling workstealing?
-% TODO most important open question 2: workstealing slower on bigger queries?
+The Orkut and LiveJournal datasets lead to highly similar scaling results:
+super-linear scaling for \textit{work-stealing} up to 48 workers,
+\textit{work-stealing} scales significantly better than Shares.
+Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
 
+% TODO workstealing slower on bigger queries?
+
+
+% TODO experiment about scaling of Spark
 
 
 
 
-
-
-
-\subsubsection{Analysis}
-
-
-% show DAG's for both algorithms in terms of DAG
-% measure if spark actually takes more than 30 minutes on long queries
-% measure path queries
-
-
-% measure against none code generated spark, notice in sentence
-% measure against Sortmerge join, notice in sentence
 
 % comparision against other work
 %   Dewitt

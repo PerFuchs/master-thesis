@@ -581,7 +581,7 @@ interface with the required asymptotic complexities (see~\cref{table:lftj-interf
 %We briefly compare a B-tree v.s. array-based implementation of
 %the LFTJ API. The main API function is seek(v), which fetches the next value v’ of the current attribute Ai s.t. v’ > v: in a B-tree this can be computed in amortized time O(1), while our implementation uses a binary search on the remaining part of the array at a cost per operation of O(log n). Thus, TJ is at most a factor log n slower than LFTJ, and, in particular, it is also worst case optimal (up to log n). In practice, the dominating cost of TJ is given by the sorting phase (which, as explained, is unavoidable), hence our choice to use a sorted array instead of a B-tree, because sorting is cheaper than computing a B-tree.
 
-\paragraph{Variable ordering}  % TODO move all sections one up and use of chapter?
+\paragraph{Variable ordering}
 Finding a good variable ordering for the \textsc{LFTJ} is an interesting research problem in itself.
 We are aware of two existing approaches.
 

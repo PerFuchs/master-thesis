@@ -105,7 +105,6 @@ Given this data structure, the \textit{TrieIterator} can be implemented using bi
 in~\cref{subsubsec:leapfrog-triejoin}).
 
 \subsection{GraphWCOJ} \label{subsec:spark-integration-graphWCOJ}
-% TODO maybe i miss a good connection between variable ordering and sorting and the fact that I need only two tables?
 The integration of GraphWCOJ is quite similar to the one of \textsc{LFTJ}.
 \Cref{fig:graphWCOJ-catalyst-plan} shows the logical and physical plan constructred by our integration.
 There are three main difference: GraphWCOJ requires only two children for the input relationships, the children materialize the input
@@ -135,7 +134,6 @@ One with its \textit{Indices} array build from the $src$ attribute and the \text
 The other, with \textit{Indices} from $dst$ and \textit{AdjacencyLists} from $src$.
 Next, we describe how to build these CSR's from two linear, sorted, row wise iterators as provided by Spark for the two child relationships.
 
-% TODO algorithm to build them
 First, we note that it is necessary to build both compressed sparse row data structures in tandem.
 This is because some vertices in the graph might have no outgoing or incoming edges.
 That means some vertice ID's do not occur in the $src$ or $dst$ attributes of any tuple.
@@ -210,10 +208,5 @@ Every time, we translate a logical WCOJ plan into a physical one, we check if th
 if so, our strategy reuses this broadcast.
 
 
-% TODO disk cache?
-% CSR disk cache  % CSRTrieIterableBroadcast implements that
+% TODO disk cache? % CSR disk cache  % CSRTrieIterableBroadcast implements that
 
-% connection to distribution, logical partitionings integrated into the GraphWCOJ algorithm
-
-
-% TODO where whole system overview as one big diagram, and then used to explain the structure? introduction, extra chapter after background.

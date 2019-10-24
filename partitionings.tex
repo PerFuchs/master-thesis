@@ -236,5 +236,3 @@ Second, one could extend the critical section of polling a queue value by the \t
 at the value from the queue without removing it, log the value in a set of values per task and then poll it and remove it from the queue.
 With these operations, it is guaranteed that the master can reconstruct all values that a failed worker thread considered.
 So, after a task failure, the master can add these values to the work queue again such that other tasks will redo the computations.
-
-%   - TODO read Fractal on fault tolerance?
