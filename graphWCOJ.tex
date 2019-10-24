@@ -195,7 +195,7 @@ Instead of deleting elements, we replace them with a special value.
 We estimate the size of the intersection by the size of the smallest iterator and reuse the array whenever possible. We use a sentry element to mark the end of the array.
 \end{itemize}
 
-\Cref{fig:mat-nomat-short.svg} shows that the new algorithm performance slightly better than
+\Cref{fig:mat-nomat-short} shows that the new algorithm performance slightly better than
 the original on fast running queries on the \texttt{SNB-sf1} dataset.
 We believe that this has three possible reasons.
 
@@ -204,7 +204,7 @@ We believe that this has three possible reasons.
     \includesvg[width=0.5\textwidth]{svg/mat-nomat-short}
     \caption{Runtimes of \texttt{GraphWCOJ} with and without \textit{LeapfrogJoin} materialization
     enabled for different queries on \texttt{SNB-sf1}.}
-    \label{fig:mat-vs-nomat}
+    \label{fig:mat-nomat-short}
 \end{figure}
 
 First, due to better cache usage.
