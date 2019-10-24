@@ -217,14 +217,14 @@ and
 \texttt{SNB-sf1}.
 
 
-We show our results in~\cref{table:seq-vs-bhj} and in barcharts (\cref{fig:seq-bar-ama-0302}, \ref{fig:seq-bar-ama-0601} and \ref{fig:seq-bar-snb-sf1}).
+We show our results in~\cref{fig:spark-vs-lftj}.
 \Cref{sssec:seq-analysis} analyzes the results.
 
 Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and
 \textsc{LFTJ}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
 For \texttt{seq}, we report setup time and the time, it takes to run the join, separately.
-Setup time includes the sorting and materialization.  TODO sorting not yet (data is presorted in files)
+Setup time includes the sorting and materialization.
 This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
 
 \subsubsection{Experiment Setup}\label{sssec:seq-experiment-rational}
@@ -289,53 +289,50 @@ smaller on \texttt{SNB-sf1};
 \texttt{4-cycles} takes roughly 8 times longer on the small dataset and has a much bigger result set.
 In general, we see a higher speedup on \texttt{SNB-sf1}
 
-
 \begin{figure}
     \centering
-    \includesvg{svg/seq-bar-ama0302}
-    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0302}}
-    \label{fig:seq-bar-ama-0302}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includesvg{svg/seq-bar-ama0601}
-    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{Amazon-0601}}
-    \label{fig:seq-bar-ama-0601}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includesvg{svg/seq-bar-snb-sf1}
-    \caption{\texttt{seq} vs \texttt{BroadcastHashJoin} on \texttt{SNB-sf1}}
-    \label{fig:seq-bar-snb-sf1}
-\end{figure}
-
-\begin{table}
-    \centering
-
-    \input{generated/seq-table-ama0302}
-    \vspace{0.3cm}
-
-    \input{generated/seq-table-ama0601}
-
-    \vspace{0.3cm}
-    \input{generated/seq-table-snb-sf1}
-    \caption{Runtimes for \texttt{BroadcastHashJoin} and \texttt{seq}.
-    The speedup is calculated between join times and excludes setup.
-    From top to bottom for dataset: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
-    All times in seconds.
+    \subfloat[Amazon0302]{
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon}
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon-long}
+    }\\
+    \subfloat[Amazon0601]{
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601}
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601-long}
+    }\\
+    \subfloat[SNB-sf-1]{
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb}
+        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb-long}
     }
-    \label{table:seq-vs-bhj}
-    % TODO align and remove headers
-\end{table}
+    \caption{Runtime of a Leapfrog Triejoin and Spark's \texttt{BroadcastHashJoin}}
+    \label{fig:spark-vs-lftj}
+\end{figure}
+
+
+%\begin{table}
+%    \centering
+%
+%    \input{generated/seq-table-ama0302}
+%    \vspace{0.3cm}
+%
+%    \input{generated/seq-table-ama0601}
+%
+%    \vspace{0.3cm}
+%    \input{generated/seq-table-snb-sf1}
+%    \caption{Runtimes for \texttt{BroadcastHashJoin} and \texttt{seq}.
+%    The speedup is calculated between join times and excludes setup.
+%    From top to bottom for dataset: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
+%    All times in seconds.
+%    }
+%    \label{table:seq-vs-bhj}
+%    % TODO align and remove headers
+%\end{table}
 
 \subsection{\textsc{LFTJ} vs GraphWCOJ} \label{subsec:lftj-vs-graphWCOJ}
 
 In this experiment, we compare sequentials runs of the Leapfrog Triejoin and GraphWCOJ
 on the \texttt{Amazon}, \texttt{SNB-1} and \texttt{Twitter} datasets.
 We do not show the run-time of \texttt{Path} queries because GraphWCOJ is not able to run
-graph queries\footnote{\texttt{Path} queries require us to filter the input relationship before
+them\footnote{\texttt{Path} queries require us to filter the input relationship before
 the join. This has not been implemented for GraphWCOJ due to time constraints.}.
 
 We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
@@ -351,7 +348,7 @@ We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb-long}
     }\\
-    \subfloat[]{
+    \subfloat[Twitter]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
 %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
     }

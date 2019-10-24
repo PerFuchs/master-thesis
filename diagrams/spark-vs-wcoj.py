@@ -4,17 +4,16 @@ import numpy as np
 
 from diagrams.base import *
 
-OUTPUT = False
+OUTPUT = True
 
 
-def read_dataset(dataset_path, spark):
+def read_dataset(dataset_path):
   data = pd.read_csv(dataset_path, sep=",", comment="#")
-  fix_count(data)
+  # fix_count(data)
 
-  if not spark:
-    data["time"] = (data["AlgoEnd-0"] - data["Scheduled-0"]) / 1000
-  else:
-    data["time"] = (data["End"] - data["Start"]) / 1000
+
+  data["wcoj_time"] = (data["AlgoEnd-0"] - data["Scheduled-0"]) / 1000
+  data["spark_time"] = (data["End"] - data["Start"]) / 1000
 
   data = data.groupby(["Algorithm", "Query"])
   data = data.median().round(2)
@@ -27,8 +26,7 @@ def display_data(data, queries, annotate_speedup, output_name):
 
   times = {}
   for a in algs:
-    times[a] = list(map(lambda q: data["time"][a][q], queries))
-  print(times)
+    times[a] = list(map(lambda q: data["wcoj_time"][a][q] if a == "WCOJ" else data["spark_time"][a][q], queries))
   speedup = list(map(lambda t: t[0] / t[1], zip(times["BroadcastHashJoin"], times["WCOJ"])))
 
   fig, ax = plt.subplots()
@@ -36,7 +34,7 @@ def display_data(data, queries, annotate_speedup, output_name):
   x = np.arange(len(queries))
 
   width = 0.2
-  algs_offset = {"WCOJ": -width/2, "BroadcastHashJoin": width/2}
+  algs_offset = {"WCOJ": width/2, "BroadcastHashJoin": -width/2}
 
   for a in algs:
     ax.bar(x + algs_offset[a], times[a], align="center", width=width, label=a)
@@ -61,11 +59,23 @@ def display_data(data, queries, annotate_speedup, output_name):
   plt.show()
 
 
-data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv", False)
-data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon.csv", True))
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "spark-wcoj-amazon.svg")
+data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv")
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon.csv"))
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon.csv"), sort=False)
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], True, "spark-wcoj-amazon.svg")
 display_data(data, ["house", "diamond", "4-cycle"], True, "spark-wcoj-amazon-long.svg")
 
 
-# TODO twitter
+data = read_dataset(DATASET_FOLDER + "final/sequential/amazon0601-wcoj-graphwcoj.csv")
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon0601.csv"))
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon0601.csv"), sort=False)
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], True, "spark-wcoj-amazon0601.svg")
+display_data(data, ["house", "diamond", "4-cycle"], True, "spark-wcoj-amazon0601-long.svg")
+
+data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-snb1.csv"))
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-snb.csv"), sort=False)
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path"], True, "spark-wcoj-snb.svg")
+display_data(data, ["house", "diamond", "4-cycle", "4-0.00-path"], True, "spark-wcoj-snb-long.svg")
+
 # TODO error bars

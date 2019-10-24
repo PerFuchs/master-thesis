@@ -4,7 +4,7 @@ import numpy as np
 
 from diagrams.base import *
 
-OUTPUT = False
+OUTPUT = True
 
 
 def read_dataset(dataset_path, no_mat=False):
@@ -77,8 +77,9 @@ data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-amazon0
 display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-amazon0601.svg")
 display_data(data, ["house", "diamond", "4-cycle"], True, "lftj-graphWCOJ-amazon0601-long.svg")
 
-# data = read_dataset(DATASET_FOLDER + "final/sequential/wcoj-graphwcoj-twitter.csv")
-# data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-twitter.csv", no_mat=True))
+data = read_dataset(DATASET_FOLDER + "final/sequential/wcoj-graphwcoj-twitter.csv")
+data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-twitter.csv", no_mat=True))
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-twitter.svg")
 # display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-twitter.svg")
 
 # TODO twitter

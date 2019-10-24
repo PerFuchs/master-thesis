@@ -57,6 +57,7 @@ An attribute or a variable refers to a vertice in a graph and an atom to an edge
 A depiction of the subgraph pattern described by~\cref{eqn:triangle} is shown in~\cref{fig:pattern-triangle}.
 
 \begin{figure}
+    \centering
     \includesvg[width=0.2\textwidth]{svg/triangle}
     \caption{Depiction of the triangle subgraph query.}
     \label{fig:pattern-triangle}
@@ -81,6 +82,7 @@ This is the diamond query as discussed in most papers in academia~\cite{olddog,m
 Twitter uses $k = 3$ in production~\cite{twitter-diamond}.
 
 \begin{figure}
+    \centering
     \includesvg[width=0.2\textwidth]{svg/diamond}
     \caption{The dimaond query is used by Twitter. The vertices are users and the edges follower relationships.
       In the example, they could recommend $A$ to follow $D$ because $A$ follows $B_1$ and $B_2$ which both follow $C$.
@@ -98,13 +100,23 @@ build up bigger credit lines.
 At a certain date, they max out all credit lines and disappear.
 The phone numbers are dropped and the actual people living at the addresses deny ever knowing the identities that opened the accounts.
 
-% TODO figure
 This scheme can be detected using graph pattern matching.
 Let us assume, we have a graph database in which customer of the bank, their addresses and phone numbers are all vertices and the
 relationship of an address or phone number belonging to a customer are edges.
 Then, the case described above forms an 8-cycle of 4 persons (fake identities) connected by the shared use of phone numbers and
 addresses.
-The imagined cycle is shown in~\cref{figure:graph-patter-example-bank-fraud}.
+The imagined cycle is shown in~\cref{fig:graph-pattern-example-bank-fraud}.
+
+\begin{figure}
+    \centering
+    \includesvg[width=0.2\textwidth]{svg/bank-fraud}
+    \caption{Schematics of a bank fraud ring.
+    2 fraudsters share their phone numbers and addresses (labelled $P$ and $A$) to create four
+    fake customers ($C$ vertices).
+    }
+    \label{fig:graph-pattern-example-bank-fraud}
+\end{figure}
+
 
 \subsection{Binary joins vs \textsc{WCOJ}'s: an intuitive example} \label{subsec:intuitive-example}
 We introduce the triangle query and possible binary join plans.
