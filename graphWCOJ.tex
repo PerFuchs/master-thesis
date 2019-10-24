@@ -82,11 +82,10 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 
 \begin{figure}
 \centering
-%\includegraphics[width=0.5\textwidth]{wcoj-vs-graph-wcoj.png}
-\caption{Barchart comparing join time of \texttt{WCOJ} and \texttt{GraphWCOJ} on multiple queries on \texttt{SNB-sf1}}
+\includesvg[width=0.5\textwidth]{svg/wcoj-csr}
+\caption{Run time of \textsc{LFTJ} and GraphWCOJ backed by \textsc{CSR} for multiple queries on \texttt{SNB-sf1}.}
 \label{fig:wcoj-vs-graphWCOJ}
 \end{figure}
-% TODO graph from new numbers
 
 \subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
 % TODO study in backgrounda
