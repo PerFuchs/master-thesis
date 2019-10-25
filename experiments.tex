@@ -333,7 +333,32 @@ We do not show the run-time of \texttt{Path} queries because GraphWCOJ is not ab
 them\footnote{\texttt{Path} queries require us to filter the input relationship before
 the join. This has not been implemented for GraphWCOJ due to time constraints.}.
 
-We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
+We show the run-time of the queries on  the different datasets in~\cref{fig:lftj-graphWCOJ}.
+We present the performance of the Leapfrog Triejoin, GraphWCOJ and GraphWCOJ without the
+materialization optimization.
+
+\textit{\paragraph{Comment for Peter and Bogdan:}
+  The materialization showed to be not as good of an optimization as I thought;
+  in some cases it turns out to be slower.
+  This has two reasons:
+
+  I found that it is faster to build the intersection my way because it causes less seek
+  calls to the underlying iterators due to the fact that I start the intersection with the
+  smallest list.
+  So it does not improve computation because of better caching behaviour as I used to believe.
+
+  Then I experimented with the linear search thresholds and found that the algoritm gets faster
+  when I use a higher threshold.
+  Now, there are nearly no binary searches.
+  Hence, the original algorithm got faster and the overhead that used to be avoided by my
+  optimizations (binary searches) is gone.
+  Therefore, the optimizations doesn't look great anymore.
+
+  So far I'm not sure what to do about it and present the results as they are.
+  In many cases, it's slightly faster, in some slower.
+  In general, it is not a huge improvement anymore.
+}
+
 
 
 \begin{figure}
@@ -350,9 +375,52 @@ We show the results for the different datasets in~\cref{fig:lftj-graphWCOJ}.
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
 %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
     }
-    \caption{WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.}
+    \caption{
+      WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
+      Diamond, house and cycle queries are not reported for Twitter because of their high
+      run-time of over an hour.
+    }
     \label{fig:lftj-graphWCOJ}
 \end{figure}
+
+\paragraph{Observations}
+
+We first compare the Leapfrog Join algorithm with the GraphWCOJ without the materialization optimization.
+
+Throughout all datasets, we see that GraphWCOJ is faster than a \textsc{LFTJ} for all queries.
+The biggest speedups are reached for 5-cliques and the lowest speedup for 4-cycles.
+The maximum speedup over all queries and datasets is 11.4 for a 5-clique query on \texttt{Amazon-0601}.
+The lowest speedup is 1.2 on a 4-cycle query on \texttt{SNB-sf-1}.
+Generally, the performance gain from using GraphWCOJ is higher for bigger and denser queries like clique
+queries.
+
+The \texttt{Amazon} datasets show quite similar behaviour over all queries.
+\texttt{SNB-sf-1} and \texttt{Twitter} queries do not profit from using GraphWCOJ as much as
+the \texttt{Amazon} datasets.
+
+The influence of the materialization optimization (described in~\cref{subsec:graphWCOJ-materalization})
+is mixed;
+some queries can benefit, others cannot.
+
+In general, queries that see the highest speedup from using GraphWCOJ, also benefit most strongly
+from materialization of the intersections, i.e. clique queries.
+4-cycles, diamonds and kites are sometimes slower when we materialize the intersections.
+
+The \texttt{Amazon-0302} dataset is the only dataset that shows increased performance for all
+queries.
+
+\texttt{Amazon-0601} does not profit from materialization;
+the query run-time does not change for the clique queries and house query and
+increases for kite, diamond and 4-cycle.
+
+On the other two datasets, we see improvements for the clique and house query but decreased
+performance on diamond and cycle.
+
+
+% TODO observation denser queries profit more
+% TODO SNB-sf-10 to rule out dataset size for improvement
+% TODO why do 4-cycle and diamond become slower.
+
 
 \subsection{Scaling of \textit{Graph\textsc{WCOJ}}} \label{subsec:scaling-graphWCOJ}
 
