@@ -22,13 +22,14 @@ def read_dataset(dataset_path, no_mat=False):
 
 
 def display_data(data, queries, annotate_speedup, output_name):
-  algs = ["WCOJ", "GraphWCOJ", "NoMat"]
+  algs = ["WCOJ", "NoMat", "GraphWCOJ"]
 
   if not "NoMat" in data.index:
 
     algs.remove("NoMat")
 
   wcoj_times = {}
+
   for a in algs:
     wcoj_times[a] = list(map(lambda q: data["wcoj_time"][a][q], queries))
   speedup = list(map(lambda t: t[0] / t[1], zip(wcoj_times["WCOJ"], wcoj_times["GraphWCOJ"])))
@@ -39,9 +40,14 @@ def display_data(data, queries, annotate_speedup, output_name):
 
   width = 0.2
   algs_offset = {"WCOJ": -width, "GraphWCOJ": width, "NoMat": 0}
+  algs_labels = {
+    "WCOJ": "LFTJ",
+    "NoMat": "GraphWCOC w/o materialization",
+    "GraphWCOJ": "GraphWCOJ"
+  }
 
   for a in algs:
-    ax.bar(x + algs_offset[a], wcoj_times[a], align="center", width=width, label=a)
+    ax.bar(x + algs_offset[a], wcoj_times[a], align="center", width=width, label=algs_labels[a])
     ax.vlines(x + width + 0.1, wcoj_times["GraphWCOJ"], wcoj_times["WCOJ"])
 
   if annotate_speedup:

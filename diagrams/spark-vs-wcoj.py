@@ -35,9 +35,13 @@ def display_data(data, queries, annotate_speedup, output_name):
 
   width = 0.2
   algs_offset = {"WCOJ": width/2, "BroadcastHashJoin": -width/2}
+  algs_labels = {
+    "WCOJ": "LFTJ",
+    "BroadcastHashJoin": "BroadcastHashJoin"
+  }
 
   for a in algs:
-    ax.bar(x + algs_offset[a], times[a], align="center", width=width, label=a)
+    ax.bar(x + algs_offset[a], times[a], align="center", width=width, label=algs_labels[a])
     ax.vlines(x + width + 0.1, times["WCOJ"], times["BroadcastHashJoin"])
 
   if annotate_speedup:
