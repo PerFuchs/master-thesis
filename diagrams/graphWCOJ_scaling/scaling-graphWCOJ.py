@@ -1,9 +1,12 @@
 import pprint
 import pandas as pd
 from collections import defaultdict, OrderedDict
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 from diagrams.base import *
 
+OUTPUT = True
 
 def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealing, parallelism_levels_5_clique_shares, output_path,
                            new_3c_data_path=""):
@@ -47,7 +50,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
             scaling[(pa, q)].append(median["total_time"]["AllTuples" if base_scaling_level == 1 else pa][q][base_scaling_level]
                                     / median["total_time"][pa][q][p] * base_scaling_level)
   colors = {"Shares": "C0", "FirstVariablePartitioningWithWorkstealing": "C1"}
-  markers = {"3-clique": "o", "5-clique": "x"}
+  markers = {"3-clique": "o", "5-clique": "^", "4-clique": "d"}
   plots = {}
   for p in partitionings:
     if p != "AllTuples":
@@ -68,10 +71,11 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
 
   legend = OrderedDict()
   legend["linear"] = linear_plot
-  legend["work-stealing, 3-clique"] = plots[(WORKSTEALING, "3-clique")]
-  legend["Shares, 3-clique"] = plots[(SHARES, "3-clique")]
-  legend["work-stealing, 5-clique"] = plots[(WORKSTEALING, "5-clique")]
-  legend["Shares, 5-clique"] = plots[(SHARES, "5-clique")]
+  legend["work-stealing"] = Patch(facecolor=colors[WORKSTEALING])
+  legend["Shares logical"] = Patch(facecolor=colors[SHARES])
+  for q in queries:
+    legend[q] = Line2D([0], [0], marker=markers[q], color='w', markerfacecolor='black')
+
 
   plt.legend(list(legend.values()), list(legend.keys()))
   plt.xticks(list(filter(lambda p: p != 2, parallelism_levels)))
@@ -82,7 +86,8 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
   plt.grid(axis="y")
 
   plt.tight_layout()
-  plt.savefig(FIGURE_PATH + output_path)
+  if OUTPUT:
+    plt.savefig(FIGURE_PATH + output_path)
   plt.show()
   plt.clf()
 
