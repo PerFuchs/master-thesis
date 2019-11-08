@@ -79,8 +79,8 @@ than 20 \textit{TrieIterators}.
 The binary search is the most expensive operation of the Leapfrog Triejoin.
 Hence, special attention needs to be paid while implementing it.
 Our most important optimization is to change to a linear search once we narrowed the search space
-to a certain threshold - currently at 60 values.
-We experimented with values from 0 to 400 and found that 60 was optimal but even going as high as 120 values would not change the performance much.
+to a certain threshold.
+We experiment with different thresholds and show the results in~\cref{subsec:linear-search-threshold}.
 
 We directly perform a linear search if the search space is smaller than the threshold from the beginning (see 12th optimization in
 \cref{table:lftj-optimizations}).
