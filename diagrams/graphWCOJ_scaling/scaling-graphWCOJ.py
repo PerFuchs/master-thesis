@@ -73,6 +73,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
   legend["linear"] = linear_plot
   legend["work-stealing"] = Patch(facecolor=colors[WORKSTEALING])
   legend["Shares logical"] = Patch(facecolor=colors[SHARES])
+  sorted(queries, reverse=True)
   for q in queries:
     legend[q] = Line2D([0], [0], marker=markers[q], color='w', markerfacecolor='black')
 
