@@ -15,10 +15,41 @@ This design allows us to implement a new flavour of the Shares partitioning in w
 graph on-the-fly while processing it with our \textit{GraphWCOJ} algorithm.
 We describe this contribution in \cref{subsec:shares-logical}.
 
+We also consider partitioning the work based on a single variable.
+Here we use the values of the bindings for this variable to determine if a worker processes a specific part of the join.
+
 Furthermore, we consider a work-stealing based partitioning which does not replicate any work and produces less
 skew than Shares. % TODO is that always correct.
 This comes at the price of implementing work-stealing on Spark.
 The design of work-stealing in Spark is described in \cref{subsec:work-stealing}.
+
+In \cref{subsec:statical-partitioning-experiment}, we compare \textit{logical} Shares, range based, \textit{logical} Shares
+and single variable partitioning in terms of scalability and skew resilience.
+
+\subsection{Single variable partitioning} \label{subsec:single-variable-partitioning}
+As first baseline, we implement partitioning along a single variable.
+We partition the values of this variable into as many ranges as the desired level of parallelism.
+Each variable can take $V$ values where $V$ is the number of vertices in the graph.
+So, if we have $w$ workers and partition along the first variable, the first worker processes the first $\frac{V}{w}$ values for
+bindings of the first variable and ignores the rest.
+
+We implement this partitioning as a range based filter on the \textit{TrieIterators} of the join.
+A range filtered \textit{TrieIterator} interface is trivially implemented by changing the \textit{open} method to seek
+for the upper bound of the first value in the range and rewrite the \textit{atEnd} method to return true once the key
+value is higher than the upper bound of the range.
+
+We chose a range filter because it is easily pushed into the \textit{TrieIterator} interface and cheap to compute.
+As opposed to a hash-based filter which we found not suitable to be pushed into the \textit{TrieIterator} interface (see
+\cref{subsec:shares-logical}) and more expensive to compute.
+
+The single variable partitioning is interesting because it allows us to trade duplicated work against skew resilience.
+A partitioning on the first variable to bind in the join is free of any duplicated work.
+Partitionings based on any other variable run the same work on each worker up to the depth of the variable to partition on but
+are duplication free after.
+These partitioning on later variables tend to be more skew resilient because there are fewer variables still to bind, which are often
+restricted by the bindings of earlier variables.
+In particular, partitioning on the second variable is interesting because bindings for the first variable are cheap to compute;
+they are the scan of the first level of a \textit{TrieIterator}.
 
 \subsection{Logical Shares} \label{subsec:shares-logical}
 Shares has been developed as an optimal shuffle for n-ary joins on MapReduce like systems.
@@ -101,7 +132,7 @@ We improve over a physical Shares by using the same CSR data structure for all \
 Therefore, we do not need to materialize a prefiltered data structure for each \textit{TrieIterator} and query which saves time and memory
 if the partitions become large for bigger queries.
 
-\subsubsection{RangeShares}
+\subsubsection{RangeShares} \label{subsubsec:range-shares}
 In the last section, we raised the point that our Shares implementation only filters out value after the
 \textit{LeapfrogJoins}.
 This is because a hash-bashed filter needs to consider single values one-by-one.
@@ -125,7 +156,7 @@ two attributes.
 The worker with the coordinate (0, 0, 0) is then assigned the ranges [0,300), [0,450) and [0,450).
 It configures its \textit{TrieIterators} accordingly such that they are limited to these ranges.
 
-We run first experiments to evaluate this idea.
+We run the first experiments to evaluate this idea.
 We expect it to scale better than a hash-based Shares because it saves intersection work in the \textit{LeapfrogJoins}.
 However, we find that high skew between the workers leads to much worse performance than a hash-based Shares.
 % TODO present data?
@@ -144,13 +175,59 @@ We stopped our investigation in this direction.
 
 % TODO source code for clarification?
 
-% TODO story of duplicated work vs skew?
+\subsection{Comparision of static partitioning schemes} \label{subsec:statical-partitioning-experiment}
+% TODO add 5-clique
+In this section, we show how the static partitioning schemes implemented by us scale on the 3-clique query on the
+\texttt{LiveJournal} dataset.
+We partition the work according to logical Shares, on the first and second variable and according to both range-based, logical Shares schemes.
+The first range based logical Shares scheme uses a single range per \textit{TrieIterator}, the second uses multiple ranges with improved
+overlapping;
+both have been described in the last section.
+We call them \textit{SharesRange} and \textit{SharesRangeMulti}.
+
+The speedup with up to 48 workers is shown in~\cref{fig:static-speedup}.
+We measure the skew of a scheme as a relationship between the time it takes to compute the smallest and biggest partition.
+\Cref{fig:static-skew} plots the skew for the different schemes, queries and levels of parallelism.
+
+\begin{figure}
+\subfloat[Speedup \label{fig:static-speedup}]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-other-schemes}}
+\subfloat[Skew \label{fig:static-skew}]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-other-schemes-skew}}
+\caption{3-clique on LiveJournal for logical Shares, range based shares and partitioning on the first and second variable.
+Skew is measured as relationship between the time it takes to compute the biggest and the smallest partition.
+}
+\end{figure}
+
+We see that logical Shares scales better than all other schemes.
+Partitioning on the second variable is slightly worse, while the other two schemes are a further behind.
+
+Our explanation is that logical Shares and second variable partitioning inflect the lowest skew.
+There is a strong correlation between the skew shown in~\cref{fig:static-skew} and speedup of~\cref{fig:static-speedup}.
+
+Except for \textit{SharesRangeMulti}, the amount of skew relates directly to the scaling behaviour.
+\textit{SharesRangeMulti} is more skew resilient than first variable partitioning and \textit{SharesRange} but does not scale
+better.
+That is because first variable partitioning does not replicate any work.
+Therefore, it's scaling is better even with higher skew between the workers.
+The difference between the two range based Shares partitioning in archived speedup is minimal.
+Most likely this are caused by the fact that \textit{SharesRangeMulti} is implemented as a decorator around the
+\textit{TrieIterator} interfaces while \textit{SharesRange} is directly integrated into the \textit{TrieIterator} interface.
+
+Also, we see that \textit{SharesRangeMulti} drastically reduces the skew compared to \textit{SharesRange} which confirms that our
+optimization fulfils the intended goal.
+However, the reduced skew does not translate in better scalability for the range based Shares partitioning.
+
+We conclude that various static partitioning schemes do not scale well.
+In the end, we find logical Shares is the best static partitioning scheme because it is best in managing skew which even beats work
+replication free schemes as partitionings on the first variable.
+We tried to improve hash-based logical Shares to push it deeper into the layers of the Leapfrog Triejoin algorithm but find that
+range-based Shares cannot handle skew well enough to be a competitor for hash-based Shares.
+Following from these results, we look into dynamic parallelization schemes as work-stealing.
 
 \subsection{Work-stealing} \label{subsec:work-stealing}
 Normally, Spark uses static, physical partitioning of the data.
 As we learned in the last section that can lead to a trade-off between the ability to handle skew and duplicated work.
 A standard approach to handle skew and unbalanced workloads is work-stealing.
-Fot this, the work is not statically partitioned before-hand but organized in many smaller tasks which can be
+For this, the work is not statically partitioned before-hand but organized in many smaller tasks which can be
 solved by all workers.
 Workers are either assigned an equal split of tasks and steal tasks from other workers when they are out of work or all tasks are arranged
 in a queue accessible for all workers, so that workers can poll tasks from it whenever they are out of work.
@@ -175,7 +252,7 @@ The first design decision is the definition of a work-stealing task.
 It is not necessary to define the tasks such that they have all the same size.
 However, it is important to choose the task size small enough to avoid skew.
 Furthermore, the tasks should not overlap so that work is not duplicated.
-We choose to the define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
+We choose to define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
 This is none overlapping.
 The task size can vary widely and is query dependent.
 However, given the huge amount of tasks (as many as vertices in the graph), we believe this to be small enough.
@@ -194,7 +271,7 @@ It turns out that the work-stealing scheme as described above is straightforward
 We choose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
 Java. Most importantly they are shared between all threads of the same JVM.} to hold a dictionary which associates an ID for each
 query with a thread-safe queue instance.
-This queue can be accesses by each Spark thread.
+This queue can be accessed by each Spark thread.
 Due to the association between query and queue, it is possible to run multiple queries in parallel without interference.
 
 The queue for a query is filled by the first Spark task that accesses it.
@@ -216,7 +293,7 @@ In the following, we discuss the constraints of our integration.
 Work-stealing leads to an unforeseeable partitioning of the results: it is not possible to foresee which bindings end up in a certain
 partition nor can we guarantee a specific partition size.
 If the user relies on any specific partitioning, he needs to repartition the results after.
-Moreover, we cannot guarantue to construct an equal partitioning over multiple runs of the same query.
+Moreover, we cannot guarantee to construct an equal partitioning over multiple runs of the same query.
 If the user depends on a stable partitioning per query, he should cache the query after the worst-case optimal join execution.
 
 % TODO partitioning sizes? Skew after the join, do we always need to repartition?
