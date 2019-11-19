@@ -6,7 +6,7 @@ from matplotlib.patches import Patch
 
 from diagrams.base import *
 
-OUTPUT = True
+OUTPUT = False
 
 def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealing, parallelism_levels_5_clique_shares, output_path,
                            new_3c_data_path=""):
@@ -26,6 +26,9 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
   partitionings = list(set(data["partitioning_base"]))
   if "SharesRange" in partitionings:
     partitionings.remove("SharesRange")
+  if "1-variable" in partitionings:
+    partitionings.remove("1-variable")
+    
 
   parallelism_levels = list(set(data["Parallelism"]))
   parallelism_levels.sort()

@@ -70,8 +70,58 @@ def fix_shares(file_path, new_path):
 
 def split_partitioning(data):
   def split(p):
-    return p.split("(")[0]
+    s = p.split("(")
+    if s[0] == "SharesRange":
+      hc_conf = s[1]
+      hc_conf = hc_conf.replace(")", "")
+      hc_conf_parsed = list(map(lambda s: int(s), hc_conf.split(";")))
+      if len(list(filter(lambda d: d != 1, hc_conf_parsed))) == 1:
+        variable = list(map(lambda t: t[0] + 1, filter(lambda t: t[1] != 1, enumerate(hc_conf_parsed))))[0]
+        s[0] = "%i-variable" % variable
+    return s[0]
   data["partitioning_base"] = list(map(split, data["Partitioning"]))
+
+
+def split_executor(data):
+  def split(r):
+    if r == "0":
+      return None, None
+    else:
+      return r.split(":")
+
+  def split_address(r):
+    return split(r)[0]
+
+  def split_thread(r):
+    return split(r)[1]
+
+  executor_cols = list(filter(lambda c: c.startswith("Executor"), data.columns))
+  for c in executor_cols:
+    number = c.replace("Executor-", "")
+    data["executor-%s" % number] = list(map(split_address, data[c]))
+    data["thread-%s" % number] = list(map(split_thread, data[c]))
+  return data
+
+
+def map_executor_to_numbers(data):
+  executor_cols = list(filter(lambda c: c.startswith("executor"), data.columns))
+
+  addresses = []
+  for e in executor_cols:
+    for a in data[e]:
+      if a is not None:
+        addresses.append(a)
+  addresses = list(set(addresses))
+  addresses.sort()
+
+  def map_to_numbers(e):
+    if e is not None:
+      return addresses.index(e)
+
+  for c in executor_cols:
+    number = c.replace("executor-", "")
+    data["executor-number-%s" % number] = list(map(map_to_numbers, data[c]))
+  return data
 
 
 def get_values(row, column_names):
@@ -87,6 +137,35 @@ def add_wcoj_time(data):
   data["wcoj_time"] = data.apply(lambda r: max(get_values(r, ends_columns)) -
                                            min(list(filter(lambda  v: 0 < v, get_values(r, scheduled_columns)))),
                                                                                        axis=1)
+  return data
+
+
+def add_worker_times(data):
+  column_names = data.columns.values
+
+  for c in column_names:
+    if c.startswith("Scheduled"):
+      otherName = c.replace("Scheduled", "AlgoEnd")
+      p = c.replace("Scheduled-", "")
+      data["worker-time-" + p] = data[otherName] - data[c]
+
+  column_names = data.columns.values
+  worker_time_names = list(filter(lambda c: c.startswith("worker-time"), column_names))
+
+  def min_worker_times(r):
+    return min(list(filter(lambda v: v != 0, get_values(r, worker_time_names))))
+
+  def max_worker_times(r):
+    return max(list(get_values(r, worker_time_names)))
+
+  data["max-worker-time"] = data.apply(max_worker_times, axis=1)
+  data["min-worker-time"] = data.apply(min_worker_times, axis=1)
+
+  return data
+
+
+def add_skew(data):
+  data["skew"] = data["max-worker-time"] / data["min-worker-time"]
   return data
 
 
@@ -113,9 +192,7 @@ def fix_missing_columns(input_file_path, output_file_path, parallelism):
   for column_prefix in parallelism_dependend_column_prefixes:
     for p in range(0, parallelism):
       column_name = column_prefix + str(p)
-      print(column_name)
       if not column_name in existing_columns:
-        print("Filling")
         default_value = 0
         if column_prefix == "WCOJTime-":
           default_value = 0.0
@@ -133,3 +210,4 @@ def fix_missing_columns(input_file_path, output_file_path, parallelism):
             new_column_order.append(new_column)
 
   data.to_csv(output_file_path, sep=",", columns=new_column_order, index=False)
+

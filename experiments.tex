@@ -526,14 +526,60 @@ We hypnotize that this is the fact because if the 32 processes are distributed o
 % TODO note why do we have locallity in data accesses?
 
 Second, the scaling of 4- and 5-clique is worse than for 3-clique.
-Our explanation is that 4- and 5-clique result in higher skew even with \textit{work-stealing}.
+Our explanation is that 4- and 5-clique show skew even with \textit{work-stealing}.
 % TODO skew relationship
 %
+% TODO datasets in ttt or not?
 This is because \textit{work-stealing} partitions work along the first variable binding.
 Hence, the size of a single job in \textit{work-stealing} is never smaller than the work of finding all bindings for a single
 first binding.
-In this experiment, we see that this job size is not fine-grained enough for bigger queries.
-We address this issue in~\cref{subsubsec:work-stealing.}
+That means a single long-running job towards the end of the \textit{work-stealing} queue can
+result in a single task running longer than the others which delays the whole query.
+
+We measure the time at which a task finishes.
+We define skew for \textit{work-stealing} as the time between the average worker finishes and
+the time of the last worker to finish.
+In \cref{table:skew-liveJ} and \cref{table:skew-orkut} we show the total skew and the percentage of
+skew in the whole query time for the LiveJournal respectively the Orkut dataset.
+
+We note that the residual skew correlates with the scaling behaviour;
+the higher the percentage of skew in the whole query time the worse the query scales.
+
+The total skew grows with the level of parallelism.
+We explain this as follows.
+Lets assume there is at least one job which takes significantly longer than most of the jobs in
+the work-stealing queue.
+This job is picked by a worker.
+When more executors are added which work on the remaining jobs, the likelyhood of this one big
+job adding significant skew raises because the other jobs are finished faster.
+
+This experiment shows that the job size is not fine-grained enough for bigger queries and a high level of parallelism.
+We see that the skew can raise up to nearly half of the total run-time for the 5-clique query
+on Orkut.
+We address this issue in~\cref{subsubsec:work-stealing}.
+However, we want to point out that the skew raises significantly as soon as we use more cores
+than physical cores available.
+This could hint that part of the problem is causes by hyper-threading.
+We do not investigate this issue further.
+
+\begin{table}
+    \centering
+    \input{generated/skew-liveJ.tex}
+    \caption{
+    Total skew in seconds and percentage of skew in the total query time displayed for different
+    queries and levels of parallelism on the LiveJournal dataset.
+    }\label{table:skew-liveJ}
+\end{table}
+
+
+\begin{table}
+    \centering
+    \input{generated/skew-orkut.tex}
+    \caption{
+    Total skew in seconds and percentage of skew in the total query time displayed for different
+    queries and levels of parallelism on the Orkut dataset.
+    }\label{table:skew-orkut}
+\end{table}
 
 Fourth, Shares exhibits lower speedup of 12.1 for 64 workers which is
 lower than for 32 workers (14.7) and 14.8 for 96 workers.

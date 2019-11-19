@@ -319,7 +319,8 @@ With these operations, it is guaranteed that the master can reconstruct all valu
 So, after a task failure, the master can add these values to the work queue again such that other tasks will redo the computations.
 
 \subsubsection{Work-stealing in cluster mode} \label{subsubsec:distributed-work-stealing}
-
+% TODO reread
+% TODO spell check
 In this section, we describe a simple, yet promising design to integrate work-stealing with Spark's cluster mode.
 We assume clusters in which one worker runs one executor.
 This is the case in Databrick's clusters.
