@@ -227,6 +227,7 @@ Following from these results, we look into dynamic parallelization schemes as wo
 Normally, Spark uses static, physical partitioning of the data.
 As we learned in the last section that can lead to a trade-off between the ability to handle skew and duplicated work.
 A standard approach to handle skew and unbalanced workloads is work-stealing.
+
 For this, the work is not statically partitioned before-hand but organized in many smaller tasks which can be
 solved by all workers.
 Workers are either assigned an equal split of tasks and steal tasks from other workers when they are out of work or all tasks are arranged
@@ -236,7 +237,10 @@ when no free tasks are left in the system.
 Hence, the maximum amount of skew roughly the size of the smallest task.
 There is no duplicated work because different tasks should not overlap and each task exists only once in the whole system.
 
-This leaves us with two design decisions.
+We first describe a work-stealing version designed for the Spark's local mode where all tasks are computed on a single machine.
+Then we extend this design to the cluster mode of Spark.
+
+Work-stealing requires two major design decisions from the developer.
 First, how to organize the workload of a \textit{LeapfrogTriejoin} into tasks.
 Second, how do workers get their tasks?
 We address these questions in order by first describing our preferred solution and then their integration with Spark.
@@ -313,3 +317,56 @@ Second, one could extend the critical section of polling a queue value by the \t
 at the value from the queue without removing it, log the value in a set of values per task and then poll it and remove it from the queue.
 With these operations, it is guaranteed that the master can reconstruct all values that a failed worker thread considered.
 So, after a task failure, the master can add these values to the work queue again such that other tasks will redo the computations.
+
+\subsubsection{Work-stealing in cluster mode} \label{subsubsec:distributed-work-stealing}
+
+In this section, we describe a simple, yet promising design to integrate work-stealing with Spark's cluster mode.
+We assume clusters in which one worker runs one executor.
+This is the case in Databrick's clusters.
+
+The main problem with distributing work-stealing is that Spark's executors cannot communicate with each other.
+Therefore, we choose a communication free approach in which the tasks share work only with other tasks on the same
+executor.
+The work is statically partitioned in between multiple executors.
+
+We cannot control how Spark schedules tasks on its executors.
+The tasks for the join algorithm could be co-located on a single executor, balanced evenly between all of them or could be distributed
+over multiple executors in any fashion between these two extremes\footnote{Spark's standalone scheduler default behaviour is to schedule
+the tasks as evenly spread over all executors as possible.
+Alternatively, the standalone mode offers the possibility to consolidate all tasks as much as possible on a single worker.
+This can be controlled by the setting \texttt{spark.deploy.spreadOut}.}.
+We need to use the slots assigned to our tasks as best as possible.
+To archive this goal, we would like to know how many tasks were scheduled on each worker.
+With this knowledge, we can split the workload between executors such that each of them deals with $\frac{w}{e} \times t_e$
+where $w$ is the workload, $e$ the number of executors and $t_e$ the number of tasks on executor $e$.
+
+Spark's scheduler offers the so called \textit{Barrier Execution Mode}.
+In this mode, it schedules all tasks of a stage together; either all of them are scheduled at the same time or
+none are scheduled.
+When tasks are scheduled in this mode they have access to the location of all other tasks for this stage.
+Hence, we can determine on how many tasks were scheduled on how many executors from within each task.
+Furthermore, we can tell on which executor the current task runs.
+
+We distribute our local work-stealing approach by requesting barrier scheduling for the worst-case optimal join
+operator.
+Then, we can use the work-stealing design as described for the local mode on each executor by partitioning the
+queue that holds all bindings for the first variable.
+
+We experimented with two different partitioning schemes for the queue: round-robin and range based partitioning.
+However, both schemes lead to similar run-times and behaviours.
+We choose the round-robin partitioning because it is generally more skew resilient.
+
+To conclude, we distribute work-stealing in Spark by partitioning the work queue over all executors with respect to the
+number of tasks assigned on each of them.
+
+This approach has two drawbacks.
+
+First, we use the barrier mode which requires Spark to find as enough available resources to schedule all tasks at the same time.
+This is not a huge issue in our experiments where we run one join at the time.
+However, it could be difficult to find enough open spots in a busy production cluster.
+In particular, if it runs workloads with many small tasks.
+
+Second, this scheme does not manage skew between executors.
+If it turns out that the part of the work-stealing queue assigned to any executor requires significantly more work than
+to the other executors, then this executor will dominate the overall run-time of the whole algorithm.
+We establish if this is a problem in practice in our experiments~\cref{subsec:distributed-experiments}.
