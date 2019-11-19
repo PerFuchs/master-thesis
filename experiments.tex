@@ -483,7 +483,7 @@ Hence, we can not expect linear speedup above 48 workers because after multiple 
 expected to reach the same performance as two cores.
 
 To conclude, we expect sub-linear speedup for Shares and better but still sub-linear speedup for \textit{work-stealing}.
-Anyhow, it super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
+Anyhow, super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
 % TODO cite the internet source from Monday.
 
 We describe our observations per dataset;
@@ -495,6 +495,8 @@ The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highe
 with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
 The best observed speedup is 21.3 for 5-clique and 96 workers.
+
+The 4-clique sees a speedup which is higher than for 3-clique but lower than 5-clique.
 % TODO spark overhead
 % TODO bad scaling for hyperthreading
 
@@ -509,7 +511,7 @@ Nevertheless, \textit{work-stealing} beats Shares on both queries and all levels
 % TODO analyse, higher skew rigth, at least name reason, is skew higher because of 0th vertice?
 % TODO effect of dataset size leads to 5-clique scaling the same or worse
 
-Additionally, we see two strange scaling behaviours for LiveJournal.
+Additionally, we see three unexpected scaling behaviours for LiveJournal.
 First, super-linear scaling for 3-clique and \textit{work-stealing}.
 We hypnotize that this is the fact because if the 32 processes are distributed over all 4 sockets they share in total
 120 MB of L3 cache while a single process can use only 30 MB of L3 cache.
@@ -523,7 +525,17 @@ We hypnotize that this is the fact because if the 32 processes are distributed o
 % TODO run with perf counter
 % TODO note why do we have locallity in data accesses?
 
-Second, Shares exhibits lower speedup of 12.1 for 64 workers which is
+Second, the scaling of 4- and 5-clique is worse than for 3-clique.
+Our explanation is that 4- and 5-clique result in higher skew even with \textit{work-stealing}.
+% TODO skew relationship
+%
+This is because \textit{work-stealing} partitions work along the first variable binding.
+Hence, the size of a single job in \textit{work-stealing} is never smaller than the work of finding all bindings for a single
+first binding.
+In this experiment, we see that this job size is not fine-grained enough for bigger queries.
+We address this issue in~\cref{subsubsec:work-stealing.}
+
+Fourth, Shares exhibits lower speedup of 12.1 for 64 workers which is
 lower than for 32 workers (14.7) and 14.8 for 96 workers.
 This can be explained by the chosen Shares configuration.
 For 32 workers, the best configuration is given by the hypercube of the sizes 4, 4, 2.
@@ -559,7 +571,20 @@ Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
 % TODO experiment about scaling of Spark
 
+\subsection{Distributed work-stealing}
 
+% TODO take out reference to spark local mode only from background and abstract.
+
+% TODO 5-clique query
+We run the distributed version of work-stealing as described in~\cref{subsubsec:distribute-work-stealing}
+on the LiveJournal and Orkut dataset for the 3-clique query.
+
+For this experiment, we use four machines as described in~\cref{subsec:setup}.
+Each of this machine has 48 physical cores with hyper-threading.
+In total, the Spark cluster has 192 physical cores and 384 virtual cores.
+We run the experiments on 16 to 192 of these cores.
+The tasks are evenly distributed over all four machines for all levels of parallelism by
+the standard behaviour of Spark's standalone mode scheduler.
 
 
 
