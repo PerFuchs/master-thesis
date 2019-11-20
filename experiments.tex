@@ -430,10 +430,10 @@ Towards this goal, we run Graph\textsc{WCOJ} on datasets of different size namel
 \texttt{LiveJournal} and \texttt{Orkut}.
 We compare two partitioning schemes: Shares and work-stealing.
 These are the two most promising schemed identified in \cref{sec:worst-case-optimal-join-parallelization}.
-The experiment is performed on 3-clique and 5-clique.
+The experiment is performed on 3-clique, 4-clique and 5-clique.
 3-clique is the smallest of our queries.
 Therefore, it is most difficult to scale.
-5-clique takes much longer than 3-clique.
+4-clique and 5-clique take much longer than 3-clique.
 Hence, it shows how query size influences the scaling.
 Also, it increases the job size for the \textit{work-stealing} partitioning scheme.
 
@@ -450,6 +450,8 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
     \newline
     \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
       {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
+    \subfloat[Twitter 3-clique join run-time only \label{fig:twitter-3-clique-scaling}]
+    {\includesvg[width=0.5\textwidth]{svg/twitter-3-clique-scaling}}
     \caption{Scaling behaviour of Shares and work-stealing on three different datasets
       and two different queries.
       The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
@@ -496,8 +498,14 @@ with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
 The best observed speedup is 21.3 for 5-clique and 96 workers.
 
-The 4-clique sees a speedup which is higher than for 3-clique but lower than 5-clique.
-% TODO spark overhead
+We note that the 3-clique query does not scale well because there is not enough work.
+Therefore, the run-time is dominated by overheads, e.g. the time it takes until Spark starts
+the first job and the time it takes to finalize the query by Spark.
+The overhead calculated by $(queryEnd - queryStart) - (lastTaskCompleted - firstTaskScheduled)$ is
+roughly 0.13 seconds for all levels of parallelism and the whole query runs for 0.19 seconds on
+48 cores.
+We depict the speedup archieved when we measure only the time spent with the join in \cref{fig:twitter-3-clique-scaling}.
+
 % TODO bad scaling for hyperthreading
 
 The experiment on LiveJournal confirms our hypothesis that bigger datasets lead to better
