@@ -10,4 +10,121 @@
 
 \subsubsection{Cluster mode} \label{subsubsec:cluster-mode}
 
-\subsubsection{Deeper integration of Workstealing} \label{subsubsec:work-stealing}
+\subsubsection{Finer-grained work-stealing} \label{subsubsec:finer-grained-work-stealing}
+% TODO does the materialization section include a reference to not moving first level trieIterators
+In our experiment section~\ref{subsec:scaling-graphWCOJ}, we noted that work-stealing that
+operates only on the first level of variable bindings can still lead to skew for bigger queries.
+Therefore, we describe a work-stealing LeapfrogTrieJoin algorithm that allows to steal work
+on all levels.
+We describe a possible design in two steps.
+First, we explain under which circumstances to steal work.
+Then, we describe how to steal work.
+In the following, we call the process that steals work thief and the other process
+victim.
+
+We let each task start with its own bindings for the first variable, e.g. by assigning
+a range to each task based on its partition number.
+This can be implemented as a range filter in the \textit{LeapfrogJoin} of the first variable.
+
+Once all of these initial bindings are processed, we start stealing work from other
+\textit{LeapfrogTriejoins}.
+It is beneficial to steal bindings of variables higher in the global order because this
+maximizes the amount of work stolen.
+A task is encoded as a prefix of variable bindings, e.g. if we steal work in a 5-clique query at
+the third level a prefix might be $[4, 1 , 5]$.
+If the work-stealing request successfully returns a binding, we set the state of all components
+of the current join to the values of the prefix.
+Then we run the normal Leapfrog Triejoin algorithm to generate all complete bindings for the stolen
+prefix.
+When all bindings have been produced, we steal work and repeat the process.
+
+If a work-stealing request cannot find any work, the task finishes.
+
+We face four challenges for the question of how work is stolen.
+
+First, the Leapfrog Triejoin encodes its state in the \textit{TrieIterator} components.
+This state should not be changed when we steal work, except for the fact that a stolen
+prefix is not considered by the victim.
+
+Second, when we use the \textit{LeapfrogJoin} to steal work it is not guarantued that the underlying
+\textit{TrieIterators} are set to the correct level for this \textit{LeapfrogJoin}.
+
+Third, we plan to use shared \textit{LeapfrogJoin} instances to implement work-stealing.
+Therefore, this interface needs to become thread-safe.
+
+Fourth, the \textit{LeapfrogJoin} interfaces need to be accessible to the thieves.
+As in our current solution, we implement communication via a shared data structure.
+This data structure allows access to all \textit{LeapfrogJoin} instances on the same worker.
+If a task needs to steal work, it selects one of these \textit{LeapfrogJoin} instances.
+
+We describe the solution to this problems in order.
+
+For the first problem of not changing the state of the \textit{TrieIterators}, we
+suggest to add new \textit{seek} and \textit{next} methods to the \textit{LeapfrogJoin} and
+\textit{TrieIterator} interface which do not change the state but work exactly as the originals
+otherwise.
+Additionally, the stateless \textit{next} method of the \textit{LeapfrogJoin} interface stores
+the last value it returns.
+This value can be used from the stateful method to seek for the upper bound of it, such that
+values returned by the stateless version are skipped in the statefull version.
+Then thiefs can use the stateless versions and the owner of the interfaces uses the stateful
+versions.
+
+The second issue of ensuring that the \textit{LeapfrogJoin} uses the \textit{TrieIterators} with
+the correct level is trivially solved by introducing one version per level of the stateless \textit{next}
+and \textit{seek} methods of the \textit{TrieIterator} interface and store which to use in the
+\textit{LeapfrogJoin}.
+
+Introducing a thread-safe \textit{LeapfrogJoin} interface requires one lock per instance which
+needs to be aquired before using any method and released after.
+It is not necessary to lock the underlying \textit{TrieIterator} interfaces as we argue in the next
+paragraphs.
+
+We start our argument that we only need to consider cases where one thief and one victim
+thread interfere with each other.
+This is because only one thief can be active at any \textit{LeapfrogJoin} at any time due to the
+necessity to hold the lock for this \textit{LeapfrogJoin}.
+
+We observe that to use a specific \textit{LeapfrogJoin} to steal work from, the
+victim needs to work on bindings which are later in the variable ordering.
+Otherwise, the variables above are not bound and it is not possible to steal a complete prefix.
+This is a precondition to be enforced on the thieves side when it chooses a \textit{LeapfrogJoin}
+to steal work from.
+
+Then, we require the victim to hold the lock of the respective \textit{LeapfrogJoin}
+instance when its enters the \textit{trieJoinUp} method.
+This guarantees that the victim \textit{LeapfrogTriejoin} cannot break the assumption above during the process
+of work-stealing.
+
+With these assumptions in place, we are ensured that the victim does not call
+any \textit{TrieIterator} methods which interfere with the thief.
+There are two cases to consider.
+First, the \textit{TrieIterator} is independent from the work-stealing process because it is not
+part of the intersecion of the \textit{LeapfrogJoin} which is used by the thief.
+Second, the \textit{TrieIterator} is used at a deeper level than the one which is used by the
+\textit{LeapfrogJoin} to steal work of.
+In both cases, the use of the \textit{TrieIterator} does not interfere with the thief.
+
+The changes outlined above allow to share the \textit{LeapfrogJoin} instances of all
+tasks of an executor to steal work at any level in the variable ordering.
+This should approach should lead to work-stealing jobs which are fine-grained enough
+to be nearly skew free for queries of all sizes.
+We end the section with a short discussion of lock contention.
+
+The algorithm starts with totally uncontested locks until the first tasks finishes work in its
+range.
+Then the number of threads which could contend for locks grows linearly with the progress of the
+algorithm within finding all possible bindings because before a thread can start work-stealing it
+finishes its own range.
+
+When threads start stealing work they can choose their victims such that they minimize lock contention.
+Hence, locks are contested mostly between the thief and the victim.
+For this case, we note that the thief chooses \textit{LeapfrogJoins} as high in the variable ordering
+as possible which are less often used by the victim which spends most of its time with bindings
+for lower variables.
+
+Finally, the locking time of the locks is short most of the times because it only needs to find
+one further binding.
+With materialized \textit{LeapfrogJoins} the locked code section only
+reads one value from an array, one or at most two \textit{seek} calls on the first level of an
+\textit{TrieIterator}\footnote{These calls need two array reads. Hence, they are actions in constant time.} and stores the value returned.

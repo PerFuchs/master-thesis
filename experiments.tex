@@ -556,7 +556,7 @@ job adding significant skew raises because the other jobs are finished faster.
 This experiment shows that the job size is not fine-grained enough for bigger queries and a high level of parallelism.
 We see that the skew can raise up to nearly half of the total run-time for the 5-clique query
 on Orkut.
-We address this issue in~\cref{subsubsec:work-stealing}.
+We address this issue in~\cref{subsubsec:finer-grained-work-stealing}.
 However, we want to point out that the skew raises significantly as soon as we use more cores
 than physical cores available.
 This could hint that part of the problem is causes by hyper-threading.
@@ -611,8 +611,6 @@ super-linear scaling for \textit{work-stealing} up to 48 workers,
 \textit{work-stealing} scales significantly better than Shares.
 Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
-
-% TODO workstealing slower on bigger queries?
 
 
 % TODO experiment about scaling of Spark
