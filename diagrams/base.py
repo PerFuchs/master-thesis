@@ -10,7 +10,8 @@ SHARES = "Shares"
 
 partitioning_names = {
   WORKSTEALING: "work-stealing",
-  SHARES: "Shares"
+  SHARES: "Shares",
+  WORKSTEALING + "-batched": "batched work-stealing"
 }
 
 plt.rc('text', usetex=True)
