@@ -337,29 +337,43 @@ We show the run-time of the queries on different datasets in~\cref{fig:lftj-grap
 We present the performance of the Leapfrog Triejoin, GraphWCOJ and GraphWCOJ without the
 materialization optimization.
 
-{\itshape Comment for Peter and Bogdan:
-The materialization showed to be not as good of an optimization as I thought;
-in some cases, it turns out to be slower.
-This has two reasons:
+We first analyze the impact of using the \textsc{CSR} data structure as basis for the join.
 
-I found that it is faster to build the intersection my way because it causes less seek
-calls to the underlying iterators because I start the intersection with the
-smallest list.
-So it does not improve computation because of better caching behaviour as I used to believe.
+Throughout all datasets, we see that GraphWCOJ is faster than a \textsc{LFTJ} for all queries.
+The biggest speedups are reached for 5-cliques and the lowest speedup for 4-cycles.
+The maximum speedup over all queries and datasets is 11.4 for a 5-clique query on \texttt{Amazon-0601}.
+The lowest speedup is 1.2 on a 4-cycle query on \texttt{SNB-sf-1}.
 
-Then I experimented with the linear search thresholds and found that the algorithm gets faster
-when I use a higher threshold.
-Now, there are nearly no binary searches.
-Hence, the original algorithm got faster and the overhead that used to be avoided by my
-optimizations (binary searches) is gone.
-Therefore, the optimizations don't look great anymore.
+It shows the biggest speedup for the clique queries which is increasing with the size of the clique.
+The effect on the house and kite query is generally lower.
+The diamond and 4-cycle query do not improve much when we use GraphWCOJ.
 
-So far I'm not sure what to do about it and present the results as they are.
-In many cases, it's slightly faster, in some slower.
-In general, it is not a huge improvement anymore.
-}
+This can be explained by the fact that \textsc{CSR} mostly improves by implementing searches on
+the first level of the \textit{TrieIterators} as a two array reads instead of a binary search for
+the column-based implementation of the original Leapfrog Triejoin.
+The denser the query the more first level \textit{TrieIterator} accesses are used.
+Hence, clique, house and kite query profit more than the sparse cycle and diamond query.
+For example, the 5-clique query uses the 10 \textit{TrieIterators} with 10 first levels to set while
+the 4-cylce and diamond need only 4 \textit{TrieIterators}.
 
+We find that materialization does not improve the algorithm much.
+The strongest speedup can be seen for dense queries, e.g. 5-clique.
+However, sparse queries, as the 4-cycle, take longer with enabled materialization.
 
+To explain these weak results, we used \textit{perf} to monitor cache hits and misses while running
+GraphWCOJ with and without materialization on the 5-clique query on the SNB dataset.
+This is where materialization shows its strongest impact.
+We cannot measure any significant difference in cache utilization between the two configurations.
+
+The last reason why materialization can improve the performance it because it uses binary
+intersections starting with the smallest intersection which leads to less \textit{seek} calls.
+We measure this effect by counting all \textit{seek} calls on the 5-clique of the SNB dataset.
+We count TODO calls with and TODO without materialization.
+
+The effect on dense clique queries is highest because they employ intersections between up to
+four adjacency lists while the 4-cycle intersects at-most two adjacency lists.
+Hence, using binary intersection makes no difference for 4-cylcles.
+This query gets slower with materialization because of the overhead of copying values into a new buffer.
 
 \begin{figure}
     \subfloat[Amazon-0302]{\includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon}}
@@ -374,6 +388,7 @@ In general, it is not a huge improvement anymore.
     \subfloat[Twitter]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
     %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
+    % TODO long twitter queries?
     }
     \caption{
     WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
@@ -382,45 +397,6 @@ In general, it is not a huge improvement anymore.
     }
     \label{fig:lftj-graphWCOJ}
 \end{figure}
-
-\paragraph{Observations}
-
-We first compare the Leapfrog Join algorithm with the GraphWCOJ without the materialization optimization.
-
-Throughout all datasets, we see that GraphWCOJ is faster than a \textsc{LFTJ} for all queries.
-The biggest speedups are reached for 5-cliques and the lowest speedup for 4-cycles.
-The maximum speedup over all queries and datasets is 11.4 for a 5-clique query on \texttt{Amazon-0601}.
-The lowest speedup is 1.2 on a 4-cycle query on \texttt{SNB-sf-1}.
-Generally, the performance gain from using GraphWCOJ is higher for bigger and denser queries like clique
-queries.
-
-The \texttt{Amazon} datasets show quite similar behaviour overall queries.
-\texttt{SNB-sf-1} and \texttt{Twitter} queries do not profit from using GraphWCOJ as much as
-the \texttt{Amazon} datasets.
-
-The influence of the materialization optimization (described in~\cref{subsec:graphWCOJ-materalization})
-is mixed;
-some queries can benefit, others cannot.
-
-In general, queries that see the highest speedup from using GraphWCOJ, also benefit most strongly
-from the materialization of the intersections, i.e. clique queries.
-4-cycles, diamonds and kites are sometimes slower when we materialize the intersections.
-
-The \texttt{Amazon-0302} dataset is the only dataset that shows increased performance for all
-queries.
-
-\texttt{Amazon-0601} does not profit from materialization;
-the query run-time does not change for the clique queries and house query and
-increases for kite, diamond and 4-cycle.
-
-On the other two datasets, we see improvements for the clique and house query but decreased
-performance on diamond and cycle.
-
-
-% TODO observation denser queries profit more
-% TODO SNB-sf-10 to rule out dataset size for improvement
-% TODO why do 4-cycle and diamond become slower.
-
 
 \subsection{Scaling of \textit{Graph\textsc{WCOJ}}} \label{subsec:scaling-graphWCOJ}
 

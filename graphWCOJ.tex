@@ -224,5 +224,7 @@ This array is more likely to stay cached while the other parts of the \textit{Le
 
 Third, by starting with the smallest adjacency list of the intersection we get less \textit{seek}
 calls to iterators over bigger adjacency lists.
+Furthermore, by using binary intersection we limit the number of \textit{seek} calls always to the
+size of ther intermediary result which tends to converge to the final size quickly; as seen in~\cref{fig:intersection-workload}.
 
 We show the results of more experiments in \cref{subsec:lftj-vs-graphWCOJ}.
