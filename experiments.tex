@@ -2,7 +2,7 @@
 
 TODO introduction
 
-\subsection{Setup}
+\subsection{Setup} \label{subsec:experimental-setup}
 
 We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster owned by the CWI Database Architecture research
 group.
@@ -450,7 +450,7 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
     \newline
     \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
       {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
-    \subfloat[Twitter 3-clique join run-time only \label{fig:twitter-3-clique-scaling}]
+    \subfloat[Twitter 3-clique join run-time only without overheads \label{fig:twitter-3-clique-scaling}]
     {\includesvg[width=0.5\textwidth]{svg/twitter-3-clique-scaling}}
     \caption{Scaling behaviour of Shares and work-stealing on three different datasets
       and two different queries.
@@ -565,10 +565,6 @@ This experiment shows that the job size is not fine-grained enough for bigger qu
 We see that the skew can raise up to nearly half of the total run-time for the 5-clique query
 on Orkut.
 We address this issue in~\cref{subsubsec:finer-grained-work-stealing}.
-However, we want to point out that the skew raises significantly as soon as we use more cores
-than physical cores available.
-This could hint that part of the problem is causes by hyper-threading.
-We do not investigate this issue further.
 
 \begin{table}
     \centering
@@ -578,7 +574,6 @@ We do not investigate this issue further.
     queries and levels of parallelism on the LiveJournal dataset.
     }\label{table:skew-liveJ}
 \end{table}
-
 
 \begin{table}
     \centering
@@ -623,24 +618,24 @@ Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
 % TODO experiment about scaling of Spark
 
-\subsection{Distributed work-stealing}
+\subsection{Distributed work-stealing}\label{subsec:distributed-work-stealing}
 
 % TODO take out reference to spark local mode only from background and abstract.
 
 % TODO 5-clique query
-We run the distributed version of work-stealing as described in~\cref{subsubsec:distribute-work-stealing}
+We run the distributed version of work-stealing as described in~\cref{subsubsec:distributed-work-stealing}
 on the LiveJournal and Orkut dataset for the 3-clique query.
 
-For this experiment, we use four machines as described in~\cref{subsec:setup}.
+For this experiment, we use four machines as described in~\cref{subsec:experimental-setup}.
 Each of this machine has 48 physical cores with hyper-threading.
 In total, the Spark cluster has 192 physical cores and 384 virtual cores.
 We run the experiments on 16 to 384 of these cores.
-Each machine runs one executor which uses 1 fourth of the available cores.
+Each machine runs one executor which uses $\frac{1}{4}$ of the available cores.
 The tasks are evenly distributed over all four machines for all levels of parallelism by
 the standard behaviour of Spark's standalone mode scheduler.
 
 We show the speedup of the different queries on the LiveJournal and Orkut dataset in \cref{fig:distributed-scaling}.
-We analyse the results by query.
+We analyse the results by query and dataset.
 
 The 3-clique query scales very differently on both datasets.
 We show two plots for the 3-clique query on LiveJournal with different parameters for the work-stealing
@@ -678,7 +673,7 @@ Again, there is no internal executor skew.
 
 During our study of inter executor skew, we noticed that the worker which takes longest can differ widely
 for different repetitions of the experiment for exactly the same configuration.
-This is unexpected because in all executors receive the same workload in each repetition.
+This is unexpected because in all of them the executors receive the same workload.
 We run the experiments with a batch size of 1 for the work-stealing algorithm.
 Therefore, we suspect contention of the work-stealing queue to be the reason speedup deterioration and
 repeat the experiment with a batch size of 40.
@@ -700,7 +695,7 @@ than 48 cores and to suboptimal speedup with higher levels of parallelism due to
 Due to time constraints, we run 5-clique only on the LiveJournal dataset.
 As expected we see stronger speedup than for 3-clique as there is more work to share.
 The scaling is sub-linear due to internal and inter executor skew.
-The internal executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:distributed-skew-livej}.
+The internal executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:skew-liveJ}.
 
 The inter executor skew is shown in~\cref{table:distributed-skew-livej}.
 We see that the total and relative skew decrease with the number of workers used which is to be

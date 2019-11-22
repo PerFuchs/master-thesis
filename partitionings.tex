@@ -370,4 +370,4 @@ In particular, if it runs workloads with many small tasks.
 Second, this scheme does not manage skew between executors.
 If it turns out that the part of the work-stealing queue assigned to any executor requires significantly more work than
 to the other executors, then this executor will dominate the overall run-time of the whole algorithm.
-We establish if this is a problem in practice in our experiments~\cref{subsec:distributed-experiments}.
+We establish if this is a problem in practice in our experiments~\cref{subsec:distributed-work-stealing}.

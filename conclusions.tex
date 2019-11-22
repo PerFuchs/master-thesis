@@ -14,7 +14,7 @@
 % TODO does the materialization section include a reference to not moving first level trieIterators
 In our experiment section~\ref{subsec:scaling-graphWCOJ}, we noted that work-stealing that
 operates only on the first level of variable bindings can still lead to skew for bigger queries.
-Therefore, we describe a work-stealing LeapfrogTrieJoin algorithm that allows to steal work
+Therefore, we describe a work-stealing Leapfrog Triejoin algorithm that allows to steal work
 on all levels.
 We describe a possible design in two steps.
 First, we explain under which circumstances to steal work.
@@ -33,13 +33,15 @@ maximizes the amount of work stolen.
 A task is encoded as a prefix of variable bindings, e.g. if we steal work in a 5-clique query at
 the third level a prefix might be $[4, 1 , 5]$.
 If the work-stealing request successfully returns a binding, we set the state of all components
-of the current join to the values of the prefix.
+of the thief to the values of the prefix.
 Then we run the normal Leapfrog Triejoin algorithm to generate all complete bindings for the stolen
 prefix.
 When all bindings have been produced, we steal work and repeat the process.
-
 If a work-stealing request cannot find any work, the task finishes.
 
+We propose to steal work by accessing the \textit{LeapfrogJoin} instances of the victim to generate
+the next binding for a variable at a given depth.
+The victim then should not generate results for this binding.
 We face four challenges for the question of how work is stolen.
 
 First, the Leapfrog Triejoin encodes its state in the \textit{TrieIterator} components.
@@ -80,7 +82,7 @@ needs to be aquired before using any method and released after.
 It is not necessary to lock the underlying \textit{TrieIterator} interfaces as we argue in the next
 paragraphs.
 
-We start our argument that we only need to consider cases where one thief and one victim
+We start our argument with the observation that we only need to consider cases where one thief and one victim
 thread interfere with each other.
 This is because only one thief can be active at any \textit{LeapfrogJoin} at any time due to the
 necessity to hold the lock for this \textit{LeapfrogJoin}.
