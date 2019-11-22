@@ -1,0 +1,54 @@
+\begin{tabular}{llr|rr}
+\toprule
+  Partitioning &     Query &  Parallelism &   Time &  Speedup \\
+\midrule
+        Shares &  3-clique &            1 &    1.7 &      1.0 \\
+        Shares &  3-clique &            2 &    0.8 &      2.2 \\
+        Shares &  3-clique &            4 &    0.4 &      4.1 \\
+        Shares &  3-clique &            8 &    0.4 &      4.4 \\
+        Shares &  3-clique &           16 &    0.2 &      8.5 \\
+        Shares &  3-clique &           32 &    0.1 &     14.7 \\
+        Shares &  3-clique &           48 &    0.1 &     13.7 \\
+        Shares &  3-clique &           64 &    0.1 &     12.1 \\
+        Shares &  3-clique &           96 &    0.1 &     14.8 \\
+        Shares &  4-clique &            1 &   15.1 &      1.0 \\
+        Shares &  4-clique &            2 &    8.2 &      1.8 \\
+        Shares &  4-clique &            4 &    4.2 &      3.6 \\
+        Shares &  4-clique &            8 &    2.4 &      6.4 \\
+        Shares &  4-clique &           16 &    2.2 &      7.0 \\
+        Shares &  4-clique &           32 &    1.1 &     13.2 \\
+        Shares &  4-clique &           48 &    1.1 &     13.8 \\
+        Shares &  4-clique &           64 &    0.8 &     19.3 \\
+        Shares &  4-clique &           96 &    0.7 &     22.0 \\
+        Shares &  5-clique &            1 &  531.3 &      1.0 \\
+        Shares &  5-clique &           16 &   54.3 &      9.8 \\
+        Shares &  5-clique &           32 &   47.5 &     11.2 \\
+        Shares &  5-clique &           48 &   29.0 &     18.3 \\
+        Shares &  5-clique &           64 &   29.7 &     17.9 \\
+        Shares &  5-clique &           96 &   23.6 &     22.5 \\
+ work-stealing &  3-clique &            1 &    1.7 &      1.0 \\
+ work-stealing &  3-clique &            2 &    0.7 &      2.4 \\
+ work-stealing &  3-clique &            4 &    0.3 &      5.0 \\
+ work-stealing &  3-clique &            8 &    0.2 &     10.0 \\
+ work-stealing &  3-clique &           16 &    0.1 &     19.6 \\
+ work-stealing &  3-clique &           32 &    0.0 &     36.7 \\
+ work-stealing &  3-clique &           48 &    0.0 &     50.0 \\
+ work-stealing &  3-clique &           64 &    0.0 &     54.7 \\
+ work-stealing &  3-clique &           96 &    0.0 &     61.3 \\
+ work-stealing &  4-clique &            1 &   15.1 &      1.0 \\
+ work-stealing &  4-clique &            2 &    7.5 &      2.0 \\
+ work-stealing &  4-clique &            4 &    3.8 &      4.0 \\
+ work-stealing &  4-clique &            8 &    1.9 &      7.8 \\
+ work-stealing &  4-clique &           16 &    1.0 &     14.7 \\
+ work-stealing &  4-clique &           32 &    0.6 &     25.8 \\
+ work-stealing &  4-clique &           48 &    0.4 &     34.8 \\
+ work-stealing &  4-clique &           64 &    0.4 &     34.2 \\
+ work-stealing &  4-clique &           96 &    0.4 &     36.1 \\
+ work-stealing &  5-clique &            1 &  531.3 &      1.0 \\
+ work-stealing &  5-clique &           16 &   37.1 &     14.3 \\
+ work-stealing &  5-clique &           32 &   18.8 &     28.3 \\
+ work-stealing &  5-clique &           48 &   13.2 &     40.3 \\
+ work-stealing &  5-clique &           64 &   12.1 &     44.1 \\
+ work-stealing &  5-clique &           96 &   10.9 &     48.7 \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,33 @@
+\begin{tabular}{llr|rr}
+\toprule
+          Partitioning &     Query &  Parallelism &     Time &  Speedup \\
+\midrule
+ batched work-stealing &  3-clique &            1 &    100.3 &      1.0 \\
+ batched work-stealing &  3-clique &           16 &     12.1 &      8.3 \\
+ batched work-stealing &  3-clique &           32 &      6.5 &     15.5 \\
+ batched work-stealing &  3-clique &           48 &      4.5 &     22.2 \\
+ batched work-stealing &  3-clique &           64 &      3.7 &     27.2 \\
+ batched work-stealing &  3-clique &           96 &      2.4 &     42.5 \\
+ batched work-stealing &  3-clique &          128 &      2.0 &     49.1 \\
+ batched work-stealing &  3-clique &          192 &      1.7 &     59.5 \\
+ batched work-stealing &  3-clique &          384 &      1.2 &     83.3 \\
+         work-stealing &  3-clique &            1 &    100.3 &      1.0 \\
+         work-stealing &  3-clique &           16 &      7.3 &     13.7 \\
+         work-stealing &  3-clique &           32 &      3.7 &     27.1 \\
+         work-stealing &  3-clique &           48 &      2.9 &     34.7 \\
+         work-stealing &  3-clique &           64 &      4.1 &     24.3 \\
+         work-stealing &  3-clique &           96 &      2.4 &     41.1 \\
+         work-stealing &  3-clique &          128 &      2.2 &     45.5 \\
+         work-stealing &  3-clique &          192 &      4.3 &     23.5 \\
+         work-stealing &  3-clique &          384 &      3.5 &     28.8 \\
+         work-stealing &  5-clique &            1 &  31875.6 &      1.0 \\
+         work-stealing &  5-clique &           16 &   1828.9 &     17.4 \\
+         work-stealing &  5-clique &           32 &   1092.2 &     29.2 \\
+         work-stealing &  5-clique &           48 &    851.1 &     37.5 \\
+         work-stealing &  5-clique &           64 &    683.1 &     46.7 \\
+         work-stealing &  5-clique &           96 &    508.6 &     62.7 \\
+         work-stealing &  5-clique &          128 &    405.0 &     78.7 \\
+         work-stealing &  5-clique &          192 &    224.3 &    142.1 \\
+         work-stealing &  5-clique &          384 &    175.0 &    182.1 \\
+\bottomrule
+\end{tabular}
