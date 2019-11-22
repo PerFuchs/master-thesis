@@ -85,7 +85,7 @@ Twitter uses $k = 3$ in production~\cite{twitter-diamond}.
     \centering
     \includesvg[width=0.2\textwidth]{svg/diamond}
     \caption{The dimaond query is used by Twitter. The vertices are users and the edges follower relationships.
-      In the example, they could recommend $A$ to follow $D$ because $A$ follows $B_1$ and $B_2$ which both follow $C$.
+    In the example, they could recommend $A$ to follow $D$ because $A$ follows $B_1$ and $B_2$ which both follow $C$.
     }
     \label{fig:pattern-diamond}
 \end{figure}
@@ -361,7 +361,7 @@ Our integration is detailed in~\cref{sec:spark-integration}.
 
 Normally, Spark achieves parallelism and distributed algorithms by partitioning data overall workers.
 When data from different tables need to be joined, Spark repartition the data such that each worker can process parts of the join locally.
-However, shuffling an expensive operations, involving disk writes and reads, which should be avoided if possible.
+However, shuffling is an expensive operation, involving disk writes and reads, which should be avoided if possible.
 Moreover, we can show that a communication optimal partitioning scheme converges to a full broadcast for bigger graph pattern queries;
 we explain this in detail in~\cref{subsubsec:shares}.
 
@@ -431,12 +431,12 @@ TODO summarize the most important results here.
 
 %Spark offers a well optimized Relational interface [SparkSQL] [Catalsyst]
 %Relational interfaces rely on JOINS which have different characteristics different for graphs than for traditional star or snowflake schemes.
- % - they are cyclic for important graph algorithms (cluster, ?subgraphing?)
-  %  - large intermediary results which make the queries really expensive for the CPU as well as the in memory
-   %   - work is done for nothing because most of the intermediary results are filtered out later
- % - they are highly selective (paths starting from a specific node)
-  %  - allowing to safe work when all "filters" are applied simultaneously
-  %  - allowing for big jumps on sorted keys with a seek operation, naturally, applied by LFTJ
+% - they are cyclic for important graph algorithms (cluster, ?subgraphing?)
+%  - large intermediary results which make the queries really expensive for the CPU as well as the in memory
+%   - work is done for nothing because most of the intermediary results are filtered out later
+% - they are highly selective (paths starting from a specific node)
+%  - allowing to safe work when all "filters" are applied simultaneously
+%  - allowing for big jumps on sorted keys with a seek operation, naturally, applied by LFTJ
 % - therefore, they are a prime area of application for a new class of join algorithms with worst-case guarantees, which guarantee that no big intermediary results build up
- %because the evaluate multiple joins as once only materializing results that fulfil all join filters.
+%because the evaluate multiple joins as once only materializing results that fulfil all join filters.
 % - Furthermore, they are naturally suited for highly selective queries because of using an O(log(N)) seek a method to jump over "uninteresting" parts of a sorted result.  

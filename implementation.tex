@@ -35,11 +35,11 @@ This result is in line with the observation that `in the Tributary join algorith
         Binary search & removing galloping search      & 56.4 \\
         LFTJ          & no sorting in \textit{LF} \textit{init} method &  54.1 \\
         \bottomrule
-   \end{tabular}
+    \end{tabular}
     \caption{Optimizations to the \textsc{LFTJ} algorithm in Scala and their runtimes on the unfiltered 5-clique query on
-       the Amazon0601 dataset.
-       \textit{LFTJ}, \textit{LF} and \textit{TI} refers to the \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
-       and \textit{TrieIterator} component of the Leapfrog Triejoin algorithm.
+    the Amazon0601 dataset.
+    \textit{LFTJ}, \textit{LF} and \textit{TI} refers to the \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
+    and \textit{TrieIterator} component of the Leapfrog Triejoin algorithm.
     }
     \label{table:lftj-optimizations}
 \end{table}
@@ -49,12 +49,12 @@ The \textit{LeapfrogJoin.init} method is originally described to sort its \texti
 \textit{leapfrogSearch} knows the position of the largest and smallest iterator (see~\cref{subsubsec:leapfrog-triejoin}).
 However, the method can be improved by avoiding to sort the \textit{TrieIterators}.
 We can start moving the \textit{TrieIterator} without sorting them and arrive at an ordered array in $\mathcal{O} (n)$ steps with $n$
-defined as the size of array.
+defined as the size of the array.
 This approach improves over the original algorithm in two ways: (1) it starts moving the \textit{TrieIterators} to their next intersection
 immediately without sorting them first and
 (2) orders the array in fewer steps than traditional sorting algorithms.
 
-To implement this we find the maximum value for  all iterators and store the index in $p$.
+To implement this we find the maximum value for all iterators and store the index in $p$.
 Then we move the \textit{TrieIterator} at $p + 1$ to the least upper bound of the maximum value (by calling \textit{seek}) and store the
 result as the new maximum.
 We proceed with this process, wrapping \textit{p} around when it reaches \textit{iterators.length}, until \textit{p} equals the original
@@ -73,7 +73,7 @@ For the first one, which is no completely replaced by the second, we used a self
 Scala's array sort.
 Scala's array sort is slow because it copies the array twice and casts the values to \textit{Java.Object} such that it can use Java's
 sorting methods.
-An insertion sort is a asymtopical suboptimal algorithm but a good option given that a \textit{LeapfrogJoin} normally operates on less
+An insertion sort is an asymptotical suboptimal algorithm but a good option given that a \textit{LeapfrogJoin} normally operates on less
 than 20 \textit{TrieIterators}.
 
 The binary search is the most expensive operation of the Leapfrog Triejoin.
@@ -122,9 +122,9 @@ which did not succeed, we list these approaches here to save others the work of 
 \end{itemize}
 
 Finally, we believe that code generation for specific queries that combines the functionality of \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
-and \textit{TrieIterator} into one query specific function would lead to noticeable performance improvements.
+and \textit{TrieIterator} into one query-specific function would lead to noticeable performance improvements.
 The reason for this belief is that our implementation takes about 3.46 seconds for a triangle query on the Twitter social circle dataset
-while a triangle query specific Julia implementation, of a colleague of ours, needs only half a second.
+while a triangle query-specific Julia implementation, of a colleague of ours, needs only half a second.
 The main difference between our implementation and his are: the language used (Julia is a high-performance, compiled language) and the fact
 that his implementation has no query interpretation overhead but cannot handle any other query than the triangle query.
 

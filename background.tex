@@ -62,8 +62,8 @@ In this section, we explain the architecture that allows this flexibility.
 \begin{figure}
     \includegraphics[width=\textwidth]{figures/spark-cluster.png}
     \caption{
-      Schematics of a Spark cluster with two workers, each of them with one exectuor and two threads per executor.
-      Source: Apache Spark Documentation, https://spark.apache.org/docs/latest/cluster-overview.html
+    Schematics of a Spark cluster with two workers, each of them with one executor and two threads per executor.
+    Source: Apache Spark Documentation, https://spark.apache.org/docs/latest/cluster-overview.html
     }
     \label{fig:spark-cluster}
 \end{figure}
@@ -116,7 +116,7 @@ a running example.
 \end{figure}
 
 The input of Catalyst is a query in the form of a DataFrame or SQL string.
-From this the optimizer builds a \textit{unresolved logical plan}.
+From this, the optimizer builds a \textit{unresolved logical plan}.
 This plan can include unresolved attributes, e.g. attribute names which are not matched to a specific
 data source yet or which have no known type.
 To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describe the
@@ -126,10 +126,10 @@ The logical plan represents \textit{what} should be done for the query but not e
 e.g. it might contain a Join operator but not a Sort-merge join.
 
 We show the logical plan for the triangle query in~\cref{fig:triangle-logical-plan}.
-As we see, the query is represented as tree where the vertices are operators and the edge indicate dataflow from
+As we see, the query is represented as a tree where the vertices are operators and the edge indicate dataflow from
 one operator to another.
 The leaves of the tree are three aliases of the edge relationship.
-zTwo of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
+Two of these source relationships are the input the join between \textit{R} and \textit{S} via \textit{B}.
 The result of this join and the leaf relationship \textit{T} are input to the second join.
 The tuples produced by this join are filtered to fulfil $A < B < C$.
 Finally, at the root of the tree, there is an aggregation to count all results and report the sum.
@@ -201,26 +201,26 @@ physical operators and a Strategy to translate between them.
 \textit{Broadcast variables} readonly variables which are accessible by all tasks.
 They are initialized once by the driver program and should not be changed after initialization.
 The process of broadcasting them is handled by Spark.
-It is guaranteed that each broadcast variable is sent only once to each executor and allows it to be spilled to disk if it is not
+It is guaranteed that each broadcast variable is sent only once to each executor and allows it to be spilt to disk if it is not
 possible to keep the whole value in memory.
 Furthermore, `Spark attempts to distribute broadcast variables using efficient broadcast algorithms to reduce communication
 costs'~\cite{rdd-programming-guide}; currently Spark uses a BitTorrent-like communication protocol\footnote{See Spark sources:
 \texttt{org.apache.spark.broadcast.TorrentBroadcast}}.
 Once sent, they are cached once per executor~(see also~\cref{subsubsec:spark-architecture}) and shared by all tasks on this executor.
-They are cached in deserialized form in memory but can be spilled to disk if they are too big.
+They are cached in deserialized form in memory but can be spilt to disk if they are too big.
 In this thesis, we use broadcast variables to cache the edge relationship of the graph on all workers.
 
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query
 is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
-In short, this bound proves that traditional, binary join plans perform asymtopically worse than theoretical possible
-for the worst-case database instances, e.g. heavely skewed instances.
+In short, this bound proves that traditional, binary join plans perform asymptotically worse than theoretical possible
+for the worst-case database instances, e.g. heavily skewed instances.
 For example, the worst-case runtime of binary joins on the triangle query is in $\mathcal{O} (N^2)$, while the AGM bound
 shows the possibility to solve it in $\mathcal{O} (N^{3/2})$.
 The AGM bound has been treated widely in literature~\cite{skew-strikes-back,andreas,agm}.
 A particular good explanation is given by Hung Ngo et al in~\cite{skew-strikes-back}.
 We refer the reader to these papers for further information.
-In the next paragraph, we discus different algorithms matching the AGM bound which are called worst-case optimal joins.
+In the next paragraph, we discuss different algorithms matching the AGM bound which are called worst-case optimal joins.
 
 In 2012, Ngo, Porat, Re and Rudra published the first join algorithm matching the AGM bound, called \textit{NPRR} join~\cite{nprr}.
 In the same year, Veldhuizen proved that the algorithm Leapfrog Triejoin used in LogicBlox,
@@ -228,7 +228,7 @@ a database system developed by his company, is also worst-case optimal with rega
 We often abbreviate Leapfrog Triejoin to \textsc{LFJT}.
 Both algorithms have been shown to be instances of a single algorithm, the \textit{Generic Join}, in 2013 by Ngo et al.~\cite{skew-strikes-back}.
 
-Three worst-case optimal join algorithms are known in literature.
+Three worst-case optimal join algorithms are known in the literature.
 We choose Leapfrog Triejoin as the basis for our work.
 The argumentation for this decision is given below.
 First, we identify the main criteria for this choice.
@@ -237,15 +237,15 @@ Then, we use them to compare the different algorithms.
 The most important argument for our decision is the degree to which the algorithm has been shown
 to be of practical use.
 In particular, the number of systems it is used in and openly available data on its performance.
-If an algorithm is used in academia as well as in industry, we deem this as a advantage.
-This criteria carries a lot of weight because the first literature on worst-case optimal joins
-has been rather theoretical but in our work we take a more praxis and system oriented perspective.
+If an algorithm is used in academia as well as in industry, we deem this as an advantage.
+This criterion carries a lot of weight because the first literature on worst-case optimal joins
+has been rather theoretical but in our work, we take a more praxis and system-oriented perspective.
 
 The practical character of our work also motivates the second dimension which we compare the algorithms in, namely
-ease of implemenation.
-If two of the three algoritms both have well proven performance, we would like to choose the algorithm
+ease of implementation.
+If two of the three algorithms both have well-proven performance, we would like to choose the algorithm
 that takes less time to implement and is easier to adapt and experiment with.
-That is, to be able to spent more time on evaluation and optimizations for the graph use-case, instead of,
+That is, to be able to spend more time on evaluation and optimizations for the graph use-case, instead of,
 time spent on replicating existing work.
 
 The Leapfrog Triejoin is used in two commercial database solutions:
@@ -254,12 +254,12 @@ Its performance has been reported on in two publications~\cite{myria-detailed,ol
 In particular, it beats various general and graph specific databases for graph pattern matching, i.e.
 PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso~\cite{olddog}.
 The broadest study of its performance uses 15 different datasets and 7 queries~\cite{olddog}.
-We conclude that the performance of \textsc{LFTJ} is well established by peer reviewed publications
+We conclude that the performance of \textsc{LFTJ} is well established by peer-reviewed publications
 as well as industrial usage.
 
 The \textit{NPRR} algorithm has been well analyzed from the theoretical point of view.
-However, we are not able to find any openenly available sources with performance measurements.
-This disqualifies \textsc{NPRR} as basis for our thesis.
+However, we are not able to find any openly available sources with performance measurements.
+This disqualifies \textsc{NPRR} as the basis for our thesis.
 
 The \textit{Generic Join} is used in at least three academic graph processing engines,
 namely GraphFlow~\cite{graphflow}, EmptyHeaded~\cite{emptyheaded} and a unnamed implementation in
@@ -269,7 +269,7 @@ However, we are not aware of any commercial systems using \textsc{GJ}.
 
 The comparision of Leapfrog Triejoin, \textsc{NPRR} and \textit{Generic Join} by proven performance
 rules out \textsc{NPRR} and puts \textsc{LFTJ} and \textsc{GJ} on a similar level.
-Next, we compare these two algorithm in ease of implementation.
+Next, we compare these two algorithms in ease of implementation.
 
 The description of the Leapfrog Triejoin implementation in its original paper~\cite{lftj} is excellent.
 Furthermore, multiple open source implementation exists~\cite{leapfrog-triejoin-schroeder,myria-detailed}.
@@ -281,7 +281,7 @@ paper~\cite{skew-strikes-back}.
 Although, well written and algorithmically clear, this explanation is much less practical than the one given for \textsc{LFTJ} which
 is backed by an executable implementation.
 
-To conclude, we choose Leapfrog Triejoin as basis for our work based on its openely available records of performance, use in
+To conclude, we choose Leapfrog Triejoin as the basis for our work based on its openly available records of performance, use in
 academia as well as industrial systems and good description for direct implementation.
 Furthermore, Peter Boncz (supervisor of this thesis) has direct contact to the inventors of \textsc{LFTJ} giving us access to valuable
 expertise if necessary.
@@ -290,12 +290,12 @@ expertise if necessary.
 In this section, we described the Leapfrog Triejoin algorithm.
 In the first paragraph, we give the high-level idea behind the algorithm and some of its requirements.
 Then we discuss the kind of queries that can be answered with it.
-The main part of the section, discusses the conceptual algorithm itself.
+The main part of the section discusses the conceptual algorithm itself.
 We finish with a short discussion of two implementation problems, namely the data structure to represent the input relationships and
 the problem of choosing a good variable ordering.
 
 The Leapfrog Triejoin is a variable-oriented join.
-Given an input queries, it requires a variable ordering.
+Given an input query, it requires a variable ordering.
 For example in the triangle query $triangles(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$,
 the variable ordering could be $a, b, c$.
 Furthermore, the Leapfrog Triejoin requires its input relationships to be sorted by lexicographic, ascending order over the given
@@ -305,8 +305,8 @@ and $b$.
 This allows it to enumerate the result of the join query without intermediary results.
 The process can be thought of as a backtracking, depth-first search for possible bindings.
 
-The algorithms impelemted in this thesis can process joins of the full conjunctive fragment of first order logic or conjunctive
-equi-joins in relational algebra terms.
+The algorithms implemented in this thesis can process joins of the full conjunctive fragment of first-order logic or conjunctive
+equijoin in relational algebra terms.
 Possible extentsions to disjunctions, ranges (none-equi joins), negation, projection, functions and scalar operations on join variables are
 explained in the original Leapfrog Triejoin paper~\cite{lftj}.
 However, they are not relevant to the core of this work because many interesting graph patterns can be answered using the full conjunctive
@@ -355,7 +355,7 @@ All tuples of the relationship can be enumerated by a depth-first traversal of t
 The \textit{TrieIterator} component offers six methods shown in~\cref{table:lftj-interfaces}.
 The \textit{open} and \textit{up} methods control the level the iterator is positioned at;
 \textit{open} moves it one level down and \textit{up} moves it one level up.
-Additionally, \textit{open} places the iterator at the first value for the next level and the up
+Additionally, \textit{open} places the iterator at the first value for the next level and the \textit{up}
 method returns to the value of the upper level that was current when the deeper level was opened.
 We call these two methods the vertical component of the \textit{TrieIterator} interface.
 
@@ -381,8 +381,8 @@ We call these two methods the vertical component of the \textit{TrieIterator} in
         \bottomrule
     \end{tabular}
     \caption{
-      The interfaces of \textit{TrieIterator} and \textit{LeapfrogJoin} with required complexity.
-      $N$ is the size of relationship represented by the iterator.
+    The interfaces of \textit{TrieIterator} and \textit{LeapfrogJoin} with required complexity.
+    $N$ is the size of relationship represented by the iterator.
     }
     \label{table:lftj-interfaces}
 \end{table}
@@ -401,40 +401,40 @@ Therefore, it operates on the linear component of all \textit{TrieIterators} of 
 \Cref{fig:lftj-layers} for the triangle query shows three \textit{LeapfrogJoin} instances (for $a, b$ and $c$);
 each of them uses two \textit{TrieIterators}.
 
-The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:lftj-interfaces}, with their required asymptopical
+The \textit{LeapfrogJoin} interface has five methods shown in~\cref{table:lftj-interfaces}, with their required asymptotical
 performance.
 In the following paragraphs, we explain each of them.
 In short, the join offers an iterator interface over the intersection of its input iterators.
-This intersection is found by repeatingly seeking the value of the largest input iterator in the smallest input iterator.
-This process resemples a frog taking a leap which gives the join its name.
+This intersection is found by repeatedly seeking the value of the largest input iterator in the smallest input iterator.
+This process resembles a frog taking a leap which gives the join its name.
 When all iterators point to the same value leapfrogging stops and the value is emitted as part of the intersection.
 
 The \textit{init} operation sorts the input iterator by their current key and finds the first value of the intersection.
 To find the first value it uses the private method \textit{leapfrogSearch} which is the work-horse of the whole join.
 The algorithm of this method is shown in~\cref{alg:leapfrogSearch}.
-This method loops the process of calling the \textit{seek} method of the its smallest input iterator with the key of the largest input
+This method loops the process of calling the \textit{seek} method of its smallest input iterator with the key of the largest input
 iterator until the smallest and the largest (and therefore all iterators) point to the same value.
 
 \begin{algorithm}
     \KwData{\\
-      iters \textit{sorted array of TrieIterators} \\
-      p \textit{index of the smallest iterator}
+    iters \textit{sorted array of TrieIterators} \\
+    p \textit{index of the smallest iterator}
     }
-   \KwResult{\textit{Either} atEnd \textit{is true or} key \textit{is set to next key of intersection}}
+    \KwResult{\textit{Either} atEnd \textit{is true or} key \textit{is set to next key of intersection}}
     maxKey $\gets$ iters[p \% iters.length].key()\;
-   \While{\upshape iters[p].key() $\neq$ maxKey}{
-     iters[p].seek(maxKey)\;
-     \eIf{\upshape iters[p].atEnd()} {
-       atEnd $\leftarrow$ true\;
-       \Return\;
-     } {
-       maxKey $\leftarrow$ iters[p].key()\;
-       p $\leftarrow$ (p + 1) \% iters.length\;
-     }
-   }
-   key $\leftarrow$ iters[p].key()
-   \caption{leapfrogSearch()}
-   \label{alg:leapfrogSearch}
+    \While{\upshape iters[p].key() $\neq$ maxKey}{
+    iters[p].seek(maxKey)\;
+    \eIf{\upshape iters[p].atEnd()} {
+    atEnd $\leftarrow$ true\;
+    \Return\;
+    } {
+    maxKey $\leftarrow$ iters[p].key()\;
+    p $\leftarrow$ (p + 1) \% iters.length\;
+    }
+    }
+    key $\leftarrow$ iters[p].key()
+    \caption{leapfrogSearch()}
+    \label{alg:leapfrogSearch}
 \end{algorithm}
 The \textit{leapfrogNext} method moves the join to its next value.
 Internally, it uses the \textit{next} function of its smallest iterator and then \textit{leapfrogSearch}.
@@ -447,7 +447,7 @@ Finally, the functions \textit{key} and \textit{atEnd} return the current key or
 
 The last layer of the whole algorithm is a single \textit{LeapfrogTriejoin} instance.
 It interacts with both lower layers to enumerate all possible bindings for the join.
-For this it aquires one binding for the first variable from the corresponding \textit{LeapfrogJoin}.
+For this, it acquires one binding for the first variable from the corresponding \textit{LeapfrogJoin}.
 Then it moves the \textit{TrieIterators} containing this variable to the next level and
 finds a binding for the second variable using the next \textit{LeapfrogJoin}.
 This process continues until all variables are bound and a tuple representing this binding is emitted
@@ -466,58 +466,58 @@ in~\cref{table:lftj-state-machine} and describe each action below.
 
 \begin{algorithm}
     \KwData{
-      depth \textit{the index of the variable to find a binding for, ranges from -1 to \#variables - 1}\\
-      bindings \textit{array holding the current variable bindings or $-1$ for no binding} \\
-      MAX\_DEPTH \textit{the number of variables - 1} \\
-      action \textit{state of the state machine}
+    depth \textit{the index of the variable to find a binding for, ranges from -1 to \#variables - 1}\\
+    bindings \textit{array holding the current variable bindings or $-1$ for no binding} \\
+    MAX\_DEPTH \textit{the number of variables - 1} \\
+    action \textit{state of the state machine}
     }
     \Repeat{\upshape $\neg$ (depth = MAX\_DEPTH $\and$ bindings[MAX\_DEPTH] $\neq$ -1) $\lor$ atEnd} {
-      \Switch{\upshape action} {
-        \Case{\upshape NEXT} {
-            leapfrogJoins[depth].leapfrogNext() \; \label{line:lftj-leapfrog-next}
-            \eIf{\upshape leapfrogJoins[depth].atEnd()} {
-                action $\leftarrow$ UP \; \label{line:lftj-next-up}
-            } {
-                bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \; \label{line:lftj-next-down-or-next}
-                \If{\upshape depth == MAX\_DEPTH} {
-                    action $\leftarrow$ NEXT
-                } {
-                    action $\leftarrow$ DOWN
-                }
-            }
-        }
-       \Case{\upshape DOWN} {
-          depth $\leftarrow$ depth + 1 \;
-          trieJoinOpen() \; \label{line:lftj-trieJoinOpen}
-          \eIf{\upshape leapfrogJoins[depth].atEnd()} {
-            action $\leftarrow$ UP \; \label{line:lftj-down-up}
-          } {
-            bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
-          \eIf{\upshape depth = MAX\_DEPTH} {
-             action $\leftarrow$ NEXT \label{line:lftj-down-next}
-          } {
-            action $\leftarrow$ DOWN
-          }
-          }
-       }
-        \Case{\upshape UP} {
-          \eIf{\upshape depth = 0} { \label{line:lftj-atEnd}
-            atEnd $\leftarrow$ true \;
-          } {
-            depth $\leftarrow$ depth - 1 \;
-            trieJoinUp() \; \label{line:lftj-trieJoinUp}
-            \eIf{\upshape leapfrogJoins[depth].atEnd()} { \label{line:lftj-up-up-next}
-                action $\leftarrow$ UP \;
-            } {
-                action $\leftarrow$ NEXT \;
-            }    
-          }
-        }
-      }
-    }  
+    \Switch{\upshape action} {
+    \Case{\upshape NEXT} {
+    leapfrogJoins[depth].leapfrogNext() \; \label{line:lftj-leapfrog-next}
+    \eIf{\upshape leapfrogJoins[depth].atEnd()} {
+    action $\leftarrow$ UP \; \label{line:lftj-next-up}
+    } {
+    bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \; \label{line:lftj-next-down-or-next}
+    \If{\upshape depth == MAX\_DEPTH} {
+    action $\leftarrow$ NEXT
+    } {
+    action $\leftarrow$ DOWN
+    }
+    }
+    }
+    \Case{\upshape DOWN} {
+    depth $\leftarrow$ depth + 1 \;
+    trieJoinOpen() \; \label{line:lftj-trieJoinOpen}
+    \eIf{\upshape leapfrogJoins[depth].atEnd()} {
+    action $\leftarrow$ UP \; \label{line:lftj-down-up}
+    } {
+    bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \;
+    \eIf{\upshape depth = MAX\_DEPTH} {
+    action $\leftarrow$ NEXT \label{line:lftj-down-next}
+    } {
+    action $\leftarrow$ DOWN
+    }
+    }
+    }
+    \Case{\upshape UP} {
+    \eIf{\upshape depth = 0} { \label{line:lftj-atEnd}
+    atEnd $\leftarrow$ true \;
+    } {
+    depth $\leftarrow$ depth - 1 \;
+    trieJoinUp() \; \label{line:lftj-trieJoinUp}
+    \eIf{\upshape leapfrogJoins[depth].atEnd()} { \label{line:lftj-up-up-next}
+    action $\leftarrow$ UP \;
+    } {
+    action $\leftarrow$ NEXT \;
+    }
+    }
+    }
+    }
+    }
     \caption{LeapfrogTrieJoin state machine.
-        \textit{trieJoinUp} and \textit{trieJoinOpen} move all \textit{TrieIterators} that involve
-        the current variable a level up respectively down.
+    \textit{trieJoinUp} and \textit{trieJoinOpen} move all \textit{TrieIterators} that involve
+    the current variable a level up respectively down.
     }
     \label{alg:leapfrogTrieJoin-state-machine}
 \end{algorithm}
@@ -570,16 +570,16 @@ Then, this action is followed by another \textit{up} or a \textit{next} dependin
 
 \paragraph{TrieIterator implementation, backing data structure}
 While we can implement the \textit{LeapfrogJoin} and \textit{LeapfrogTriejoin} component of the Leapfrog Triejoin from the
-algorithmic description given above, we are missing some details for a concrete implementation of the
+the algorithmic description given above, we are missing some details for a concrete implementation of the
 \textit{TrieIterator} interface.
-Mainly, we need to decide for a datastructure to back the \textit{TrieIterator}.
+Mainly, we need to decide for a data structure to back the \textit{TrieIterator}.
 
 We choose to use sorted arrays as described in~\cite{myria-detailed}.
 One array is used per column of the input relationship and binary search on these arrays allows us to implement the \textit{TrieIterator}
 interface with the required asymptotic complexities (see~\cref{table:lftj-interfaces}).
 
 %We briefly compare a B-tree v.s. array-based implementation of
-%the LFTJ API. The main API function is seek(v), which fetches the next value v’ of the current attribute Ai s.t. v’ > v: in a B-tree this can be computed in amortized time O(1), while our implementation uses a binary search on the remaining part of the array at a cost per operation of O(log n). Thus, TJ is at most a factor log n slower than LFTJ, and, in particular, it is also worst case optimal (up to log n). In practice, the dominating cost of TJ is given by the sorting phase (which, as explained, is unavoidable), hence our choice to use a sorted array instead of a B-tree, because sorting is cheaper than computing a B-tree.
+%the LFTJ API. The main API function is seek(v), which fetches the next value v’ of the current attribute Ai s.t. v’ > v: in a B-tree this can be computed in amortized time O(1), while our implementation uses a binary search on the remaining part of the array at a cost per operation of O(log n). Thus, TJ is at most a factor log n slower than LFTJ, and, in particular, it is also worst-case optimal (up to log n). In practice, the dominating cost of TJ is given by the sorting phase (which, as explained, is unavoidable), hence our choice to use a sorted array instead of a B-tree, because sorting is cheaper than computing a B-tree.
 
 \paragraph{Variable ordering}
 Finding a good variable ordering for the \textsc{LFTJ} is an interesting research problem in itself.
@@ -593,17 +593,17 @@ To the best of our knowledge, the exact method of creating the representative sa
 The second approach is described in great detail by Mhedhbi and Salihoglu in~\cite{mhedhbi2019}.
 Its has been implemented in their research graph database Graphflow~\cite{graphflow}.
 
-They define a novel cost-metric for \textsc{WCOJ}s which estimates the costs incured by constructing the intersections of adjacency
+They define a novel cost-metric for \textsc{WCOJ}s which estimates the costs incurred by constructing the intersections of adjacency
 lists.
 The metric takes three factors into account.
 First, the size adjacency lists.
 
 Second, the number of intermediate matches.
-The concept of intermedieate matches is best understood by a simple example;
+The concept of intermediate matches is best understood by a simple example;
 we see the tailed-triangle query in~\cref{fig:tailed-triangle}.
 Two very different vertice ordering categories exist for this query.
 The ones that start on $v_4$ and find all 2-paths of the graph;
-and vertice orderings that start with $v_1, v_2, v_3$ in any order which close the triangle first.
+and vertice orderings that start with $v_1, v_2, v_3$ in any order which closes the triangle first.
 Clearly, there are more 2-paths in any graph than triangles.
 Hence, the second category produces far less intermediate matches.
 
@@ -635,24 +635,24 @@ In our work, we do not implement an automatic process to choose the best variabl
 The order we choose is based on experiments with different orders and intuition of the author.
 
 Integrating the approach of LogixBlox would be possible but require the implementer to find a good sampling strategy because no details
-are openenly available.
+are openly available.
 
 The approach of Mhedhbi and Salihoglu is much better documented but also more complex.
-It consists out of four contribution which build up on each other but could be useful on its own.
+It consists of four contributions which build upon each other but could be useful on its own.
 The cost metric described in their paper applies to our system as well and could be used.
 
-They use this metric for cost estimation in connection with a none-trivial subgraph catalogue.
+They use this metric for cost estimation in connection with a non-trivial subgraph catalogue.
 The main challenge in integrating this way of cost estimation with our system is to elegantly integrate catalogue creation in Spark.
 
 Their solution for adaptive variable orderings is helpful because it proves that this technique is beneficial;
 they also publish performance measurements, so the impact can be evaluated.
-However, there system employs a \textit{Generic Join} while we use a Leapfrog Triejoin.
+However, their system employs a \textit{Generic Join} while we use a Leapfrog Triejoin.
 The integration of adaptive variable orderings into Leapfrog Triejoin is not trivial and it is likely that their implementation is not
 directly applicable.
 
 Finally, they introduce an intersection cache to make use of repeatedly used intersections.
 This can be directly applied to our system, e.g. using the decorator pattern around \textit{LeapfrogJoins}.
-We note that they only cache the last, full n-way-interesection of multiple adjacency lists.
+We note that they only cache the last, full n-way-intersection of multiple adjacency lists.
 It would be interesting to research if the system would benefit from caching partial n-way intersections as well because
 we noticed that for some queries, e.g. 5-clique, the intersection between the first two lists can be reused more often than the full
 intersection.
@@ -802,14 +802,14 @@ Our main concern is that the number of duplicated tuples in the system increases
 with the number of workers added to the system.
 We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
 of this thesis (\ref{subsubsec:shares}).
-As result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
+As a result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
 strategy to parallelize a worst-case optimal join.
 
 To conclude, the implementation in Myria and in particular the Shares algorithm is the starting point of this thesis.
 We see it as our baseline for a distributed \textsc{WCOJ} implementation.
 In the coming section, we explain Shares in detail.
 
-We note that a implementation of a distributed worst-case optimal join on Timely Dataflow exists.
+We note that an implementation of a distributed worst-case optimal join on Timely Dataflow exists.
 However, it is not applicable to Spark.
 Therefore, we treat it in the related work section (\ref{subsec:wcoj-timely-data-flow}) of this thesis.
 
@@ -819,17 +819,17 @@ end up on the same worker in a single shuffle round.
 Hence, it allows running any multi-way join algorithm locally after one shuffle round.
 The output of the join is the union of all local results.
 
-The idea is to organize all workers in a logical hypercube, such that each worker can be addressed by it hypercube coordinate.
-Then it is straightforward to find a mapping from the attribute values of a tuple to these coordinates, so that joinable tuples
-arrive on the same worker after one shuffle.
+The idea is to organize all workers in a logical hypercube, such that each worker can be addressed by its hypercube coordinate.
+Then it is straightforward to find a mapping from the attribute values of a tuple to these coordinates so that joinable tuples
+arrive at the same worker after one shuffle.
 
 We first explain how to organize the workers in a hypercube and then how to map tuples to these workers.
 Next, we treat the problem of choosing a good hypercube configuration.
-Followed, by a summary about optimality of Shares.
-Finally, we provide analysis of the scaling of Shares for graph pattern matching.
+Followed, by a summary about the optimality of Shares.
+Finally, we provide an analysis of the scaling of Shares for graph pattern matching.
 
 A hypercube is characterized by the number of dimensions and the size of each dimension.
-\Cref{fig:hypercube} shows a hypercube with three dimesions labelled $a, b$ and $c$.
+\Cref{fig:hypercube} shows a hypercube with three dimensions labelled $a, b$ and $c$.
 They have the size of 3, 2 and 2 for $a, b$ and $c$ respectively.
 It is a possible configuration for the triangle query $triangle(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$ with
 12 workers.
@@ -840,18 +840,18 @@ It is a possible configuration for the triangle query $triangle(a, b, c) \leftar
     \hspace{0.04\textwidth}
     \subfloat{\includegraphics[width=0.55\textwidth,valign=c]{figures/hypercube-example.png}}
     \caption{
-      Left: Three aliases of an edge relationship with one triangle.
-        The participating tuples are marked in red, green and blue.
-        Their hypercube coordinates are shown below.
-      Right: Example of a Shares hypercube configuration for the triangle query for 12 workers with three attributes/dimensions of the sizes
-        3, 2, 2.
-        The tuples marked in red, green and blue end up on the workers with red, green and blue rhombs respectively.
+    Left: Three aliases of an edge relationship with one triangle.
+    The participating tuples are marked in red, green and blue.
+    Their hypercube coordinates are shown below.
+    Right: Example of a Shares hypercube configuration for the triangle query for 12 workers with three attributes/dimensions of the sizes
+    3, 2, 2.
+    The tuples marked in red, green and blue end up on the workers with red, green and blue rhombs respectively.
     }
     \label{fig:hypercube}
 \end{figure}
 
 Given an input query, Shares builds a hypercube with one dimension per variable in the input.
-It then chooses the size of each dimension, such that the product is smaller than number of workers.
+It then chooses the size of each dimension, such that the product is smaller than the number of workers.
 We call $v$ the numbers of variables in the query and $p_0, \dots, p_v$ the sizes of each dimension.
 This allows us to address each worker with a coordinate of the form $(0..p_0, \dots, 0..p_v)$.
 If the product of all dimension sizes is smaller than the number of workers, additional workers are not used.
@@ -875,7 +875,7 @@ This is where the triangle occurs in the output of the join.
 
 \paragraph{Finding the best hypercube configuration}
 The problem of finding the best hypercube configuration is to choose the sizes of its dimensions such that (1) the product of
-all sizes is smaller than the number of available workers and (2) such that the number of tuples to single worker is minimized.
+all sizes is smaller than the number of available workers and (2) such that the number of tuples to a single worker is minimized.
 (2) is backed by the assumption that the number of tuples is a good indicator for the amount of work;
 this assumption is made in all papers discussing the problem~\cite{myria-detailed,shares-proof,shares}.
 Therefore, we want to minimize the number of tuples on each single worker because the slowest worker determines the run-time.
@@ -885,7 +885,7 @@ The original Shares paper proposes a none-convex solution which is hard to compu
 Later, Beame et al. define a linear optimization problem which is solvable but leads to fractional hypercube
 sizes~\cite{shares-proof}.
 Hence, it is not possible to use their solution directly.
-Rounding down would be an obvious solutions but as discussed in~\cite{myria-detailed}, it can lead to highly suboptimal solutions, in
+Rounding down would be an obvious solution but as discussed in~\cite{myria-detailed}, it can lead to highly suboptimal solutions, in
 particular with low numbers of workers.
 Hence, the paper further considers to use a higher number of \textit{virtual} workers and assign these to \textit{physical} workers
 by a one-to-many mapping.
@@ -894,12 +894,12 @@ Therefore, this solution does not scale well.
 
 In the end, the paper that integrates Shares and the Tributary join in Myria suggests a practical solution.
 They enumerate all integral hypercube configurations smaller or equal to the number of available workers.
-For each configuration they estimate number of assigned tuples, then they choose the configuration with the lowest estimated workload.
+For each configuration they estimate the number of assigned tuples, then they choose the configuration with the lowest estimated workload.
 
 They use the following equation to estimate the workload, where $R$ are all relationships in the query, $var(r)$ gives the variables
 occuring in the relationship $r$, $size(v)$ gives the hypercube size of the dimension for variable $v$.
 \begin{equation} \label{eqn:estimated-workload}
-    workload = \sum_{r \in R}{|r| \times \frac{1}{\prod_{v \in var(r)}{size(v)}}}
+workload = \sum_{r \in R}{|r| \times \frac{1}{\prod_{v \in var(r)}{size(v)}}}
 \end{equation}
 The term $\prod_{v \in var(r)}{size(v)}$ gives the numbers of workers that span the hyper-plain over which a relationship $r$ is
 partitioned.
@@ -934,20 +934,20 @@ Finally, while first experiments with SharesSkew exist~\cite{shares-skew}, we ar
 to integrate SharesSkew into a complete system.
 Hence, we deem it out of scope for this thesis to attempt a full integration.
 
-Some readers might ask if there are better multi-round algorithms which replicate less data.
+Some readers might ask if there are better multi-round algorithms which replicate fewer data.
 Indeed, the authors of a Shares related paper raise the same question as future work~\cite{shares-skew-proof}.
 They are able to answer this question for specific join queries in~\cite{shares-skew-proof,shares-skew}, e.g. chain-joins and cycle-joins.
 Later, they present an algorithm which is multi-round optimal for all acyclic queries~\cite{gym} and one for all queries
 over binary relationships~\cite{shares-binary}.
 
-The papers about about multi-round optimal partitioning schemes are rather theoretical.
+The papers about multi-round optimal partitioning schemes are rather theoretical.
 To the best of our knowledge, only one paper provides practical experiments~\cite{shares-skew} but has no dedicated implementation section.
 Also, they have not been shown optimal for general conjunctive join queries but only for special cases.
-Two of the three papers~\cite[shares-skew-proof,gym] cannot handle clique joins which are important class of joins in our thesis.
+Two of the three papers~\cite[shares-skew-proof,gym] cannot handle clique joins which are an important class of joins in our thesis.
 Additionally, they add additional complexity to the query optimizer, e.g. they require the input query to be represented as
 generalized hypertree decomposition to calculate their intersection width~\cite{gym} or to find many different hypercube
 configurations~\cite{shares-binary,shares-skew,shares-skew-proof} which is not trivial in
-praxis and computation intensive as discussed in the last paragraph.
+praxis and computation-intensive as discussed in the last paragraph.
 
 We leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
 The most interesting paper in this direction is~\cite{shares-binary}.
@@ -1132,34 +1132,34 @@ list of $2$ in \textit{AdjacencyLists}.
 Additionally, we point out that the 3rd entry in the \textit{Indices} array is the same as the second.
 This is because vertex $3$ has no outgoing edges.
 Hence, it has no adjacency list to point to.
-Therfore, it points to the same offset as the entry for $2$.
+Therefore, it points to the same offset as the entry for $2$.
 
 
 \begin{figure}
     \centering
     \subfloat{
-        \begin{tabular}{rr}
-            \toprule
-            a  &  b \\\midrule
-            1  &  2 \\
-            2  &  3 \\
-            2  &  4 \\
-            2  &  5 \\
-            2  &  6\\
-            4  &  2 \\
-            5  &  2 \\
-            5  &  6 \\
-            6 &   5 \\\bottomrule
-        \end{tabular}
+    \begin{tabular}{rr}
+        \toprule
+        a  &  b \\\midrule
+        1  &  2 \\
+        2  &  3 \\
+        2  &  4 \\
+        2  &  5 \\
+        2  &  6\\
+        4  &  2 \\
+        5  &  2 \\
+        5  &  6 \\
+        6 &   5 \\\bottomrule
+    \end{tabular}
     }
     \hspace{1.5cm}
     \subfloat{
-        \includesvg[width=0.5\textwidth]{svg/csr-example}
+    \includesvg[width=0.5\textwidth]{svg/csr-example}
     }
     \caption{Example of a table and its compressed sparse row representation.
-      The \textit{Indices} array gives offsets into the \textit{AdjacencyLists} array.
-      The vertices are represented as the indexes into the indices array, e.g. vertex id
-      $2$ is represented as $1$.
+    The \textit{Indices} array gives offsets into the \textit{AdjacencyLists} array.
+    The vertices are represented as the indexes into the indices array, e.g. vertex id
+    $2$ is represented as $1$.
     }
     \label{fig:csr-example}
 \end{figure}
@@ -1173,17 +1173,17 @@ A uncompressed columnar representation needs $2 \times |E|$ while CSR uses only 
 << |E| holds (see~\cref{subsec:graph-analysis}).
 
 \subsection{Sizes of public real-world graph datasets} \label{subsec:graph-analysis}
-In this section, we present a short analysis of the sizes of real worl graph datasets.
+In this section, we present a short analysis of the sizes of real-world graph datasets.
 For this, we collect data about all graphs from the SNAP and Laboratory of Web Algorithms dataset collection~\cite{snapnets,
 law}.
 The graphs in the Snap dataset are a bit older;
 they have been collected between 2000 and 2010.
-All Labaratory of Web Algorithms graph have been collected between 2007 and 2018.
+All Laboratory of Web Algorithms graphs have been collected between 2007 and 2018.
 Both dataset collections are heavily used and cited in academia~\cite{ammar2018distributed,olddog,myria-detailed,fractal,longbin}.
 Two of these papers are from 2019.
 
 For our size calculation we assume that the graph is stored in compressed sparse row representation (see \cref{subsec:csr-background}) using
-integers for the vertice ID's.
+integers for the vertice ids.
 Then, we determine the storage size in bits by the formulae $32 \times |V| + 32 \times |E|$ with 32 the size of an integer in bits, V the
 set of all vertices in the graph and E the set of all edges in the graph.
 
@@ -1195,14 +1195,14 @@ The biggest graph is the friendship graph of Facebook from the year 2017 with 55
     \centering
     \includesvg[width=0.7\textwidth]{svg/graph-sizes}
     \caption{
-      Sizes of all graphs from the SNAP and Labaratory of Web Algorithms dataset collection in giga bytes.
-      The histogram shows graphs up to 100 GB in buckets of 5 GB and in buckets of 50 GB after.
-      In total, we see data collected about 157 graphs.
+    Sizes of all graphs from the SNAP and Laboratory of Web Algorithms dataset collection in gigabytes.
+    The histogram shows graphs up to 100 GB in buckets of 5 GB and in buckets of 50 GB after.
+    In total, we see data collected about 157 graphs.
     }
     \label{fig:graph-sizes}
 \end{figure}
 
-We conclude that even the biggest graph can be fitted in main memory of many cluster machines today.
+We conclude that even the biggest graph can be fitted in the main memory of many cluster machines today.
 The vast majority could be fitted in the main memory of a simple desktop machine or laptop.
 This supports our argument to replicate graph data over all machines.
 

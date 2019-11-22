@@ -8,22 +8,22 @@ We run our experiments on machines of the type \texttt{diamond} of the Scilens c
 group.
 These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (48 cores / 96 threads)
 Each core has 32 KB of 1st level cache, 32KB 2nd level cache.
-The 3rd level cache are 30 MB shared between 12 cores.
+The 3rd level cache provides 30 MB shared between 12 cores.
 The main memory consists of 1 TB of RAM DDR-3 memory.
 
 The machines run a Fedora version 30 Linux system with the 5.0.17-300.fc30.x86\_64 kernel.
-We use Spark 2.4.0 with Scala 2.11.12 on Java openJDK 1.8.
+We use Spark 2.4.0 with Scala 2.11.12 on Java OpenJDK 1.8.
 In the majority of our experiments, we use Spark in its standard configuration with enabled code generation.
 We also tune the parameters for driver and executor memory usage (\texttt{spark.driver.memory} and \texttt{spark.executor.memory}) to fit
 all necessary data into main memory.
 
 \subsubsection{Algorithms}
 
-In our experiments we use 4 different join algorithms.
+In our experiments, we use 4 different join algorithms.
 Two of them are worst-case optimal joins.
 That is our Leapfrog Triejoin implementation and a graph-pattern matching
 specialized Leapfrog Triejoin developed in this thesis: Graph\textsc{WCOJ}.
-LFTJ is only run as sequential algorithm as a baseline against GraphWCOJ.
+LFTJ is only run as a sequential algorithm as a baseline against GraphWCOJ.
 We compare these two algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
 
 The other two algorithms are Spark's binary joins: \textit{BroadcastHashJoin} and \textit{SortmergeJoin}.
@@ -33,21 +33,21 @@ We adjust the \texttt{spark.sql.autoBroadcastJoinThreshold} parameter to control
 if Spark is using a \textit{BroadcastHashJoin} or a \textit{SortMergeJoin}.
 
 \subsubsection{Datasets}
-We run the our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
+We run our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
 We motivate our choice in the next paragraph.
 \Cref{table:datasets} includes a list of all graph datasets mentioned throughout the thesis.
 
 \begin{table}[]
     \centering
     \begin{tabular}{llrrl} \toprule
-        Name    & Variant              &  Vertices   & Edges          & Source          \\ \midrule
-        \textbf{SNB}         & sf1     &             &  453.032       & \cite{snb}      \\
-        \textbf{Amazon}      & 0302    & 262,111     &  1,234,877     & \cite{snapnets} \\
-                             & 0601    & 403,394     &  3,387,388     & \cite{snapnets} \\
-        \textbf{Twitter}     & sc-d    & 81,306      &  1,768,135     & \cite{snapnets} \\
-%                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
-        \textbf{LiveJournal} &         & 4,847,571   & 68,993,773     & \cite{snapnets} \\
-        \textbf{Orkut}       &         & 3,072,441   & 117,185,083    & \cite{snapnets} \\ \bottomrule
+    Name    & Variant              &  Vertices   & Edges          & Source          \\ \midrule
+    \textbf{SNB}         & sf1     &             &  453.032       & \cite{snb}      \\
+    \textbf{Amazon}      & 0302    & 262,111     &  1,234,877     & \cite{snapnets} \\
+    & 0601    & 403,394     &  3,387,388     & \cite{snapnets} \\
+    \textbf{Twitter}     & sc-d    & 81,306      &  1,768,135     & \cite{snapnets} \\
+    %                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
+    \textbf{LiveJournal} &         & 4,847,571   & 68,993,773     & \cite{snapnets} \\
+    \textbf{Orkut}       &         & 3,072,441   & 117,185,083    & \cite{snapnets} \\ \bottomrule
     \end{tabular}
     \caption{A summary of all datasets mentioned in the thesis.}
     \label{table:datasets}
@@ -79,12 +79,12 @@ To allow comparisons with former work, we run a subset of our experiments on the
 This dataset includes the follower relationship of one thousand Twitter users; each of these follows 10 to 4.964 other users and
 relationships between these are included.
 
-The \texttt{LiveJournal} graph represents the friendship relationship of a medium sized social network.
+The \texttt{LiveJournal} graph represents the friendship relationship of a medium-sized social network.
 
 \subsubsection{Graph patterns}
 
 In this section, we detail the graph patterns used throughout our experiments.
-Most of the queries are cyclic because that has been shown to be the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
+Most of the queries are cyclic because that is the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
 WCOJ's also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
 
 We apply filters to most of our queries to make them more realistic, e.g. a clique query does make more sense if it is combined with a
@@ -99,7 +99,7 @@ A complete list of all queries and filters used is shown in~\cref{table:patterns
 Patterns and filters are combined as follows.
 Cliques and the \texttt{kite} query use smaller than filters which require the bindings to increase
 in value according to the variable ordering.
-All other queries are run with a filter such that each of their binding must be distinct.
+All other queries are run with a filter such that each of their bindings must be distinct.
 
 \begin{table}[]
     \centering
@@ -112,7 +112,7 @@ All other queries are run with a filter such that each of their binding must be 
         \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ \\
         \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 \\
         \texttt{n-s-path} & \# edges / selectivity  & $n$       & $n - 1$                 \\
-    \texttt{kite}  & NA                         & $4$        & $5$                    \\
+        \texttt{kite}  & NA                         & $4$        & $5$                    \\
         \texttt{house}    & NA                         & $5$        & $9$                 \\
         \texttt{diamond}  & NA                         & $4$        & $4$                 \\
         \textbf{Filters}   &                            &          &                   \\
@@ -138,7 +138,7 @@ All other queries are run with a filter such that each of their binding must be 
 
 For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
 Then we search for all paths of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all
-paths between two randomly selected, fixed sets of vertices of length 4.
+paths between two randomly selected fixed sets of vertices of length 4.
 The sets of nodes contain roughly 10\% of all input nodes and are
 not guaranteed to be intersection free.
 
@@ -163,7 +163,7 @@ In this experiment, we vary the threshold between 1 and 1600 to determine the be
 These values are chosen such that 1 does not trigger any linear search and that 1600
 does not improve the performance anymore (for \textsc{LFTJ}) and triggers no
 binary search for GraphWCOJ.
-We do so for the 5-clique query on the SNB-1 and on the Twitter dataset.
+We do so for the 5-clique query on the SNB-1 and the Twitter dataset.
 
 The results are shown in~\cref{subsec:linear-search-threshold}.
 The optimum for LFTJ is around 200 while GraphWCOJ shows the best performance at 1600 and 800 for
@@ -186,12 +186,12 @@ and second level of the \textit{TrieIterators} while GraphWCOJ uses it only on t
 level.
 Hence, the impact is bigger.
 
-The optimal values are different because data of the levels is differently distributed.
+The optimal values are different because data of the levels are differently distributed.
 The first level lists nearly all vertices while the second level is made of adjacency lists which are more
 sparse.
 Hence, we assume that the linear searches on the first level are generally longer than
 the one on the second level;
-note that the threshold only gives an maximum length for linear searches but this is not
+note that the threshold only gives a maximum length for linear searches but this is not
 necessarily a good indicator for the length of the performed search.
 
 We tried to use different threshold values for the two levels in \textsc{LFTJ}.
@@ -205,7 +205,7 @@ From this experiment, we conclude that the optimal threshold for \textsc{LFTJ} i
 for GraphWCOJ.
 We choose 800 for GraphWCOJ because it is on the safe site:
 a binary search performance degrades less than the one of a linear search.
-We set these values accordingly in the all further experiments.
+We set these values accordingly in all further experiments.
 
 
 \subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}} \label{subsec:spark-vs-lftj}
@@ -223,7 +223,7 @@ Our experiment measures the time it takes to perform a \texttt{count} on the cac
 \textsc{LFTJ}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
 For \texttt{seq}, we report setup time and the time, it takes to run the join, separately.
-Setup time includes the sorting and materialization.
+Setup time includes sorting and materialization.
 This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
 
 \subsubsection{Experiment Setup}\label{sssec:seq-experiment-rational}
@@ -234,10 +234,10 @@ A shuffle writes and reads data to and from disk.
 Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}.
 We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{triangle} (8.1 seconds vs 58.9 seconds) and
 \texttt{5-clique} pattern (32.9 seconds vs 850.9 seconds).
-We assume that Spark is able to optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
+We assume that Spark can optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
 \textbf{Question:} Why do we exclude setup times from the WCOJ times?\\
-\textbf{Answer:} Because system is meant to cache the readily sorted and formatted as \textsc{CSR}'s and reuse it for multiple queries.
+\textbf{Answer:} Because the system is meant to cache the readily sorted and formatted as \textsc{CSR}'s and reuse it for multiple queries.
 We anticipate that this is necessary to benefit from \textsc{WCOJ}'s in general.
 
 %\textbf{Question:} Why is the time to copy results into \texttt{UnsafeInternalRow} format for WCOJ counted as setup time?\\
@@ -254,7 +254,7 @@ query and \texttt{5-clique}: with code generation Spark takes 3.1 and 4.2 second
 
 We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
 Generally, we see that for \texttt{n-clique} patterns the speedup over Spark decreases for bigger $n$.
-This is due to the fact that many binary joins in a \texttt{n-clique} are actually semi-joins which to do not increase but decrease the size of intermediary results,
+This is because many binary joins in a \texttt{n-clique} are semi-joins which to do not increase but decrease the size of intermediary results,
 e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to a bigger intermediary result.
 
 The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
@@ -267,12 +267,12 @@ However, as the count of their results indicates these two edges lead to dramati
 Hence, their different timing and speedup behaviour.
 
 The \texttt{Kite} pattern produces consistently the second highest speedup after the \texttt{3-clique}.
-Most likely due to the fact that a \texttt{Kite} is two triangles back-to-back.
+Most likely since a \texttt{Kite} is two triangles back-to-back.
 
 The path query shows very different behaviour on the \texttt{Amazon} and the \texttt{SNB} datasets.
 This might be due to the different selectivity; it is extremely high on the co-purchase datasets and rather low on the social network
 benchmark.
-This different in selectivity is not surprising given that the \texttt{SNB} network fulfills the small world property, while the
+This different in selectivity is not surprising given that the \texttt{SNB} network fulfils the small-world property, while the
 \texttt{Amazon} dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
 
 % TODO maybe run path query with different selectivity
@@ -290,16 +290,16 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
 \begin{figure}
     \centering
     \subfloat[Amazon0302]{
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon}
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon-long}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon-long}
     }\\
     \subfloat[Amazon0601]{
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601}
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601-long}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-amazon0601-long}
     }\\
     \subfloat[SNB-sf-1]{
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb}
-        \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb-long}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb}
+    \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb-long}
     }
     \caption{Runtime of a Leapfrog Triejoin and Spark's \texttt{BroadcastHashJoin}}
     \label{fig:spark-vs-lftj}
@@ -333,30 +333,30 @@ We do not show the run-time of \texttt{Path} queries because GraphWCOJ is not ab
 them\footnote{\texttt{Path} queries require us to filter the input relationship before
 the join. This has not been implemented for GraphWCOJ due to time constraints.}.
 
-We show the run-time of the queries on  the different datasets in~\cref{fig:lftj-graphWCOJ}.
+We show the run-time of the queries on different datasets in~\cref{fig:lftj-graphWCOJ}.
 We present the performance of the Leapfrog Triejoin, GraphWCOJ and GraphWCOJ without the
 materialization optimization.
 
 {\itshape Comment for Peter and Bogdan:
-  The materialization showed to be not as good of an optimization as I thought;
-  in some cases it turns out to be slower.
-  This has two reasons:
+The materialization showed to be not as good of an optimization as I thought;
+in some cases, it turns out to be slower.
+This has two reasons:
 
-  I found that it is faster to build the intersection my way because it causes less seek
-  calls to the underlying iterators due to the fact that I start the intersection with the
-  smallest list.
-  So it does not improve computation because of better caching behaviour as I used to believe.
+I found that it is faster to build the intersection my way because it causes less seek
+calls to the underlying iterators because I start the intersection with the
+smallest list.
+So it does not improve computation because of better caching behaviour as I used to believe.
 
-  Then I experimented with the linear search thresholds and found that the algoritm gets faster
-  when I use a higher threshold.
-  Now, there are nearly no binary searches.
-  Hence, the original algorithm got faster and the overhead that used to be avoided by my
-  optimizations (binary searches) is gone.
-  Therefore, the optimizations doesn't look great anymore.
+Then I experimented with the linear search thresholds and found that the algorithm gets faster
+when I use a higher threshold.
+Now, there are nearly no binary searches.
+Hence, the original algorithm got faster and the overhead that used to be avoided by my
+optimizations (binary searches) is gone.
+Therefore, the optimizations don't look great anymore.
 
-  So far I'm not sure what to do about it and present the results as they are.
-  In many cases, it's slightly faster, in some slower.
-  In general, it is not a huge improvement anymore.
+So far I'm not sure what to do about it and present the results as they are.
+In many cases, it's slightly faster, in some slower.
+In general, it is not a huge improvement anymore.
 }
 
 
@@ -364,8 +364,8 @@ materialization optimization.
 \begin{figure}
     \subfloat[Amazon-0302]{\includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon}}
     \subfloat[Amazon-0601]{
-      \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601}
-      \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601-long}
+    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601}
+    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon0601-long}
     }\\
     \subfloat[SNB-1]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
@@ -373,12 +373,12 @@ materialization optimization.
     }\\
     \subfloat[Twitter]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
-%    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
+    %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
     }
     \caption{
-      WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
-      Diamond, house and cycle queries are not reported for Twitter because of their high
-      run-time of over an hour.
+    WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
+    Diamond, house and cycle queries are not reported for Twitter because of their high
+    run-time of over an hour.
     }
     \label{fig:lftj-graphWCOJ}
 \end{figure}
@@ -394,7 +394,7 @@ The lowest speedup is 1.2 on a 4-cycle query on \texttt{SNB-sf-1}.
 Generally, the performance gain from using GraphWCOJ is higher for bigger and denser queries like clique
 queries.
 
-The \texttt{Amazon} datasets show quite similar behaviour over all queries.
+The \texttt{Amazon} datasets show quite similar behaviour overall queries.
 \texttt{SNB-sf-1} and \texttt{Twitter} queries do not profit from using GraphWCOJ as much as
 the \texttt{Amazon} datasets.
 
@@ -403,7 +403,7 @@ is mixed;
 some queries can benefit, others cannot.
 
 In general, queries that see the highest speedup from using GraphWCOJ, also benefit most strongly
-from materialization of the intersections, i.e. clique queries.
+from the materialization of the intersections, i.e. clique queries.
 4-cycles, diamonds and kites are sometimes slower when we materialize the intersections.
 
 The \texttt{Amazon-0302} dataset is the only dataset that shows increased performance for all
@@ -444,18 +444,18 @@ Also, it increases the job size for the \textit{work-stealing} partitioning sche
 \begin{figure}
     \centering
     \subfloat[Twitter dataset\label{fig:graphWCOJ-scaling-twitter}]
-      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-twitter}}
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-twitter}}
     \subfloat[LiveJournal dataset\label{fig:graphWCOJ-scaling-livej}]
-      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-livej}}
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-livej}}
     \newline
     \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
-      {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
     \subfloat[Twitter 3-clique join run-time only without overheads \label{fig:twitter-3-clique-scaling}]
     {\includesvg[width=0.5\textwidth]{svg/twitter-3-clique-scaling}}
     \caption{Scaling behaviour of Shares and work-stealing on three different datasets
-      and two different queries.
-      The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
-      50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
+    and two different queries.
+    The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
+    50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
     }
     \label{fig:graphWCOJ-scaling}
 \end{figure}
@@ -464,9 +464,9 @@ We first describe our expectations of the experiment outcome.
 We assume that scaling improves with the dataset size.
 Hence, we should see the highest speedups for Orkut, then LiveJournal and the lowest speedups for Twitter.
 Also, we expect the scaling to improve with the query size.
-Both hypothesis are grounded in the fact that more work to distribute often leads to stronger scaling.
+Both hypotheses are grounded in the fact that more work to distribute often leads to stronger scaling.
 Additionally, we believe that \textit{work-stealing} shows better scaling than Shares because it does not duplicate work.
-Finally, we have no clear cut expectations to the scaling behaviour of \textit{work-stealing}.
+Finally, we have no clear cut expectations for the scaling behaviour of \textit{work-stealing}.
 Theoretically, we could expect linear scaling for it because no work is duplicated, synchronization overhead is minimal and
 work balance should be given by the scheme.
 However, we measure on a quite complex hardware platform which complicates scaling behaviour.
@@ -475,8 +475,8 @@ First of all, we work on a machine with 4 sockets.
 This can influence scaling positively and negatively.
 Positively because adding more sockets means to add significantly more L3 cache (30 MB shared per socket).
 If we do not use all cores on a socket, each used core can use a bigger share of this cache.
-Negatively because each socket is in a different NUMA zone and the graph is not guarantued to be chached in all
-NUMA zone.
+Negatively because each socket is in a different NUMA zone and the graph is not guaranteed to be cached in all
+NUMA zones.
 Indeed, Spark shares the broadcasts for all tasks on a single executor.
 So there is only one copy in memory.
 
@@ -491,12 +491,12 @@ Anyhow, super-linear scaling in MapReduce like systems is not unheard of and cou
 We describe our observations per dataset;
 starting with Twitter.
 As expected, both partitioning schemes scale better when we increase the query size.
-For 5-clique, \textit{work-stealing} exhibits near linear scaling up to 48 workers, while
+For 5-clique, \textit{work-stealing} exhibits near-linear scaling up to 48 workers, while
 clique-3 reaches the maximum speedup of 6.22 for 8 workers.
 The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highest speedup
 with 13.2 on 64 workers.
 Shares lacks behind in scaling for both queries and all levels of parallelism.
-The best observed speedup is 21.3 for 5-clique and 96 workers.
+The best-observed speedup is 21.3 for 5-clique and 96 workers.
 
 We note that the 3-clique query does not scale well because there is not enough work.
 Therefore, the run-time is dominated by overheads, e.g. the time it takes until Spark starts
@@ -504,7 +504,7 @@ the first job and the time it takes to finalize the query by Spark.
 The overhead calculated by $(queryEnd - queryStart) - (lastTaskCompleted - firstTaskScheduled)$ is
 roughly 0.13 seconds for all levels of parallelism and the whole query runs for 0.19 seconds on
 48 cores.
-We depict the speedup archieved when we measure only the time spent with the join in \cref{fig:twitter-3-clique-scaling}.
+We depict the speedup archived when we measure only the time spent with the join in \cref{fig:twitter-3-clique-scaling}.
 
 % TODO bad scaling for hyperthreading
 
@@ -555,14 +555,14 @@ the higher the percentage of skew in the whole query time the worse the query sc
 
 The total skew grows with the level of parallelism.
 We explain this as follows.
-Lets assume there is at least one job which takes significantly longer than most of the jobs in
+Let us assume there is at least one job which takes significantly longer than most of the jobs in
 the work-stealing queue.
 This job is picked by a worker.
-When more executors are added which work on the remaining jobs, the likelyhood of this one big
+When more executors are added which work on the remaining jobs, the likelihood of this one big
 job adding significant skew raises because the other jobs are finished faster.
 
 This experiment shows that the job size is not fine-grained enough for bigger queries and a high level of parallelism.
-We see that the skew can raise up to nearly half of the total run-time for the 5-clique query
+We see that the skew can raise to nearly half of the total run-time for the 5-clique query
 on Orkut.
 We address this issue in~\cref{subsubsec:finer-grained-work-stealing}.
 
@@ -592,19 +592,19 @@ For 64 workers, we get the hypercube with 4 workers on each axis.
 Hence, although we are doubling the number of workers, we use the new workers only to partition
 work along the last axis, in the case of 3-clique along the C attribute axis.
 Partitioning work along the last axis leads to a high amount of duplicated work on the first
-two axis.
+two axes.
 Additionally, with 64 workers at least 12 of these workers are not exclusive cores but cores shared by
 two hyperthreads.
 In total, we get a lower speedup.
 This changes slightly for 96 workers because the optimal hypercube configuration here is 6, 4, 4 which
 adds more workers along the first axis.
-However, the scaling only increases marginally by 0.1 from 32 workers which is quite disappointing given
+However, the scaling only increases marginally (14.7 to 14.8) from 32 workers which is quite disappointing given
 that the number of threads increased by a threefold.
 
 One could argue that we should use a different definition of \textit{best} hypercube configuration.
 As we see, it is not necessarily efficient to distribute the computation along the last axis.
 % TODO prefix shares
-%We implemented version of the configuration finder that considers only the first \textit{i} axes and
+%We implemented to version of the configuration finder that considers only the first \textit{i} axes and
 %call this partitioning scheme \textit{i-prefixShares}.
 %However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
 %in our further experiments.
@@ -643,18 +643,18 @@ batch size.
 One with the batch size of 1 and one with a batch size of 40.
 We explain this choice later.
 
-On the Orkut dataset we see similiar speedup as in the local version.
+On the Orkut dataset, we see similar speedup as in the local version.
 It is super-linear in the beginning up to 96 cores then the curve flattens out.
 Partly this is due to the use of hyper-threading and partly due to skew.
 
 Skew can be broken down into two components: internal executor skew and inter executor skew.
 
-Internal executor skew is defined as the difference end times of the tasks running and sharing work on
+Internal executor skew is defined as the different end times of the tasks running and sharing work on
 a single executor.
 There is not internal executor skew for the 3-clique query;
-all tasks on the same executor finish work in a time-span of maximal 5 micro seconds.
+all tasks on the same executor finish work in a time-span of maximal 5 microseconds.
 
-Inter executor skew is the difference between the duration of the longest running executor and the average
+Inter executor skew is the difference between the duration of the longest-running executor and the average
 run-time of all other executors.
 We show the absolute skew in seconds and the percentage of skew in the total query run-time
 in~\cref{table:distributed-skew-orkut} for the Orkut dataset.
@@ -663,7 +663,7 @@ The total skew decreases with higher levels of parallelism.
 This is because the work is equally distributed on 4 executors and with more tasks running per executor,
 the run-time difference between executor falls when there is no internal executor skew.
 
-Skew accords for 5\% to 10\% of the total query run-time with an decreasing trend for higher levels of
+Skew accords for 5\% to 10\% of the total query run-time with a decreasing trend for higher levels of
 parallelism.
 Although, decreasing this contributes to a flattening of the speedup curve for 128 workers and more.
 
@@ -672,7 +672,7 @@ With a batch size of 1, it is sub-linear until 48 cores and deteriorates after.
 Again, there is no internal executor skew.
 
 During our study of inter executor skew, we noticed that the worker which takes longest can differ widely
-for different repetitions of the experiment for exactly the same configuration.
+for different repetitions of the experiment for the same configuration.
 This is unexpected because in all of them the executors receive the same workload.
 We run the experiments with a batch size of 1 for the work-stealing algorithm.
 Therefore, we suspect contention of the work-stealing queue to be the reason speedup deterioration and
@@ -701,7 +701,7 @@ The inter executor skew is shown in~\cref{table:distributed-skew-livej}.
 We see that the total and relative skew decrease with the number of workers used which is to be
 expected as explained above.
 Nevertheless, it leads to sub-optimal scaling behaviour and the total value of nearly 3 minutes
-can be quite high for low amount of workers.
+can be quite high for a low amount of workers.
 Reducing the internal executor skew is likely to reduce the inter executor skew;
 we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-work-stealing}.
 
@@ -709,7 +709,7 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
     \subfloat[LiveJournal]{\includesvg[width=0.5\textwidth]{svg/distributed-scaling-livej}}
     \subfloat[Orkut]{\includesvg[width=0.5\textwidth]{svg/distributed-scaling-orkut}}
     \caption{Speedup for 16 to 384 workers evenly distributed over 4 machines for
-      3-clique and 5-clique on two datasets.
+    3-clique and 5-clique on two datasets.
     }
     \label{fig:distributed-scaling}
 \end{figure}
@@ -717,11 +717,11 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
 \begin{table}
     \centering
     \resizebox{\textwidth}{!}{%
-        \input{generated/distributed-skew-liveJ.tex}
+    \input{generated/distributed-skew-liveJ.tex}
     }
     \caption{Total skew and percentage of skew in the total run-time for queries on the LiveJournal dataset.
-        It is displayed for 3-clique run with a batch size of 1 and a batch size of 40 for the work-stealing
-        algorithm.
+    It is displayed for 3-clique run with a batch size of 1 and a batch size of 40 for the work-stealing
+    algorithm.
     }
     % TODO did I explain batch size? in the work-stealing chapter.
     \label{table:distributed-skew-livej}
@@ -730,7 +730,7 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
 \begin{table}
     \centering
     \resizebox{\textwidth}{!}{%
-        \input{generated/distributed-skew-orkut.tex}
+    \input{generated/distributed-skew-orkut.tex}
     }
     \caption{Total skew and percentage of skew in the total run-time for queries on the Orkut dataset.
     }
@@ -740,7 +740,7 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
 
 % TODO write Orkut dataset or only Orkut everywhere
 
-% comparision against other work
+% comparison against other work
 %   Dewitt
 %   Andreas Amler
 %   Old dog

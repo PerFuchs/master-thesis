@@ -18,8 +18,8 @@ Moreover, it achieves optimality and work-balance while using low amounts of mem
 the memory usage per worker is in $\mathcal{O} (\frac{IN}{w})$ with $IN$ size of the input relationships and $w$ the number of workers.
 
 The other two join algorithm are only worst-case optimal in computation and communication costs but
-do not guarantue work-balance nor do they give the same low memory guarantues.
-Although, in praxis, they archieve both on many real-world datasets.
+do not guarantee work-balance nor do they give the same low memory guarantees.
+Although, in praxis, they achieve both on many real-world datasets.
 
 \textit{Delta-BigJoin} is an incremental algorithm which computes the new instances of the subgraph given a batch of new edges.
 Hence, it operates in a different setting than our work.
@@ -29,7 +29,7 @@ We assume static graphs while they operate on graphs with the ability to find ne
 It has been implemented and is a worst-case optimal join for static graphs.
 In the following paragraphs, we describe \textit{BigJoin}, analyse why it is not likely to be a good fit for Spark,
 discuss and compare the index structures used in their work to represent the input relationships and compare the
-guarantees given by them and us.
+guarantees are given by them and us.
 
 \subsubsection{The \textit{BigJoin} algorithm}
 \textit{BigJoin} encodes a \textit{Generic Join} (see~\cref{subsec:worst-case-optimal-join-algorithm}) into multiple
@@ -55,7 +55,7 @@ Then they find join relation that offers the smallest set of extensions for each
 This is done in steps with one step per relationship.
 In each step, the prefix is sent to a worker by the hash of the attributes bound in the relationship of that step.
 When the relationship offers less possible values for the new binding then the current minimum, i.e. the size of its matching adjacency
-list is smaller, we remember it as the new minimum for the given prefix.
+the list is smaller, we remember it as the new minimum for the given prefix.
 
 Next, they hash the values of the prefix which are defined in the relationship with the least extensions and use these hashes to
 distribute the tuples over all workers.
@@ -107,7 +107,7 @@ of the index.
 This is because each worker needs to hold only the possible extensions for the prefixes that map to it for each relationship.
 We analyse this in the next paragraph.
 
-The prefixes are mapped to workers  by the hash of the attributes already bound.
+The prefixes are mapped to workers by the hash of the attributes already bound.
 For graph pattern matching this is one or zero attributes;
 the edge relationship has two attributes and one is a new, yet unbound variable in the prefix.
 
@@ -136,7 +136,7 @@ Hence, this partitioning scheme scales relatively well.
     \centering
     \includesvg[width=0.5\textwidth]{svg/big-join-indices}
     \caption{Expected split of the indexes hold on each worker for different numbers of workers used
-      and variables in the query.
+    and variables in the query.
     }
     \label{fig:big-join-indices}
 \end{figure}
@@ -211,7 +211,7 @@ highlight their most interesting findings and finally compare their results with
 triangle indexing and a specific form of compression as optimization.
 
 The Shares algorithm is configured as described in~\cref{subsubsec:shares} and uses
-\textit{DualSim} as local algorithm.
+\textit{DualSim} as the local algorithm.
 \textit{DualSim} is a specialized subgraph matching algorithm.
 The authors show that it beats the worst-case optimal join used in \textit{EmptyHeaded}~\cite{emptyheaded}
 which is a form of the \textit{Generic Join} (see \cref{subsec:worst-case-optimal-join-algorithm}).
@@ -248,7 +248,7 @@ Otherwise, \textit{BigJoin} is preferable in most cases.
 Finally, they study the communication costs of the binary joins, Shares and \textit{BigJoin}.
 They find that graph pattern matching is computation bound problem when 10 GB switches are used
 for networking but communication costs dominate in 1 GB switched networks.
-They draw there conclusions from experiments run with 10 GB network infrastructure.
+They draw their conclusions from experiments run with 10 GB network infrastructure.
 
 Interestingly, Shares incurs fewer communication costs than \textit{BigJoin}.
 
@@ -318,7 +318,7 @@ before starting the next one.
 A typical problem of graph pattern mining is the high amount of memory needed to keep partial matches;
 the state of the algorithm.
 Fractal counters this problem by enlisting subgraphs with a depth-first strategy.
-Furthermore, it starts computing all subgraphs from scratch for each steap, instead of keeping them in
+Furthermore, it starts computing all subgraphs from scratch for each step, instead of keeping them in
 memory in between the steps.
 They only keep the results of the aggregations to be used by the next step.
 
@@ -379,7 +379,7 @@ from a subgraph enumerator, the work would be taken from the queue on each worke
 
 Both systems enlist the subgraphs in a depth-first like fashion.
 In both systems, this is highly beneficial to memory usage;
-the problem of breadth first algorithms has been discussed for \textit{BigJoin} before (\cref{subsec:wcoj-timely-data-flow}).
+the problem of breadth-first algorithms has been discussed for \textit{BigJoin} before (\cref{subsec:wcoj-timely-data-flow}).
 
 To conclude, Fractal is a complete system with its own query interface.
 This makes it more powerful than our system but also less integrated into Spark.
@@ -391,11 +391,11 @@ Both systems recognize and demonstrate the advantages of a depth-first approach.
 %\subsection{Adaptive Query Exectution}
 
 % Code generation
-%A novel development in Spark is the ability to generate code to execute queries on the fly, called WholeStage codegeneration, based on a technique used in the Hyper database~\cite{hyper,jira-whole-stage,1m-rows-laptop}.
+%A novel development in Spark is the ability to generate code to execute queries on the fly, called WholeStage code-generation, based on a technique used in the Hyper database~\cite{hyper,jira-whole-stage,1m-rows-laptop}.
 %Compiled queries have been shown to be multiple magnitudes faster than interpreted queries traditionally used in most database systems.
 %Interpreted queries are most commonly implemented using the Volcano model~\cite{volcano}.
-%This model provides a simple and composable interface for algebraic operators; basically every operator would provide an iterator interface.
-%This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on, until the next calls reach the scanning operators at the bottom of the query execution tree.
+%This model provides a simple and composable interface for algebraic operators; basically, every operator would provide an iterator interface.
+%This interface would be used by a query by calling next on the root operator, who in turn calls next on each of its children and so on until the next calls reach the scanning operators at the bottom of the query execution tree.
 %These would provide a single tuple which would then be "pulled" upwards through the query tree and processed by all operators.
 %When it reaches the root operator, the result is delivered to the user.
 %This happens for every tuple; hence, the approach can be described as tuple-at-a-time.

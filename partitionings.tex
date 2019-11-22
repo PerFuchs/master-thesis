@@ -193,7 +193,7 @@ We measure the skew of a scheme as a relationship between the time it takes to c
 \subfloat[Speedup \label{fig:static-speedup}]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-other-schemes}}
 \subfloat[Skew \label{fig:static-skew}]{\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-other-schemes-skew}}
 \caption{3-clique on LiveJournal for logical Shares, range based shares and partitioning on the first and second variable.
-Skew is measured as relationship between the time it takes to compute the biggest and the smallest partition.
+Skew is measured as the relationship between the time it takes to compute the biggest and the smallest partition.
 }
 \end{figure}
 
@@ -206,7 +206,7 @@ There is a strong correlation between the skew shown in~\cref{fig:static-skew} a
 Except for \textit{SharesRangeMulti}, the amount of skew relates directly to the scaling behaviour.
 \textit{SharesRangeMulti} is more skew resilient than first variable partitioning and \textit{SharesRange} but does not scale
 better.
-That is because first variable partitioning does not replicate any work.
+That is because the first variable partitioning does not replicate any work.
 Therefore, it's scaling is better even with higher skew between the workers.
 The difference between the two range based Shares partitioning in archived speedup is minimal.
 Most likely this are caused by the fact that \textit{SharesRangeMulti} is implemented as a decorator around the
@@ -221,7 +221,7 @@ In the end, we find logical Shares is the best static partitioning scheme becaus
 replication free schemes as partitionings on the first variable.
 We tried to improve hash-based logical Shares to push it deeper into the layers of the Leapfrog Triejoin algorithm but find that
 range-based Shares cannot handle skew well enough to be a competitor for hash-based Shares.
-Following from these results, we look into dynamic parallelization schemes as work-stealing.
+Following these results, we look into dynamic parallelization schemes as work-stealing.
 
 \subsection{Work-stealing} \label{subsec:work-stealing}
 Normally, Spark uses static, physical partitioning of the data.
@@ -341,11 +341,11 @@ To archive this goal, we would like to know how many tasks were scheduled on eac
 With this knowledge, we can split the workload between executors such that each of them deals with $\frac{w}{e} \times t_e$
 where $w$ is the workload, $e$ the number of executors and $t_e$ the number of tasks on executor $e$.
 
-Spark's scheduler offers the so called \textit{Barrier Execution Mode}.
+Spark's scheduler offers the so-called \textit{Barrier Execution Mode}.
 In this mode, it schedules all tasks of a stage together; either all of them are scheduled at the same time or
 none are scheduled.
 When tasks are scheduled in this mode they have access to the location of all other tasks for this stage.
-Hence, we can determine on how many tasks were scheduled on how many executors from within each task.
+Hence, we can determine how many tasks were scheduled on how many executors from within each task.
 Furthermore, we can tell on which executor the current task runs.
 
 We distribute our local work-stealing approach by requesting barrier scheduling for the worst-case optimal join
@@ -353,7 +353,7 @@ operator.
 Then, we can use the work-stealing design as described for the local mode on each executor by partitioning the
 queue that holds all bindings for the first variable.
 
-We experimented with two different partitioning schemes for the queue: round-robin and range based partitioning.
+We experimented with two different partitioning schemes for the queue: round-robin and range-based partitioning.
 However, both schemes lead to similar run-times and behaviours.
 We choose the round-robin partitioning because it is generally more skew resilient.
 

@@ -1,11 +1,11 @@
 \section{Graph\textsc{WCOJ}} \label{sec:graphwcoj}
-
+TODO
 \subsection{Combining \textsc{LFTJ} with \textsc{CSR}} \label{subsec:graphWCOJ-csr}
 For our graph pattern matching specialized Leapfrog Triejoin version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
 This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
 In this section, we shortly describe the implementation of a \textsc{CSR} based \textit{TrieIterator}, point out the differences between
-this new version and a column based \textit{TrieIterator} (as described in~\cref{subsubsec:leapfrog-triejoin}) and conclude with an experiment demonstrating
+this new version and a column-based \textit{TrieIterator} (as described in~\cref{subsubsec:leapfrog-triejoin}) and conclude with an experiment demonstrating
 the power of this optimization.
 
 The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward except for one design change: instead of using
@@ -22,23 +22,23 @@ The creation of the \textsc{CSR} data structure itself is described in~\cref{sub
 
 We recall that a CSR uses two arrays to represent the graph edge relationship;
 the \textit{AdjacencyLists} array and \textit{Indices} array.
-The first one stores all ajacency lists in one direction (outgoing or incoming) as one concatenated array.
-The second stores indices into the first array, e.g. the value 5 at the position 1 means that the adjacency list
+The first one stores all adjacency lists in one direction (outgoing or incoming) as one concatenated array.
+The second stores indices into the first array, e.g. the value of 5 at position 1 means that the adjacency list
 for the second vertice starts at the 5th position in \textit{AdjacencyLists}.
 
 The vertical component of the \textit{TrieIterator} consists out of the \textit{open} and \textit{up} methods.
-Both of them control on which of the two \textsc{CSR} arrays the iterator is operates.
+Both of them control on which of the two \textsc{CSR} arrays the iterator operates.
 For the first level, it uses the \textit{Indices} array and on the second level the \textit{AdjacencyLists} array.
 
 The \textit{open} method does nothing when the first level is opened.
 When the second level is opened, it positions the iterator at the first element of the adjacency list.
 This position is given by the index in \textit{Indices} where the first level is positioned.
 
-Both methods use only a constant time.
+Both methods use only constant time.
 This differs from the \textit{open} method of the array based \textit{TrieIterator}.
-This method needs to find the number of second level elements when the second level is opened;
+This method needs to find the number of second-level elements when the second level is opened;
 it does so by counting the number of occurrences of the first level key in the first column.
-Additionally, both vertical component methods have more book keeping overhead for the array based implemenation.
+Additionally, both vertical component methods have more bookkeeping overhead for the array-based implementation.
 
 The linear component of the \textit{TrieIterator} is made of the functions: \textit{key}, \textit{atEnd}, \textit{seek} and
 \textit{next}.
@@ -47,12 +47,12 @@ The \textit{key} and \textit{atEnd} method are both only returning values comput
 They do not differ for the \textsc{CSR} based and array based \textit{TrieIterator}.
 
 The \textit{next} method of the CSR based \textit{TrieIterator} only changes at the first level.
-While the array based method needs to use the \textit{seek} method to find the next higher value because
+While the array-based method needs to use the \textit{seek} method to find the next higher value because
 it needs to jump over all entries of the same value as the current key, the CSR based value can simply increase
 the iterator position by one.
 
 The \textit{seek(key)} method exhibits the biggest possible performance improvement on the first level.
-For the array based version, we need to use a binary search to find the \textit{key}.
+For the array-based version, we need to use a binary search to find the \textit{key}.
 A CSR allows us to jump to the correct position in constant time because the \textit{key} parameter is the correct
 index into the array.
 
@@ -65,7 +65,7 @@ Therefore, this linear search does not majorly influence the run time.
 
 The \textit{TrieIterator} implementation based on \textsc{CSR} is much faster than the column based iterator; mainly due to the fact
 that the \textit{seek} method on the first level can be implemented in $\mathcal{O}(1)$, instead of $\mathcal{O}(\log n)$.
-This optimization has huge potential because these searches are the most costly operations for a column based
+This optimization has huge potential because these searches are the most costly operations for a column-based
 \textit{TrieIterator}~\cite{myria-detailed}.
 Note that searches on the second level are fast, due to the fact that most graphs have a low outdegree (see
 \cref{subsec:graph-analysis}).
@@ -76,21 +76,21 @@ number of outgoing edges for each source vertice in its \textit{open} method, to
 
 We conclude that \textsc{CSR} based \textit{TrieIterator}'s are a promising match for \textsc{LFTJ} and graph pattern matching.
 The improvements of this optimization can be seen in \cref{fig:wcoj-vs-graphWCOJ}.
-It demonstrates an up to 2.6 speedup over a column based \textsc{LFTJ}. % NUMBER
+It demonstrates an up to 2.6 speedup over a column-based \textsc{LFTJ}. % NUMBER
 We also see that the optimization has a stronger impact on queries with more edges and vertices, e.g. \texttt{5-clique}.
 For a more thorough evaluation refer to the experiment section \ref{sec:experiments}.
 
 \begin{figure}
-\centering
-\includesvg[width=0.5\textwidth]{svg/wcoj-csr}
-\caption{Run time of \textsc{LFTJ} and GraphWCOJ backed by \textsc{CSR} for multiple queries on \texttt{SNB-sf1}.}
-\label{fig:wcoj-vs-graphWCOJ}
+    \centering
+    \includesvg[width=0.5\textwidth]{svg/wcoj-csr}
+    \caption{Run time of \textsc{LFTJ} and GraphWCOJ backed by \textsc{CSR} for multiple queries on \texttt{SNB-sf1}.}
+    \label{fig:wcoj-vs-graphWCOJ}
 \end{figure}
 
 \subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
 % TODO study in backgrounda
 
-It is well-known that most real-world graphs have a low average outdeegree, mostly far below 200.
+It is well-known that most real-world graphs have a low average outdegree, mostly far below 200.
 This leads to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 
 We can exploit this fact by materializing the intersections in the \textit{LeapfrogJoins} directly
@@ -150,21 +150,21 @@ once we start with the smallest iterator the further intersections are small (be
 
 
 \begin{figure}[H]
-\centering
-\subfloat[Smallest iterator\label{fig:intersection-workload-smallest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest.png}}
-\hfill
-\subfloat[Largest intersection including smallest iterator\label{fig:intersection-workload-smallest-biggest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest-biggest.png}}
-\hfill
-\subfloat[Total intersection\label{fig:intersection-workload-total}]{\includegraphics[width=0.3\textwidth]{intersections/total.png}}
-\caption{Cumulative histograms of total intersection sizes, largest intersection with the smallest iterator and any other, and size of the
-smallest iterator participating in \texttt{5-clique} on \texttt{SNB-sf-1}.}
-\label{fig:intersection-workload}
+    \centering
+    \subfloat[Smallest iterator\label{fig:intersection-workload-smallest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest.png}}
+    \hfill
+    \subfloat[Largest intersection including smallest iterator\label{fig:intersection-workload-smallest-biggest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest-biggest.png}}
+    \hfill
+    \subfloat[Total intersection\label{fig:intersection-workload-total}]{\includegraphics[width=0.3\textwidth]{intersections/total.png}}
+    \caption{Cumulative histograms of total intersection sizes, largest intersection with the smallest iterator and any other, and size of the
+    smallest iterator participating in \texttt{5-clique} on \texttt{SNB-sf-1}.}
+    \label{fig:intersection-workload}
 \end{figure}
 
 In the coming paragraphs, we detail how to build the n-way intersection of multiple adjacency list
 such that we gain performance by better use of data-locality than original the \textit{LeapfrogJoin}.
 We choose to use pairwise intersections over multi-way intersection algorithms for their simpler memory access patterns;
-they touch only two lists at-a-time instead of all lists interchangly.
+they touch only two lists at-a-time instead of all lists interchangeably.
 
 From our analysis, we conclude that the final intersection size is strongly dependent on the
 smallest iterator and that the intersection of the smallest iterator with any other iterator is
@@ -186,17 +186,17 @@ the iterator by binary search with fall-back to linear search.
 
 Finally, we point out a few exceptional cases and pitfalls for implementors:
 \begin{itemize}
-\item If all iterators of the \textit{LeapfrogJoin} are on their first level, the intersection is near |V|. In this case, we fall back
-to the original
-\textit{LeapfrogJoin}.
-\item We use an array to materialize the intersections because Scala collections are slow.
-Instead of deleting elements, we replace them with a special value.
-\item Allocating a new array for every \textit{LeapfrogJoin} initialization is costly.
-We estimate the size of the intersection by the size of the smallest iterator and reuse the array whenever possible. We use a sentry element to mark the end of the array.
+    \item If all iterators of the \textit{LeapfrogJoin} are on their first level, the intersection is near |V|. In this case, we fall back
+    to the original
+    \textit{LeapfrogJoin}.
+    \item We use an array to materialize the intersections because Scala collections are slow.
+    Instead of deleting elements, we replace them with a special value.
+    \item Allocating a new array for every \textit{LeapfrogJoin} initialization is costly.
+    We estimate the size of the intersection by the size of the smallest iterator and reuse the array whenever possible. We use a sentry element to mark the end of the array.
 \end{itemize}
 
 \Cref{fig:mat-nomat-short} shows that the new algorithm performance slightly better than
-the original on fast running queries on the \texttt{SNB-sf1} dataset.
+the original on fast-running queries on the \texttt{SNB-sf1} dataset.
 We believe that this has three possible reasons.
 
 \begin{figure}[H]
@@ -212,7 +212,7 @@ Most of the searches in the adjacency lists are linear searches;
 our binary search falls back to a linear search if the remaining list is small.
 Materializing the intersections means repeating linear searches for increasing elements on the same
 two arrays until they are fully processed.
-While the original algorithm repeats linear searches over all adjacency lists, interupted from filtering
+While the original algorithm repeats linear searches overall adjacency lists, interrupted from filtering
 against first level iterators and does so only until one value is found;
 it then has to return to the same lists for the next elements.
 
