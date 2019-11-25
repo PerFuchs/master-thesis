@@ -1,30 +1,27 @@
 \section{Introduction} \label{sec:introduction}
-Newly developed worst-case optimal join (WCOJ) algorithms, e.g. Leapfrog Triejoin, turned conventional thinking about join processing
+Worst-case optimal join (WCOJ) algorithms, e.g. Leapfrog Triejoin, in the last few years turned conventional thinking about join processing
 on its head because these multi-join algorithms have provably lower complexity than classical binary joins,
 i.e. join algorithms that join just two tables at-a-time.
 In the areas of data warehousing and OLAP, this finding does not have much impact, though,
-since the join patterns most commonly encountered are primary-foreign-key joins,
-which normally take the form of a tree or snowflake and contain no cycles.
-The computational complexity of FK-PK joins is by definition linear in size of the inputs.
-In these \textit{conventional} cases, binary joins work fine, e.g. hash joins.
+since the join patterns most commonly encountered there are primary-foreign-key joins, short (PK-FK joins),
+where the join shapes a tree or snowflake and contains no cycles.
+The computational complexity of PK-FK joins is by definition linear in size of the inputs.
+In these \textit{conventional} cases, binary joins are worst-case optimal already, e.g. hash joins.
 
-However, analytical graph queries often use foreign-foreign-key joins which can grow over linearly in the size of their inputs,
+However, analytical graph queries often use FK-FK joins which can grow over linearly in the size of their inputs,
 and often contain cycles.
 For these use-cases, binary joins often exhibit highly suboptimal run-times because they generate a rapidly increasing set of
 intermediary results, e.g. when navigating a social graph with an out-degree in the hundreds.
 Many of these intermediary results are eliminated in later joins, e.g. a join that closes a cycle.
-Hence, an algorithm which avoids generating these results in the first case is to perform much better and
+Hence, an algorithm which avoids generating these results in the first place is to perform much better and
 closer to the optimal possible performance given by the output size.
-Worst-case optimal joins many of the intermediary results and are guaranteed to reach the best possible run time in terms of
-the output size.
+\textsc{WCOJ} avoid many of the intermediary results and are guaranteed to reach the best possible run time in terms of
+the output size~\cite{agm}.
 
-\textsc{WCOJ}'s avoid large result materialization and hence promise to be orders of magnitude faster than binary
-joins.
-Therefore, we believe that worst-case optimal join algorithms could be a useful addition to (analytical) graph database systems.
-We aim to integrate a scalable, \textsc{WCOJ} algorithm in Spark which is used by some modern graph engines~\cite{caps,gcore,graphframe}.
-Due to time constraints, we built our system for Spark local mode only.
-This mode allows to run queries in parallel using all cores of one machine but does not allow to distribute queries over multiple machines.
-We address the extensions to Spark's cluster modes in future work (\cref{subsec:future-work}).
+Because of the frequent presence of cyclic join-patterns in graph-pattern matching, we believe that worst-case optimal join algorithms
+could be a useful addition to (analytical) graph database systems.
+Therefore, we aim to integrate a scalable, \textsc{WCOJ} algorithm in Spark which is used by some modern graph engines~\cite{caps,gcore,
+graphframe}.
 
 The rest of our introduction is structures as follows.
 \Cref{subsec:graph-pattern-matching} defines the term graph pattern matching, its translation into datalog and
@@ -70,7 +67,7 @@ exist or negation to exclude instances that have too many connections.
 Some techniques used in this work can be extended to cover these cases, we mention related literature but do not focus
 our efforts on these extensions.
 
-Graph pattern matching is fundamental to analytical graph analysis workloads~\cite{twitter-diamonds,fraud-detection,flake2002,
+Graph pattern matching is fundamental to analytical graph analysis workloads~\cite{fraud-detection,flake2002,
 bodaghi2018automobile,newman2004detecting}.
 We show two graph patterns which are used in practice below and explain the use-cases.
 
@@ -148,10 +145,10 @@ We call these plans also \textit{join-at-a-time} approach because they process w
 Fortunately, worst-case optimal join algorithms can materialize cyclic joins with memory usage linear to their output size
 by solving the join \textit{variable-at-a-time} which avoids materializing big intermediary results~\cite{lftj,nprr}.
 
-In a variable-at-a-time the algorithm finds a binding for the first variable $a$, then one for $b$ and
+In variable-at-a-time the algorithm finds a binding for the first variable $a$, then one for $b$ and
 finally one for $c$.
-After this, they emit the tuple as part of the output.
-Then they find further bindings via backtracking until they enumerated the whole join when all bindings for $a$ have been explored.
+After this, it emits the tuple as part of the output.
+Then it finds further bindings via backtracking until they enumerated the whole join when all bindings for $a$ have been explored.
 
 % Example concrete
 A simple example graph database instance gives an idea of why a variable-at-a-time approach is beneficial for cyclic queries.
@@ -298,16 +295,18 @@ To the best of our knowledge, this is also the first time a worst-case optimal j
 computing model.
 We detail our research questions below.
 
+% TODO \textsc{WCOJ}'s everywhere
 \begin{enumerate}
     \item Can we gain performance in \textsc{WCOJ}’s by specializing them to graph pattern matching?
     \begin{enumerate}
-        \item How much performance can we gain by using compressed sparse row representations to back the iterators of \textsc{WCOJ}?
+        \item How much performance can we gain by using compressed sparse row representations as backing data structure to \textsc{WCOJ}'s?
         \item Can we exploit the fact that most real-world graphs have a low average out-degree
         in the algorithm to build intersections within the worst-case optimal join?
     \end{enumerate}
     \item How well do \textsc{WCOJ}’s scale in Spark when used for graph pattern matching?
     \begin{enumerate}
-        \item How well does Shares scale as a logical partitioning scheme given that it replicates work?
+        \item How well does a previously proposed, optimal partitioning scheme, named Shares, scale?
+          We explain Shares in detail in~\cref{subsubsec:shares}.
         \item How to integrate scalable work-stealing into Spark to counter tuple replication and skew?
     \end{enumerate}
 \end{enumerate}
@@ -321,14 +320,17 @@ Towards answering our research questions, we make the following contributions.
     Furthermore, we exploit the typical low out-degree of most graphs to by specializing the \textsc{LFTJ} for small intersections,
     gaining further TODO x of execution time. % NUMBER
     \item We analyse how many tuples Shares replicates for typical graph pattern matching queries.
-    From this analysis and the fact that Shares is an optimal partitioning scheme, we follow that we should replicate the graph on all workers for parallelization.
+    From this analysis and the fact that Shares is an optimal partitioning scheme, we conclude that replication is inevitable for complex
+    graph-pattern matching queries.
+    Therefore, we cache the graph in the memory of all workers.
     \item Based on a replicated edge relationship, we design \textit{logical} Shares.
-    This is a Shares partitioning which is integrated directly into the \textsc{WCOJ}.
-    We measure a speedup of TODO on 48 workers for some queries and beat the aforementioned speedup of Myria by TODO.
+    This is an approach where the graph is fully replicated but we use Shares partitioning to divide work between executors.
+    We measure a speedup of TODO on 48 workers for some queries and beat an existing implementation of (physical) Shares by TODO.
     The results show that Shares is good in dealing with skew but requires too much replicated work to scale well.
-    \item Therefore, we abandon static \textit{logical} partitioning and apply work-stealing.
-    We show that work-stealing can scale linear on some input queries and beats \textit{logical} Shares for all levels of parallelism for 3-cliques and 5-cliques on three different datasets.
-    \item We run experiments on TODO datasets, TODO queries, for up to 96 workers in Spark's local mode using Spark's build-in hash join,
+    \item Therefore, we abandon static partitioning and design a \textsc{WCOJ} that applies work-stealing.
+    We show that work-stealing can scale linearly on some input queries and beats \textit{logical} Shares for all levels of parallelism
+    \item for 3-cliques and 5-cliques on three different datasets.
+    \item We run experiments on TODO datasets, TODO queries, for up to 382 workers using Spark's build-in hash join,
     a general Leapfrog Triejoin and our specialize GraphWCOJ.
 \end{enumerate}
 
@@ -351,23 +353,25 @@ We give an overview of the thesis in the next paragraphs.
 \end{figure}
 
 As motivated in~\cref{subsec:graphs-on-spark}, Spark is a good platform for our work because many graph pattern matching systems use
-Spark.
+it, like neo4j's Cypher on Apache Spark (CAPS) and LDBC's G-CORE~\cite{caps,gcore}.
 In particular, they build on top of Spark's structured query execution offered by Catalyst.
-Catalyst is designed to be easily extendable and allows to introduce new operators, as a worst-case optimal join,
+Catalyst is designed to be easily extendable and allows to introduce new operators, such as a worst-case optimal join,
 without modifying the core of Spark.
-So that these new operators can be used with a native, unchanged installation of Spark.
+This is even possible in a way such that these new operators can be used with a native, unchanged installation of Spark.
 We describe Catalyst query compilation process in~\cref{subsubsec:catalyst}.
 Our integration is detailed in~\cref{sec:spark-integration}.
 
-Normally, Spark achieves parallelism and distributed algorithms by partitioning data overall workers.
-When data from different tables need to be joined, Spark repartition the data such that each worker can process parts of the join locally.
-However, shuffling is an expensive operation, involving disk writes and reads, which should be avoided if possible.
-Moreover, we can show that a communication optimal partitioning scheme converges to a full broadcast for bigger graph pattern queries;
+Normally, Spark achieves parallelism and distributed algorithms by partitioning data over all workers.
+When data from different tables needs to be joined, Spark repartitions the data such that each worker can process parts of the join locally.
+However, shuffling is an expensive operation in Spark, involving disk writes and reads, which should be avoided if possible.
+Moreover, we can show that a communication-optimal partitioning scheme degenerates into a full broadcast for bigger graph pattern queries;
 we explain this in detail in~\cref{subsubsec:shares}.
 
 Given this finding, we design our system to build on a replicated and cached edge relationship on each worker.
+As a short study of us reveals, most large graph problems described in literature, have edge structures that would fit in
+main-memory (see~\cref{subsec:graph-analysis});
+and our compressed storage format further helps to keep memory usage under control.
 This has a few distinct advantages.
-
 % TODO description of the execution of a structured query
 
 First, the broadcast can be done once at system startup.
@@ -380,17 +384,19 @@ the necessary background in~\cref{subsubsec:broadcast-variables}.
 Furthermore, such reuse helps to amortize the none trivial setup costs for worst-case optimal joins;
 they require their input data to be sorted.
 
-Finally, this allows us to use dynamic work-sharing schemes as work-stealing.
-Normally, work-sharing is done completely statically in Spark.
+Finally, a replicated data structure allows us to use dynamic work-sharing schemes as work-stealing cheaply without relocating
+data.
+Normally, partitioning is done completely statically in Spark.
 However, this is problematic given that many real-world graphs are highly skewed, e.g. power-law graphs such as many follower graphs
 (Facebook, Twitter) or web graphs.
+We find that this skew can easily lead to bad load-balancing with the static partitioning of Spark.
 We explain how to integrate work-stealing with Spark in~\cref{subsec:work-stealing}.
 
-Using a fully replicated edge relationship and potentially work-stealing does require us to build partitioning of the data into the
-worst-case optimal join operators.
+Using a fully replicated edge relationship and potentially work-stealing leads to the necessity to build data-partitioning into
+the worst-case optimal join operators.
 This is because Spark would normally have an operator work on all local data and archive parallelism via physically partitioning the
 data over multiple workers.
-We call partitioning build into our operators \textit{logical} partitioning.
+We call partitioning built into our operators \textit{logical} partitioning.
 The concept and its implementation are described in~\cref{sec:worst-case-optimal-join-parallelization}.
 
 We choose to use the Leapfrog Triejoin~\cite{lftj} as a basis for our system;
@@ -400,7 +406,7 @@ $\mathcal{O} (\log_N)$.
 Furthermore, it mainly uses intersections to compute the join.
 The algorithm is explained in detail in~\cref{subsubsec:leapfrog-triejoin}.
 
-We specialize the Leapfrog Triejoin to graph pattern matching by introducing compressed sparse row representaton~(see
+We specialize the Leapfrog Triejoin to graph pattern matching by introducing a compressed sparse row representation~(\textsc{CSR}, dsee
 \cref{subsec:csr-background}) as backing data structure for the input relationships.
 \textsc{CSR} can compress the graph edge relationship by a compression factor of nearly 2.
 Additionally, we show that it speeds up the \textsc{WCOJ} execution to be backed by a \textsc{CSR} because this representation
