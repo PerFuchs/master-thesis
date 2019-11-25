@@ -2,10 +2,11 @@
 
 TODO introduction
 \subsection{Spark}\label{subsec:spark}
-Spark is the probably most widely used and industry accepted cluster computing model.
-It improves over former computing models, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{hadoop} or Haloop~\cite{haloop},
+Spark is the probably most widely used and industry accepted cluster computing framework.
+It improves over former computing frameworks, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{hadoop} or Haloop~\cite{haloop},
 by allowing to cache results in memory between multiple queries, using so-called resilient
 distributed datasets~\cite{rdd}; often abbreviated to RDD.
+Furthermore, it offers SQL as an alternative high-level query interface due to its extensible query optimizer framework, Catalyst.
 
 This section introduces Spark and is organized in four subsections.
 \Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark: the RDD's.
@@ -29,7 +30,7 @@ to all data items, e.g. \textit{map} to apply a function to each data item.
 These operations are called \textit{transformations}.
 An RDD is built starting from a persistent data source and multiple transformations to
 apply to this data source.
-One can store the transformations applied to the input data source as a directed acyclic graph, the so-called \textit{lineage graph}.
+One can represent the transformations applied to the input data source as a directed acyclic graph, the so-called \textit{lineage graph}.
 This graph fully describes the dataset without materializing it because the transformations are deterministic.
 Hence, the dataset can be computed and recomputed on demand, e.g. when the user asks for the count
 of all items in the set.
@@ -55,7 +56,7 @@ Second, by task parallelism, because some parts of the DAG can be computed witho
 Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
 
 \subsubsection{Spark architecture} \label{subsubsec:spark-architecture}
-Spark allows the user to run his program on a single machine or hundreds of machines organized in a cluster.
+Spark allows the user to run a program on a single machine or hundreds of machines organized in a cluster.
 In this section, we explain the architecture that allows this flexibility.
 \Cref{fig:spark-cluster} shows the schematics of a Spark cluster setup.
 
@@ -94,7 +95,6 @@ a standalone mode where Spark provides its own cluster manager functionality.
 Finally, one can run Spark on a single machine in \textit{local mode}.
 In local mode, the driver program and a single executor share a single JVM.
 The executor uses the cores assigned to Spark to run multiple worker threads.
-For our experiments, we run Spark purely in local mode.
 
 \subsubsection{Catalyst} \label{subsubsec:catalyst}
 Catalyst~\cite{spark-sql} is Spark's query optimizer.
@@ -119,7 +119,7 @@ The input of Catalyst is a query in the form of a DataFrame or SQL string.
 From this, the optimizer builds a \textit{unresolved logical plan}.
 This plan can include unresolved attributes, e.g. attribute names which are not matched to a specific
 data source yet or which have no known type.
-To resolve this attributes Catalyst uses a \textit{Catalog} of possible bindings which describe the
+To resolve these attributes Catalyst uses a \textit{Catalog} of possible bindings which describe the
 available data sources.
 This phase is referred to as \textit{Analysis} and results in a \textit{logical plan}.
 The logical plan represents \textit{what} should be done for the query but not exactly \textit{how},
@@ -173,10 +173,12 @@ The last is a good example of Catalyst introducing a shuffle.
 To conclude, the translation to a physical plan translates logical operators into concrete implementations of these and adds exchanges
 to organize the data such that it can be processed independently in partitions.
 
-After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it compiles Java byte code for
-some of the physical operators.
-This code executes often magnitudes faster than interpreted versions of the same operator~\cite{spark-sql} because
-it can be specialized towards this particular query, e.g. if a join operates only on integers, code
+After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it generates
+specific Java for some of the physical operators.
+This code is fused together in a single loop, using a technique called data-centric query
+compilation~\cite{neumann2011efficiently}.
+This code executes often orders of magnitudes faster than interpreted versions of the same operator~\cite{spark-sql} because
+it is specialized towards this particular query, e.g. if a join operates only on integers, code
 generation can prune all code paths dealing with strings.
 Indeed, the code generation phase is part of another Spark project called
 \textit{Tungsten}~\cite{tungsten-project,tungsten-code-generation}.
@@ -190,15 +192,15 @@ The execution of this plan is called
 \textit{structured query execution}~\cite{spark-internals-structured-query-execution}.
 It translates the plan into RDD operations implemented by Spark's core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
-One should note that structured query execution does not materialize the query: the result is an RDD which is a none
-materialized representation of the operations necessary to generate the result.
+One should note that structured query execution does not materialize the query: the result is an RDD which is a non-materialized
+representation of the operations necessary to generate the result.
 In this thesis, we are not concerned with the internals of RDD's.
 We do not need to introduce any new RDD operations or even touch Spark's core functionality.
 Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one logical operator, multiple
 physical operators and a Strategy to translate between them.
 
 \subsubsection{Broadcast variables} \label{subsubsec:broadcast-variables}
-\textit{Broadcast variables} readonly variables which are accessible by all tasks.
+\textit{Broadcast variables} are readonly variables which are accessible by all tasks.
 They are initialized once by the driver program and should not be changed after initialization.
 The process of broadcasting them is handled by Spark.
 It is guaranteed that each broadcast variable is sent only once to each executor and allows it to be spilt to disk if it is not
@@ -213,14 +215,15 @@ In this thesis, we use broadcast variables to cache the edge relationship of the
 \subsection{Worst-case optimal join algorithm}\label{subsec:worst-case-optimal-join-algorithm}
 The development of worst-case optimal joins started in 2008 with the discovery that the output size of a relational query
 is bound by the fractional edge number of its underlying hypergraph~\cite{agm}.
-In short, this bound proves that traditional, binary join plans perform asymptotically worse than theoretical possible
+In short, this bound proves that traditional, binary join plans perform asymptotically worse than theoretically possible
 for the worst-case database instances, e.g. heavily skewed instances.
 For example, the worst-case runtime of binary joins on the triangle query is in $\mathcal{O} (N^2)$, while the AGM bound
 shows the possibility to solve it in $\mathcal{O} (N^{3/2})$.
 The AGM bound has been treated widely in literature~\cite{skew-strikes-back,andreas,agm}.
 A particular good explanation is given by Hung Ngo et al in~\cite{skew-strikes-back}.
 We refer the reader to these papers for further information.
-In the next paragraph, we discuss different algorithms matching the AGM bound which are called worst-case optimal joins.
+In the next paragraph, we discuss different algorithms whose worst-case complexity matches the AGM bound which are called worst-case
+optimal joins.
 
 In 2012, Ngo, Porat, Re and Rudra published the first join algorithm matching the AGM bound, called \textit{NPRR} join~\cite{nprr}.
 In the same year, Veldhuizen proved that the algorithm Leapfrog Triejoin used in LogicBlox,
@@ -239,7 +242,7 @@ to be of practical use.
 In particular, the number of systems it is used in and openly available data on its performance.
 If an algorithm is used in academia as well as in industry, we deem this as an advantage.
 This criterion carries a lot of weight because the first literature on worst-case optimal joins
-has been rather theoretical but in our work, we take a more praxis and system-oriented perspective.
+has been rather theoretical but in our work, we take a more practical and system-oriented perspective.
 
 The practical character of our work also motivates the second dimension which we compare the algorithms in, namely
 ease of implementation.
@@ -252,7 +255,7 @@ The Leapfrog Triejoin is used in two commercial database solutions:
 LogicBlox~\cite{logicBlox} and RelationalAI\footnote{https://www.relational.ai/}.
 Its performance has been reported on in two publications~\cite{myria-detailed,olddog}.
 In particular, it beats various general and graph specific databases for graph pattern matching, i.e.
-PostgresSQL, MonetDB, NEO4J, graphLab and Virtuoso~\cite{olddog}.
+PostgresSQL, MonetDB, neo4j, graphLab and Virtuoso~\cite{olddog}.
 The broadest study of its performance uses 15 different datasets and 7 queries~\cite{olddog}.
 We conclude that the performance of \textsc{LFTJ} is well established by peer-reviewed publications
 as well as industrial usage.
@@ -269,7 +272,7 @@ However, we are not aware of any commercial systems using \textsc{GJ}.
 
 The comparision of Leapfrog Triejoin, \textsc{NPRR} and \textit{Generic Join} by proven performance
 rules out \textsc{NPRR} and puts \textsc{LFTJ} and \textsc{GJ} on a similar level.
-Next, we compare these two algorithms in ease of implementation.
+Next, we compare these two algorithm in ease of implementation.
 
 The description of the Leapfrog Triejoin implementation in its original paper~\cite{lftj} is excellent.
 Furthermore, multiple open source implementation exists~\cite{leapfrog-triejoin-schroeder,myria-detailed}.
@@ -283,12 +286,13 @@ is backed by an executable implementation.
 
 To conclude, we choose Leapfrog Triejoin as the basis for our work based on its openly available records of performance, use in
 academia as well as industrial systems and good description for direct implementation.
-Furthermore, Peter Boncz (supervisor of this thesis) has direct contact to the inventors of \textsc{LFTJ} giving us access to valuable
+Furthermore, the Database research group of CWI (where this thesis was performed)
+has an ongoing collaboration with the inventors of \textsc{LFTJ} giving us access to valuable
 expertise if necessary.
 
 \subsubsection{Leapfrog Triejoin} \label{subsubsec:leapfrog-triejoin}
-In this section, we described the Leapfrog Triejoin algorithm.
-In the first paragraph, we give the high-level idea behind the algorithm and some of its requirements.
+In this section, we describe the Leapfrog Triejoin algorithm.
+In the next paragraph, we give the high-level idea behind the algorithm and some of its requirements.
 Then we discuss the kind of queries that can be answered with it.
 The main part of the section discusses the conceptual algorithm itself.
 We finish with a short discussion of two implementation problems, namely the data structure to represent the input relationships and
@@ -296,7 +300,7 @@ the problem of choosing a good variable ordering.
 
 The Leapfrog Triejoin is a variable-oriented join.
 Given an input query, it requires a variable ordering.
-For example in the triangle query $triangles(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$,
+For example, in the triangle query $triangles(a, b, c) \leftarrow R(a, b), S(b, c), T(a, c)$,
 the variable ordering could be $a, b, c$.
 Furthermore, the Leapfrog Triejoin requires its input relationships to be sorted by lexicographic, ascending order over the given
 variable ordering, e.g. $R$ needs to be sorted by primarily by $a$ and secondary by $b$ given the variable ordering $a, b, c$.
@@ -314,7 +318,7 @@ fragment, e.g. cliques or cycles.
 
 The Leapfrog Triejoin algorithm uses three components which are composed in a layered fashion.
 The concrete composition used for the triangle query is shown in~\cref{fig:lftj-layers}.
-In this figure, we see three layers each of them made of one or more instances of a component.
+In this figure, we see three layers, each of them made of one or more instances of a component.
 The components are the \textit{TrieIterator}, \textit{LeapfrogJoin} and \textit{LeapfrogTriejoin}.
 In the next paragraphs, we explain each layer in order, starting with the lowest layer.
 
@@ -479,7 +483,7 @@ in~\cref{table:lftj-state-machine} and describe each action below.
     action $\leftarrow$ UP \; \label{line:lftj-next-up}
     } {
     bindings(depth) $\leftarrow$ leapfrogJoins[depth].key() \; \label{line:lftj-next-down-or-next}
-    \If{\upshape depth == MAX\_DEPTH} {
+    \eIf{\upshape depth == MAX\_DEPTH} {
     action $\leftarrow$ NEXT
     } {
     action $\leftarrow$ DOWN
@@ -596,7 +600,7 @@ Its has been implemented in their research graph database Graphflow~\cite{graphf
 They define a novel cost-metric for \textsc{WCOJ}s which estimates the costs incurred by constructing the intersections of adjacency
 lists.
 The metric takes three factors into account.
-First, the size adjacency lists.
+First, the size of the adjacency lists.
 
 Second, the number of intermediate matches.
 The concept of intermediate matches is best understood by a simple example;
@@ -638,7 +642,7 @@ Integrating the approach of LogixBlox would be possible but require the implemen
 are openly available.
 
 The approach of Mhedhbi and Salihoglu is much better documented but also more complex.
-It consists of four contributions which build upon each other but could be useful on its own.
+It consists of four contributions which build upon each other but could be useful on their own.
 The cost metric described in their paper applies to our system as well and could be used.
 
 They use this metric for cost estimation in connection with a non-trivial subgraph catalogue.
@@ -797,12 +801,13 @@ The experiments on Myria indicate that the combination of Hypercube shuffles and
 They report a speedup of 8 on 64 workers compared to the time it takes on 2 nodes, which, although unlikely to be optimal, is not
 investigated in great detail.
 
-Therefore, we decide to analyse the expected scaling behaviour of Shares for graph pattern matching.
+Therefore, we decided to analyse the expected scaling behaviour of Shares for graph pattern matching.
 Our main concern is that the number of duplicated tuples in the system increases with the query size (number of vertices) and
 with the number of workers added to the system.
 We provide a theoretical analysis of the number of duplicated tuples for different query sizes and available workers in a later section
 of this thesis (\ref{subsubsec:shares}).
-As a result of this investigation, we decide to not physically partition our data but to duplicate it to all workers and seek for alternative
+As a result of this investigation, we decided to not physically partition our data but to duplicate it to all workers and seek for
+alternative
 strategy to parallelize a worst-case optimal join.
 
 To conclude, the implementation in Myria and in particular the Shares algorithm is the starting point of this thesis.
@@ -881,7 +886,7 @@ this assumption is made in all papers discussing the problem~\cite{myria-detaile
 Therefore, we want to minimize the number of tuples on each single worker because the slowest worker determines the run-time.
 Next, we discuss existing solutions and decide for one of them.
 
-The original Shares paper proposes a none-convex solution which is hard to compute in praxis~\cite{shares}.
+The original Shares paper proposes a non-convex solution which is hard to compute in practice~\cite{shares}.
 Later, Beame et al. define a linear optimization problem which is solvable but leads to fractional hypercube
 sizes~\cite{shares-proof}.
 Hence, it is not possible to use their solution directly.
@@ -911,10 +916,10 @@ Hence, the workload caused by $(a, b)$ is $|(a, b)| \times \frac{1}{6}$.
 The paper evaluates this strategy to assign hypercube configurations and finds that it is efficient and practical.
 We choose to use the same solution for our work.
 
-\paragraph{Shares is worst-case communication-cost optimal}
+\paragraph{Shares is worst-case communication-optimal}
 Shares, as described above, is shown to be worst-case optimal in its communication costs in MapReduce like systems for
 n-ary joins using one shuffle round.
-First, Beame et al. prove that Shares scheme is optimal on databases without skew~\cite{shares-proof}. % skew in parallel
+First, Beame et al. prove that the Shares scheme is optimal on databases without skew~\cite{shares-proof}. % skew in parallel
 Later the same authors are able to give a proof that Shares is also an optimal algorithm for skewed databases if one knows the
 \textit{heavy-hitter} tuples and splits the join into a skew free part and residual joins for the heavy hitters using different
 hypercube configurations for each residual join~\cite{shares-skew-proof}. % worst-case
@@ -947,7 +952,7 @@ Two of the three papers~\cite[shares-skew-proof,gym] cannot handle clique joins 
 Additionally, they add additional complexity to the query optimizer, e.g. they require the input query to be represented as
 generalized hypertree decomposition to calculate their intersection width~\cite{gym} or to find many different hypercube
 configurations~\cite{shares-binary,shares-skew,shares-skew-proof} which is not trivial in
-praxis and computation-intensive as discussed in the last paragraph.
+practice and computation-intensive as discussed in the last paragraph.
 
 We leave it to future research to investigate the practical application of these algorithms to graph pattern matching.
 The most interesting paper in this direction is~\cite{shares-binary}.
@@ -1110,7 +1115,7 @@ we decide against using any partitioning scheme in our work but replicate the ed
 workers.
 
 \subsection{Compressed sparse row representation}\label{subsec:csr-background}
-Compressed sparse row representation (short CSR) is a well known, low-memory representation for static graphs~\cite{csr,csr-first}.
+Compressed sparse row representation (short CSR) is a well known, compact representation for static graphs~\cite{csr,csr-first}.
 To ease its explanation, we assume that the graph's vertices are identified by the numbers from 0 to $|V| - 1$.
 However, our implementation allows the use of arbitrary vertice identifiers in $\mathcal{N}$ by storing the translation in an additional
 array of size \textit{|V|}.
