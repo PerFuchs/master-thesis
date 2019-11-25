@@ -52,23 +52,13 @@ In particular, partitioning on the second variable is interesting because bindin
 they are the scan of the first level of a \textit{TrieIterator}.
 
 \subsection{Logical Shares} \label{subsec:shares-logical}
-Shares has been developed as an optimal shuffle for n-ary joins on MapReduce like systems.
-So, it is used to physical partition the tables participating in the join overall workers of the system.
-Then, each worker works only on the tuples it holds in its partition.
-This has been implemented in Myria to be used with a \textsc{WCOJ}~\cite{myria-detailed} and for Hadoop~\cite{hadoop}.
-We describe the Shares and Myria in more detail in~\cref{subsec:myria} and assume that the reader is familiar
-with this section.
+We assume that the reader is familiar with~\cref{subsec:myria} where we describe the Shares and Myria in more detail.
 
 The idea of Shares can also be used for a \textit{logical} partitioning scheme.
 Instead, of partitioning the graph before computing the join, we determine if a tuple should be considered by the
 join on-the-fly.
 We do so by assigning a coordinate of a hypercube to each worker.
 Then each worker is responsible for the tuples which match its coordinate as in the original Shares.
-However, a huge difference to a physical Shares partitioning exists: while physical Shares keeps one prefiltered, materialized
-partition of the edge relationship per relationship of the join in memory, we keep only a single copy of the graph edge relationship in
-memory which can be used by all \textit{TrieIterator} for all edge table aliases.
-Once, the edge relationship is broadcasted and cached, we do not need to materialize prefiltered partitions of it before every
-query.
 
 Filtering tuples on-the-fly in the \textsc{LFTJ} comes with a challenge: in the \textit{LeapfrogTriejoin} we do not consider whole tuples
 but only single attributes of a tuple at the time,
@@ -101,7 +91,7 @@ can also be seen as a filter over the values of the \textit{TrieIterators}.
 As we know from~\cref{subsec:graphWCOJ-materalization}, the \textit{LeapfrogJoin} is a rather selective filter.
 It does not make sense to push a less selective filter below a more selective filter.
 
-With this idea in mind, we build a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
+With this idea in mind, we built a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
 method.
 This is implemented as a decorator pattern around the original \textit{LeapfrogJoin}.
 The use of the decorator pattern allows us to easily integrate Shares with the \textsc{LFTJ} while keeping it decoupled enough
@@ -133,7 +123,7 @@ Therefore, we do not need to materialize a prefiltered data structure for each \
 if the partitions become large for bigger queries.
 
 \subsubsection{RangeShares} \label{subsubsec:range-shares}
-In the last section, we raised the point that our Shares implementation only filters out value after the
+In the last section, we raised the point that our Shares implementation only filters out values after the
 \textit{LeapfrogJoins}.
 This is because a hash-bashed filter needs to consider single values one-by-one.
 In this section, we explore the possibility to use range based filters which can be pushed into the \textit{TrieIterators}.
@@ -142,7 +132,7 @@ It leads to high skew which hinders good scaling of this idea.
 
 We observe that the general idea behind Shares is to introduce a mapping per attribute from the value space into the space of possible
 hypercube coordinates, e.g. so far all Shares variants use a hash function per attribute to map the values onto the hypercube.
-We investigate the possibility to use ranges as mapping function, e.g. in a three-dimensional hypercube with three workers per dimension,
+We investigate the possibility to use ranges as mapping functions, e.g. in a three-dimensional hypercube with three workers per dimension,
 we could divide the value space into three ranges; a value matches a coordinate if it is in the correct range.
 Contrary, to hash-based mappings which are checked value by value until one matches, a range check is a single conditional after each
 \textit{seek} and \textit{next} function call.
@@ -171,7 +161,7 @@ However, experiments still show a high skew: some workers find many more instanc
 For the triangle query on \textit{LiveJournal}, we find that the fastest worker outputs only 0.4 times the triangles than the slowest worker.
 We conclude that the pattern instances are unevenly distributed over the ranges of vertice ids which leads to high skew in
 a range based solution.
-We stopped our investigation in this direction.
+We show performance measurements in the coming section and stopped our investigation in this direction.
 
 % TODO source code for clarification?
 
@@ -225,7 +215,7 @@ Following these results, we look into dynamic parallelization schemes as work-st
 
 \subsection{Work-stealing} \label{subsec:work-stealing}
 Normally, Spark uses static, physical partitioning of the data.
-As we learned in the last section that can lead to a trade-off between the ability to handle skew and duplicated work.
+As we learned in the last section, that can lead to a trade-off between the ability to handle skew and duplicated work.
 A standard approach to handle skew and unbalanced workloads is work-stealing.
 
 For this, the work is not statically partitioned before-hand but organized in many smaller tasks which can be
@@ -234,7 +224,7 @@ Workers are either assigned an equal split of tasks and steal tasks from other w
 in a queue accessible for all workers, so that workers can poll tasks from it whenever they are out of work.
 In either way, this results in a situation where no task is guaranteed to be solved by a single worker and each worker only finishes
 when no free tasks are left in the system.
-Hence, the maximum amount of skew roughly the size of the smallest task.
+Hence, the maximum amount of skew is roughly the size of the smallest task.
 There is no duplicated work because different tasks should not overlap and each task exists only once in the whole system.
 
 We first describe a work-stealing version designed for the Spark's local mode where all tasks are computed on a single machine.
@@ -257,10 +247,10 @@ It is not necessary to define the tasks such that they have all the same size.
 However, it is important to choose the task size small enough to avoid skew.
 Furthermore, the tasks should not overlap so that work is not duplicated.
 We choose to define a task as the work necessary to find all possible tuples for a single binding of the first join variable.
-This is none overlapping.
+This is non-overlapping.
 The task size can vary widely and is query dependent.
 However, given the huge amount of tasks (as many as vertices in the graph), we believe this to be small enough.
-We plan to evaluate this during our experiments.
+We will evaluate this during our experiments.
 
 The second design choice in work-stealing is how to hand tasks to workers.
 For simplicity, we choose to use a shared, thread-safe queue that holds all tasks.
