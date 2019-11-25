@@ -10,17 +10,17 @@
 
 As one can see in line 16 % LINE
 of~\cref{lst:usage-example}, we support a clean and precise DSL to match patterns in graphs.
-This DSL is inspired by GraphFrames~\cite{graphframe}.
+This DSL is inspired by Spark's API for graphs named GraphFrames~\cite{graphframe}.
 The user can define a pattern by its edges, each edge is written as \textit{(a) - [] -> (b)} where \textit{a} is the
 source vertice and \textit{b} is the destination, multiple edges are separated by a semicolon.
 A connected pattern is expressed by defining multiple edges with the same source or destination.
 One should be aware, that a named source or destination is not guaranteed to be a distinct element in the graph,
 e.g. \textit{(a) - [] -> (b); (b) - [] -> (c)} could be a linear path of size two or a circle between \textit{a} and
 \textit{b}; in the second case \textit{a} and \textit{c} are the same element.
-The reader might wonders, why we chose to stay with the GraphFrame syntax for edges of
+The reader might wonder, why we chose to stay with the GraphFrame syntax for edges of
 \textit{- [] ->}, although, we could have went with something simpler, like \textit{->}.
-However, sticking to the more verbose syntax allows us to include labels inside of the squared brackets
-in future extensions, e.g. for our stretch goal of integration with CAPS.
+However, sticking to the more verbose syntax allows us to include labels restriction inside of the squared brackets
+in future extensions, e.g. for the integration with neo4J's \textsc{CAPS} system.
 
 The second parameter to \textit{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
 Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result.
@@ -36,12 +36,13 @@ it a pure engineering task.
 We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
 Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst (see
 \cref{subsubsec:catalyst}).
-First of all this is logical plan representing a worst-case optimal join.
-Then a strategy to convert this logical operator into multiple physical operators.
+We start out with a logical plan that consists of a \textsc{WCOJ} operator.
+Then we introduce a new strategy to convert this logical operator into multiple physical operators.
 One physical operator executes the join.
 In between, this operator and the graph edge relationships, we execute another physical operator that materializes
 the graph edge relationships into a data structure that can support a \textit{TrieIterator} interface
 (see~\cref{subsubsec:leapfrog-triejoin}).
+This graph edge relationship can be cached so it needs to be computed only once on startup.
 The integration itself is quite straightforward due to Catalysts extendability.
 We explain it in the next sections.
 First, we highlight some limitations of our integration into Catalyst.
@@ -61,7 +62,7 @@ The lack of peer-reviewed papers and the high complexity of the arXiv paper clea
 Spark's optimizer is out of scope for this thesis.
 
 % TODO graphWCOJ everywhere without \textit
-\subsection{A sequetial linear Leapfrog Triejoin} \label{subsec:spark-integration-seq}
+\subsection{A sequential linear Leapfrog Triejoin} \label{subsec:spark-integration-seq}
 For this section we assume that the reader is familiar with the background section about Catalyst (see \cref{subsubsec:catalyst}) and
 \textsc{LFTJ} (see \cref{subsubsec:leapfrog-triejoin}) where we explain the components of Catalyst planning phase and the requirements
 of a Leapfrog Triejoin.
@@ -72,7 +73,7 @@ Therefore, all representations of the edge relationship have only a single parti
 In Spark this partitioning is called \textit{AllTuples}.
 We enforce sequential execution of the complete Spark plan in our experiments by setting the number of executors to 1.
 
-In the first phases of Catalyst query compilation process, the query plan is represented by logical operators.
+In the first phases of the Catalyst query compilation process, the query plan is represented by logical operators.
 Integration into this phase only requires us to build a logical operator to represent the \textsc{WCOJ} join.
 The only thing that we need to describe for this logical operator are the number of children.
 A \textsc{LFTJ} can have 2 or more children, one for each input relationship.
@@ -107,7 +108,7 @@ in~\cref{subsubsec:leapfrog-triejoin}).
 \subsection{GraphWCOJ} \label{subsec:spark-integration-graphWCOJ}
 The integration of GraphWCOJ is quite similar to the one of \textsc{LFTJ}.
 \Cref{fig:graphWCOJ-catalyst-plan} shows the logical and physical plan constructred by our integration.
-There are three main difference: GraphWCOJ requires only two children for the input relationships, the children materialize the input
+There are three main differences: GraphWCOJ requires only two children for the input relationships, the children materialize the input
 relationships in a CSR data structure (see~\cref{subsec:csr-background}) and we support parallel execution of the join (which requires
 a third child) and broadcasting of the CSR data structure.
 We address these differences in order.
@@ -137,7 +138,7 @@ Next, we describe how to build these CSR's from two linear, sorted, row wise ite
 First, we note that it is necessary to build both compressed sparse row data structures in tandem.
 This is because some vertices in the graph might have no outgoing or incoming edges.
 That means some vertice ID's do not occur in the $src$ or $dst$ attributes of any tuple.
-Therefore, the \textit{Indices} arrays of the two CSR structures would differ if they are build from either $src$ and $dst$, e.g.
+Therefore, the \textit{Indices} arrays of the two CSR structures would differ if they are built from either $src$ and $dst$, e.g.
 they could have different length.
 However, if this is the case, it is not possible to use both CSR's together in a single join.
 
@@ -194,7 +195,7 @@ the execution of a physical operator.
 Parallelism is introduced via the third child of our GraphWCOJ operators.
 It is an empty RDD with as many partitions as the desired level of parallelism.
 We schedule tasks by using the \textit{mapPartitions} function of this empty RDD.
-Foreach partition, we run the \textsc{WCOJ} join backing its \textit{TrieIterator} with the broadcasted CSR's and partition the data
+For each partition, we run the \textsc{WCOJ} join backing its \textit{TrieIterator} with the broadcasted CSR's and partition the data
 logical by one of the schemes described in~\cref{sec:worst-case-optimal-join-parallelization}.
 
 One of the main advantages of broadcasting the edge relationship to all workers is that we can reuse the same broadcast for all queries

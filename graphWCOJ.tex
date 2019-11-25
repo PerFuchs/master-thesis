@@ -3,13 +3,13 @@ TODO
 \subsection{Combining \textsc{LFTJ} with \textsc{CSR}} \label{subsec:graphWCOJ-csr}
 For our graph pattern matching specialized Leapfrog Triejoin version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
-This data structure is typically used for static graphs and we show that it is a great match for \textsc{LFTJ}.
+This data structure is typically used for static graphs and we show that it is a good match for \textsc{LFTJ}.
 In this section, we shortly describe the implementation of a \textsc{CSR} based \textit{TrieIterator}, point out the differences between
 this new version and a column-based \textit{TrieIterator} (as described in~\cref{subsubsec:leapfrog-triejoin}) and conclude with an experiment demonstrating
 the power of this optimization.
 
 The implementation of a \textsc{CSR} based \textit{TrieIterator} is straightforward except for one design change: instead of using
-the vertice identifier from the graph directly, we use their indices in the \textsc{CSR} representation.
+the vertex identifier from the graph directly, we use their indices in the \textsc{CSR} representation.
 This change is rather minor because it can be contained at any level by using a hash map for translation, e.g. in the
 \textit{TrieIterator} itself, in the \textit{LeapfrogTriejoin} or at the end of the query by an additional mapping operation.
 
@@ -102,7 +102,7 @@ the intersections touching each adjacency list only once, instead of, multiple t
 
 We structure the remainder of this section as follows.
 First, we shortly reiterate the most important facts about \textit{LeapfrogJoins} for this chapter.
-Second, we analysis the intersection workload in terms of input sizes and result size to confirm our hypothesis
+Second, we analyze the intersection workload in terms of input sizes and result size to confirm our hypothesis
 and gain valuable insights to choose the best intersection algorithm.
 Third, we explain the algorithm we chose based on the analysis.
 Fourth, we point out differences to the original Leapfrog Triejoin.
@@ -142,7 +142,7 @@ The maximum is lower than 200.
 
 These observations confirm our hypothesis that the size of the intersections is small (below 5) and do not show the same long-tail
 distribution as the whole social network graph.
-Hence, we can materialize them without running at risk of building big intermediary results.
+Hence, we can materialize them without running the risk of building big intermediary results.
 
 Furthermore, the experiment shows that optimizing by taking iterator sizes into account is worthwhile but only for the smallest iterator
 because

@@ -43,7 +43,8 @@ This result is in line with the observation that `in the Tributary join algorith
     }
     \label{table:lftj-optimizations}
 \end{table}
-We applied one \textsc{LFTJ} specific optimizations.
+
+We applied one \textsc{LFTJ} specific optimization.
 
 The \textit{LeapfrogJoin.init} method is originally described to sort its \textit{TrieIterators} so the method
 \textit{leapfrogSearch} knows the position of the largest and smallest iterator (see~\cref{subsubsec:leapfrog-triejoin}).
@@ -109,7 +110,7 @@ This is likely due to saving virtual function calls in the hottest part of our c
 We found many standard optimizations and Scala specific optimizations to be really useful.
 These are the optimizations that brought the biggest performance improvements.
 However, they are well-known, so we mention them only in tabular form~\ref{table:lftj-optimizations}.
-For Scala specific optimizations one can find good explanations at~\cite{databricks-scala-guide}.
+For Scala-specific optimizations one can find good explanations at~\cite{databricks-scala-guide}.
 
 Apart from the aforementioned very useful optimizations, we investigated multiple other avenues in hope for performance improvements
 which did not succeed, we list these approaches here to save others the work of investigating:
@@ -119,6 +120,7 @@ which did not succeed, we list these approaches here to save others the work of 
     \item use of a Galloping search before the binary search
     \item unrolling the while-loop in \textit{LeapfrogTriejoin} state machine (see \cref{alg:leapfrogTrieJoin-state-machine})
     \item predicating the \textit{action} variable in \textit{LeapfrogTriejoin} state machine
+    % TODO cite a paper for predication, Peter's feedback
 \end{itemize}
 
 Finally, we believe that code generation for specific queries that combines the functionality of \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}
