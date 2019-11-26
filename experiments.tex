@@ -1,8 +1,16 @@
 \section{Experiments}\label{sec:experiments}
-
-TODO introduction
-
-\subsection{Setup} \label{subsec:experimental-setup}
+In this section, we demonstrate our experiments.
+First, we give the experiment setup with used machines, algorithms, datasets and queries.
+Second, we vary the linear-search threshold of the binary search used by our \textsc{WCOJ}
+algorithms to determine the best values.
+Then, we provide a comparision of the run-time of a sequentially run Spark binary join with our
+reference implementation of the \textsc{LFTJ}.
+As next experiment, we compare the \textsc{LFTJ} algorithm with our graph pattern matching
+specialized GraphWCOJ.
+Followed, by an analysis of the scaling behaviour of GraphWCOJ in Spark's local mode on
+a single machine.
+Finally, we show the speedup our distributed version reaches on four machines with up
+to 384 cores and compare the run-time with Spark's binary joins in a distributed setting.
 
 We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster of the CWI Database Architecture research
 group.
@@ -17,8 +25,7 @@ In the majority of our experiments, we use Spark in its standard configuration w
 We also tune the parameters for driver and executor memory usage (\texttt{spark.driver.memory} and \texttt{spark.executor.memory}) to fit
 all necessary data into main memory.
 
-\subsubsection{Algorithms}
-
+\subsection{Algorithms}
 In our experiments, we use 4 different join algorithms.
 Two of them are worst-case optimal joins.
 That is, our Leapfrog Triejoin implementation and a graph-pattern matching
@@ -32,7 +39,7 @@ We compare them against the sequential version of \textsc{LFTJ} and GraphWCOJ in
 We adjust the \texttt{spark.sql.autoBroadcastJoinThreshold} parameter to control
 if Spark is using a \textit{BroadcastHashJoin} or a \textit{SortMergeJoin}.
 
-\subsubsection{Datasets}
+\subsection{Datasets}
 We run our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
 We motivate our choice in the next paragraphs.
 \Cref{table:datasets} includes a list of all graph datasets mentioned throughout the thesis.
@@ -81,8 +88,7 @@ relationships between these are included.
 
 The \texttt{LiveJournal} graph represents the friendship relationship of a medium-sized social network.
 
-\subsubsection{Graph patterns}
-
+\subsection{Queries}
 In this section, we detail the graph patterns used throughout our experiments.
 Most of the queries are cyclic because that is the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
 WCOJ's also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
@@ -207,50 +213,37 @@ We choose 800 for GraphWCOJ because it is on the safe site:
 a binary search performance degrades less than the one of a linear search.
 We set these values accordingly in all further experiments.
 
-
-\subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}} \label{subsec:spark-vs-lftj}
+\subsection{Baseline: \texttt{BroadcastHashJoin} vs \textsc{LFTJ}} \label{subsec:spark-vs-lftj}
 % TODO use uniform spelling for broadcasthashjoin
 In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation with the runtime of Spark's \texttt{BroadcastHashjoin}.
 Towards this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
-and
-\texttt{SNB-sf1}.
-
-
-We show our results in~\cref{fig:spark-vs-lftj}.
-\Cref{sssec:seq-analysis} analyzes the results.
+and \texttt{SNB-sf1}.
 
 Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and
 \textsc{LFTJ}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
-For \texttt{seq}, we report setup time and the time, it takes to run the join, separately.
+For \texttt{seq}, we the time, it takes to run the join, excluding setup time.
 Setup time includes sorting and materialization.
-This section is focused on comparing the runtimes excluding the setup time - rational given in~\cref{sssec:seq-experiment-rational}.
 
-\subsubsection{Experiment Setup}\label{sssec:seq-experiment-rational}
-\textbf{Question:} Why do we compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMergeJoin}? \\
-\textbf{Answer:} Because even when all data is arranged in a single partition, for simple sequential processing, Spark
-schedules its \texttt{SortMergeJoin} to use a shuffle.
+This section is focused on comparing the runtimes excluding the setup time, because the final system is meant to cache the readily sorted
+and formatted as \textsc{CSR}'s and reuse it for multiple queries.
+We anticipate that this is necessary to benefit from \textsc{WCOJ}'s in general.
+
+We compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMergeJoin} because even when all data is arranged in a single
+partition, for simple sequential processing, Spark schedules its \texttt{SortMergeJoin} to use a shuffle.
 A shuffle writes and reads data to and from disk.
 Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}.
 We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{triangle} (8.1 seconds vs 58.9 seconds) and
 \texttt{5-clique} pattern (32.9 seconds vs 850.9 seconds).
 We assume that Spark can optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
-\textbf{Question:} Why do we exclude setup times from the WCOJ times?\\
-\textbf{Answer:} Because the system is meant to cache the readily sorted and formatted as \textsc{CSR}'s and reuse it for multiple queries.
-We anticipate that this is necessary to benefit from \textsc{WCOJ}'s in general.
+We point out that Spark's code generation is a huge advantage for the \texttt{BroadcastHashJoin} compared
+to our interpreted \textsc{LFTJ}.
+We ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for the triangle
+query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
 
-%\textbf{Question:} Why is the time to copy results into \texttt{UnsafeInternalRow} format for WCOJ counted as setup time?\\
-%\textbf{Answer:} It is time solely spent for integration with Spark and not Leapfrog Triejoin specific.
-%Furthermore, it could be avoided by working directly on the \texttt{UnsafeInternalRow} format within our \texttt{seq} implementation.
-%However, this would require us to work with unmanaged memory (the \texttt{UnsafeInternalRow} interface is slower than working on \texttt{Arrays})
-%and we deem this as an unnecessary engineering overhead.
-
-\textbf{Question:} Is Spark's code generation a huge advantage for the \texttt{BroadcastHashjoin}?\\
-\textbf{Answer:} Yes, we ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for the \texttt{triangle}
-query and \texttt{5-clique}: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
-
-\subsubsection{Analysis}\label{sssec:seq-analysis}
+We show our results in~\cref{fig:spark-vs-lftj}.
+Next, we analyze the results.
 
 We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
 Generally, we see that for \texttt{n-clique} patterns the speedup over Spark decreases for bigger $n$.
@@ -384,7 +377,7 @@ This query gets slower with materialization because of the overhead of copying v
     \subfloat[SNB-1]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb}
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-snb-long}
-    }\\
+    }
     \subfloat[Twitter]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
     %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
@@ -413,29 +406,6 @@ Therefore, it is most difficult to scale.
 Hence, it shows how query size influences the scaling.
 Also, it increases the job size for the \textit{work-stealing} partitioning scheme.
 
-% TODO paragraph about section structure
-
-\subsubsection{Results}
-
-\begin{figure}
-    \centering
-    \subfloat[Twitter dataset\label{fig:graphWCOJ-scaling-twitter}]
-    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-twitter}}
-    \subfloat[LiveJournal dataset\label{fig:graphWCOJ-scaling-livej}]
-    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-livej}}
-    \newline
-    \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
-    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
-    \subfloat[Twitter 3-clique join run-time only without overheads \label{fig:twitter-3-clique-scaling}]
-    {\includesvg[width=0.5\textwidth]{svg/twitter-3-clique-scaling}}
-    \caption{Scaling behaviour of Shares and work-stealing on three different datasets
-    and two different queries.
-    The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
-    50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
-    }
-    \label{fig:graphWCOJ-scaling}
-\end{figure}
-
 We first describe our expectations of the experiment outcome.
 We assume that scaling improves with the dataset size.
 Hence, we should see the highest speedups for Orkut, then LiveJournal and the lowest speedups for Twitter.
@@ -463,6 +433,27 @@ expected to reach the same performance as two cores.
 To conclude, we expect sub-linear speedup for Shares and better but still sub-linear speedup for \textit{work-stealing}.
 Anyhow, super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
 % TODO cite the internet source from Monday.
+
+We show the scaling behaviour of Shares and work-stealing on different datasets and for 3 queries in~\cref{fig:graphWCOJ-scaling}.
+
+\begin{figure}
+    \centering
+    \subfloat[Twitter dataset\label{fig:graphWCOJ-scaling-twitter}]
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-twitter}}
+    \subfloat[LiveJournal dataset\label{fig:graphWCOJ-scaling-livej}]
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-livej}}
+    \newline
+    \subfloat[Orkut dataset\label{fig:graphWCOJ-scaling-orkut}]
+    {\includesvg[width=0.5\textwidth]{svg/graphWCOJ-scaling-orkut}}
+    \subfloat[Twitter 3-clique join run-time only without overheads \label{fig:twitter-3-clique-scaling}]
+    {\includesvg[width=0.5\textwidth]{svg/twitter-3-clique-scaling}}
+    \caption{Scaling behaviour of Shares and work-stealing on three different datasets
+    and two different queries.
+    The batch size parameter for \textit{work-stealing} is chosen for balance between lock contention and worker skew:
+    50 for Twitter and 3-clique on LiveJournal, 1 for 5-clique on LiveJournal and 20 on the Orkut dataset.
+    }
+    \label{fig:graphWCOJ-scaling}
+\end{figure}
 
 We describe our observations per dataset;
 starting with Twitter.
