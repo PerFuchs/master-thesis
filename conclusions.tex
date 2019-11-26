@@ -1,10 +1,108 @@
 \section{Conclusions} \label{sec:conclusions}
 
-% TODO get back to research questions
-% TODO section about timely dataflow comparison, leading question: what's the better way to
-% implement a WCOJ, do they need to ship each edge to all nodes, is there a connection to our share proof or
-% curse of connectivity
+First, we summarize the answers to our research questions outlined in~\cref{subsec:research-questions-and-contributions}.
+Then, we explain to areas of future work: finer-grained work-stealing and possibilities for inter executor work-stealing in Spark.
 
+The first research question is if we can gain performance by specializing \textsc{LFTJ} to graphs.
+We explored two possibilities: to use \textsc{CSR} to store the graphs edge relationship and to find a more suitable
+intersection algorithm.
+
+Using \textsc{CSR} is a big advantage for dense queries where it leads up to 11 times better performance.
+Sparse queries profit less but are often 2 times faster.
+
+We partially succeeded in finding a better intersection algorithm to use in the \textit{LeapfrogJoin}'s for the graph-pattern use-case.
+We find that intersections tend to converge to their final size quickly when using binary intersections driven by the often small
+intermediary result.
+Therefore, multiple binary intersections are often faster than the n-ary intersection proposed in the original Leapfrog Triejoin
+paper~\cite{lftj}.
+Again, dense queries can profit while sparse queries show no difference or even a slow down.
+
+The slow down in sparse queries is likely caused by our second attempted specialization, namely materializing the intersections in
+hope for better use of the processor cache.
+We can not measure any difference in cache use.
+Hence, this optimization is not worth-while.
+
+To answer the first research question: yes, \textsc{WCOJ} should be specialized to the graph-pattern
+use-case.
+Even straightforward optimizations like using a compact graph representation can lead to 11 times
+better performance.
+
+Our second research question concerns the scalability of \textsc{WCOJ}'s in Spark.
+In our background research, we find that the implementation in Myria of a provably optimal partitioning scheme, Shares, suitable for
+Spark does not scale well.
+In \cref{subsubsec:shares}, we demonstrate that Shares scaling behaviour is inherently bad for graph-pattern matching because
+it leads to a lot of duplicated work and its partitioning deteriorates to a full broadcast;
+hence, it cannot save much communication or memory over simply replicating the whole graph on each machine, in particular, if
+we run multiple queries.
+We conclude that caching the complete edge relationship of the graph on each machine at system start-up is the better design.
+This fits well with \textsc{WCOJ} joins because they need to sort and materialize their input relationships which comes at non-trivial
+costs.
+When we cache the edge relationship once and reuse it for all queries, we can amortize these costs.
+
+On the base of a replicated graph, we study two \textit{logical}, static partitioning schemes which we directly integrate into the
+Leapfrog Triejoin.
+First, we implement range based partitioning on a single variable which allows us to trade duplicated work against skew.
+Second, we build a range based and a hashed based Shares partitioning into the \textsc{LFTJ}.
+
+We find that hash-based Shares is the best \textit{logical}, static partitioning scheme because it is most skew resilient.
+Although, it replicates more work than partitioning on the first or second variable.
+
+However, the replicated work leads to bad scaling of \textit{logical} Shares;
+measured over 3 queries on three different datasets Shares strongest speedup is 25 for 96 workers, mostly it does not
+reach speedup of 20 and more for any query, dataset and level of parallelism of 48 and up.
+
+Based on this result, we conclude that static partitioning schemes are not scalable when using the \textsc{LFTJ} for graph-pattern
+matching.
+Therefore, we investigate the integration of work-stealing in Spark.
+
+First, we demonstrate high potential for work-stealing as a partitioning scheme in our experiments on a single machine in Spark's local
+mode in~\cref{subsec:scaling-graphWCOJ}.
+It achieves super-linear speedup for the triangle query on two out of three datasets and near-linear speedup if we do not take sequential
+overhead into account on the last dataset.
+Bigger queries scale less well but often twice as good as Shares.
+
+We identified residual skew as the main reason for the weaker scaling on 4-clique and 5-clique.
+This is caused by our design decision to use one binding for the first variable as minimal stealable job size.
+We describe an alternative algorithm to generalize work-stealing to all levels of variables in~\cref{subsubsec:finer-grained-work-stealing}.
+
+Then, we investigate the scaling of a simple, communication free, distributed work-stealing integration into Spark.
+We find that the scaling of it is similar to the local mode version in 3 out of 4 measured queries.
+It scales as good or better for most levels of parallelism for the 5-clique query up to 96 workers.
+We do not have data for the local version on more than 96 cores due to the size of our machines.
+
+The scaling above 96 workers for the 5-clique query is dataset dependent, while
+the Orkut dataset leads a speedup of 56 for a parallelism level of 384;
+on LiveJournal, the algorithm reaches a speedup of 182 for 384 workers.
+This seems a decent result given that only 192 physical cores are used and the fact that
+it could be improved by avoiding internal executor skew by the more fine-grained work-stealing
+approach described in~\cref{subsubsec:finer-grained-work-stealing}.
+
+The scaling for 3-clique on the LiveJournal dataset is worse than in the local version and
+deteriorates for higher levels of parallelism.
+This is partly caused by the contention of the work-stealing queue which can be easily mitigated
+by using one queue per worker which leaves queues uncontested until most tasks are finished;
+we provide a more detailed analysis of the expected contention of this design in~\cref{subsubsec:finer-grained-work-stealing}.
+
+We conclude that executor internal work-stealing is a good starting point to fully distribute
+\textsc{WCOJ} optimal joins on Spark.
+It often reaches similar speedups than the local version and beats Spark's built-in joins
+by two magnitudes.
+While being far from perfect it is the best scaling distributed \textsc{WCOJ} on a Spark
+like system to the best of our knowledge.
+
+However, we recognize that our distributed version works best on a cluster with a few
+big machines, like the one we ran experiments for this thesis on.
+This is because then the graph is broken down in a few big pieces which are processed by
+many tasks that share work.
+If one uses a cluster that has many small machines, the graph is partitioned in many small pieces
+which are worked upon by a few tasks each.
+This setup is likely to lead to higher inter worker skew.
+We discuss possible solutions in~\cref{subsubsec:cluster-mode}.
+
+The answers to our second set of research questions are: Shares does not scale well but
+better than less skew resilient schemes and dynamic work-sharing approaches are needed to
+achieve good speedup in a Spark like system.
+However, these are not natural to Spark like systems and difficult to integrate.
 
 \subsection{Future work} \label{subsec:future-work}
 
@@ -117,7 +215,7 @@ The algorithm starts with totally uncontested locks until the first task finishe
 range.
 Then the number of threads which could contend for locks grows linearly with the progress of the
 algorithm within finding all possible bindings because before a thread can start work-stealing it
-finishes its own range.
+finishes its range.
 
 When threads start stealing work they can choose their victims such that they minimize lock contention.
 Hence, locks are contested mostly between the thief and the victim.
@@ -128,5 +226,5 @@ for lower variables.
 Finally, the locking time of the locks is short most of the times because it only needs to find
 one further binding.
 With materialized \textit{LeapfrogJoins} the locked code section only
-reads one value from an array, one or at most two \textit{seek} calls on the first level of an
+reads one value from an array, one or at most two \textit{seek} calls on the first level of a
 \textit{TrieIterator}\footnote{These calls need two array reads. Hence, they are actions in constant time.} and stores the value returned.

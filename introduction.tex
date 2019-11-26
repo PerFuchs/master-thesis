@@ -300,8 +300,8 @@ We detail our research questions below.
     \item Can we gain performance in \textsc{WCOJ}’s by specializing them to graph pattern matching?
     \begin{enumerate}
         \item How much performance can we gain by using compressed sparse row representations as backing data structure to \textsc{WCOJ}'s?
-        \item Can we exploit the fact that most real-world graphs have a low average out-degree
-        in the algorithm to build intersections within the worst-case optimal join?
+        \item Can we find a more suitable algorithm to build intersections for graph-pattern matching than the complex n-ary approach
+         proposed originally?
     \end{enumerate}
     \item How well do \textsc{WCOJ}’s scale in Spark when used for graph pattern matching?
     \begin{enumerate}
