@@ -148,7 +148,6 @@ We argue that the first approach is cleaner as it does not misuse parts of the S
 and leaves us in full control of the setup.
 
 \subsection{Finer-grained work-stealing} \label{subsubsec:finer-grained-work-stealing}
-% TODO does the materialization section include a reference to not moving first level trieIterators
 In our experiment section~\ref{subsec:scaling-graphWCOJ}, we noted that work-stealing that
 operates only on the first level of variable bindings can still lead to skew for bigger queries.
 Therefore, we describe a work-stealing Leapfrog Triejoin algorithm that allows stealing work

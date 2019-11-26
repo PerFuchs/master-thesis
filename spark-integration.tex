@@ -4,7 +4,7 @@
 \begin{listing}[H]
     \centering
     \inputminted{scala}{code/usage-example.scala}
-    \caption{Example usage of a WCOJ to find triangles in graph.}
+    \caption{Example usage of a \textsc{WCOJ} to find triangles in graph.}
     \label{lst:usage-example}
 \end{listing}
 
@@ -22,7 +22,7 @@ The reader might wonder, why we chose to stay with the GraphFrame syntax for edg
 However, sticking to the more verbose syntax allows us to include labels restriction inside of the squared brackets
 in future extensions, e.g. for the integration with neo4J's \textsc{CAPS} system.
 
-The second parameter to \textit{findPattern} allows the user to specify the variable ordering used in the WCOJ algorithm.
+The second parameter to \textit{findPattern} allows the user to specify the variable ordering used in the \textsc{WCOJ} algorithm.
 Furthermore, the user interface takes multiple optional arguments, e.g. to apply to common filters to the output of the result.
 The filters are \textit{distinctFilter}, ensuring that each vertice can occur only as binding for one variable, and
 \textit{smallerThanFilter} to allow only output bindings were the values decrease with regards to the specified variable ordering,
@@ -33,8 +33,8 @@ Implementing the possibility to push general filters into the join would be a va
 it a pure engineering task.
 
 \subsection{Integration with Catalyst} \label{ssec:integration-with-catalyst}
-We integrated our WCOJ implementation into Spark such that it can be used as function on \textit{Datasets}.
-Therefore, we build all components necessary to execute a WCOJ in Spark's structured queries, provided by Catalyst (see
+We integrated our \textsc{WCOJ} implementation into Spark such that it can be used as function on \textit{Datasets}.
+Therefore, we build all components necessary to execute a \textsc{WCOJ} in Spark's structured queries, provided by Catalyst (see
 \cref{subsubsec:catalyst}).
 We start out with a logical plan that consists of a \textsc{WCOJ} operator.
 Then we introduce a new strategy to convert this logical operator into multiple physical operators.
@@ -47,15 +47,15 @@ The integration itself is quite straightforward due to Catalysts extendability.
 We explain it in the next sections.
 First, we highlight some limitations of our integration into Catalyst.
 
-It is not in the scope of this work to integrate WCOJ's into the SQL parser of Spark.
-Hence, WCOJ can only be used by Spark's Scala functional interface and not through Spark's SQL queries.
+It is not in the scope of this work to integrate \textsc{WCOJ}'s into the SQL parser of Spark.
+Hence, \textsc{WCOJ} can only be used by Spark's Scala functional interface and not through Spark's SQL queries.
 
 We do not integrate it into the query optimization components of Catalyst, e.g. we do not provide rules or cost-based strategies to
-decide when to use a WCOJ or a binary join.
-It is up to the user to decide when to use a WCOJ or a binary join.
+decide when to use a \textsc{WCOJ} or a binary join.
+It is up to the user to decide when to use a \textsc{WCOJ} or a binary join.
 However, our integration allows the user to intermix these freely.
 The reason for this decision is, that at time of writing no published paper existed that systematically studies which queries benefit from
-WCOJ's in general, nor, does research exist that studies the combination of WCOJ's and binary joins.
+\textsc{WCOJ}'s in general, nor, does research exist that studies the combination of \textsc{WCOJ}'s and binary joins.
 Only a month after we decided on our scope for Spark integration Salihoglu et al. published an arXiv paper~\cite{mhedhbi2019} that
 tackled these problems for the first time.
 The lack of peer-reviewed papers and the high complexity of the arXiv paper clearly illustrate that deeper integration with
@@ -205,7 +205,7 @@ variable cache maintained on the Spark master node.
 
 The CSR broadcast variable cache is a simple dictionary with RDD ID's to broadcast variables of CSR structures.
 When, our system builds a broadcasted CSR structure, it registers the broadcast in the cache.
-Every time, we translate a logical WCOJ plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
+Every time, we translate a logical \textsc{WCOJ} plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
 if so, our strategy reuses this broadcast.
 
 

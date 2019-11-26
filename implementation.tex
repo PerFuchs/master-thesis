@@ -6,7 +6,7 @@ Hence, we report on how to optimize the join.
 After, we are able to beat Spark's \textit{BroadcastHashjoin} on nearly all queries and datasets.
 We report measured run-times for the unfiltered 5-clique on the Amazon0601 dataset for different optimizations
 in~\cref{table:lftj-optimizations}.
-In total, we improved the WCOJ running time from 316.5 seconds to 54.1 seconds.
+In total, we improved the \textsc{WCOJ} running time from 316.5 seconds to 54.1 seconds.
 
 We discuss the optimization in categories: Leapfrog Triejoin specific, binary search specific, Spark related, Scala related and general.
 We conclude the section with some changes we tried that do not improve performance.
@@ -120,7 +120,6 @@ which did not succeed, we list these approaches here to save others the work of 
     \item use of a Galloping search before the binary search
     \item unrolling the while-loop in \textit{LeapfrogTriejoin} state machine (see \cref{alg:leapfrogTrieJoin-state-machine})
     \item predicating the \textit{action} variable in \textit{LeapfrogTriejoin} state machine
-    % TODO cite a paper for predication, Peter's feedback
 \end{itemize}
 
 Finally, we believe that code generation for specific queries that combines the functionality of \textit{LeapfrogTriejoin}, \textit{LeapfrogJoin}

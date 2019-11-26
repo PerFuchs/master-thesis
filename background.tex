@@ -1,6 +1,19 @@
-\section{Background}\label{sec:background}
+\section{Background} \label{sec:background}
+In this section, we describe the different systems and former research necessary to
+a good understanding of this thesis.
+First, we introduce Spark.
+Second, we discuss possible \textsc{WCOJ} join algorithms and argue why we
+choose to use Leapfrog Triejoin as basis for our thesis.
+Third, we describe distributed worst-case optimal join algorithm in a Spark-like
+system, called Myria.
+There implementation uses a communication optimal, physical partitioning scheme named
+Shares.
+We also analyse its scaling behaviour for graph-pattern matching.
+This analysis is a contribution of us, although it is presented in the background section.
+Fourth, we explain the compressed sparse row data structure.
+Finally, we present a study of real-world graph sizes used in literature assembled by us to
+show that most graphs used today fit into main-memory.
 
-TODO introduction
 \subsection{Spark}\label{subsec:spark}
 Spark is the probably most widely used and industry accepted cluster computing framework.
 It improves over former computing frameworks, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{hadoop} or Haloop~\cite{haloop},

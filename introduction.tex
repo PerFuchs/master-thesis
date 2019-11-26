@@ -295,7 +295,6 @@ To the best of our knowledge, this is also the first time a worst-case optimal j
 computing model.
 We detail our research questions below.
 
-% TODO \textsc{WCOJ}'s everywhere
 \begin{enumerate}
     \item Can we gain performance in \textsc{WCOJ}’s by specializing them to graph pattern matching?
     \begin{enumerate}
@@ -316,22 +315,23 @@ Towards answering our research questions, we make the following contributions.
     \item We integrate a sequential, general worst-case optimal join into Spark.
     This implementation serves as a baseline for our \textsc{WCOJ} optimized to graph pattern matching.
     \item We design and implement \textit{GraphWCOJ} which is a worst-case optimal join specialized to graph pattern matching.
-    It is backed by a compressed sparse row representation of the graph which reduces its memory footprint and speeds up execution by TODO over a normal \textsc{LFTJ} because it acts as an index. % NUMBER
-    Furthermore, we exploit the typical low out-degree of most graphs to by specializing the \textsc{LFTJ} for small intersections,
-    gaining further TODO x of execution time. % NUMBER
+    It is backed by a compressed sparse row representation of the graph which reduces its memory footprint and speeds up execution by up
+    to 11 times over a normal \textsc{LFTJ} because it acts as an index. % NUMBER
+    Furthermore, we exploit the typical low out-degree of most graphs to by specializing the \textsc{LFTJ} for small intersections.
     \item We analyse how many tuples Shares replicates for typical graph pattern matching queries.
     From this analysis and the fact that Shares is an optimal partitioning scheme, we conclude that replication is inevitable for complex
     graph-pattern matching queries.
     Therefore, we cache the graph in the memory of all workers.
     \item Based on a replicated edge relationship, we design \textit{logical} Shares.
     This is an approach where the graph is fully replicated but we use Shares partitioning to divide work between executors.
-    We measure a speedup of TODO on 48 workers for some queries and beat an existing implementation of (physical) Shares by TODO.
+    We measure a speedup of 13 on 64 workers for some queries and beat an existing implementation of (physical) Shares which reaches
+    a speedup of 8 for the same number of machines.
     The results show that Shares is good in dealing with skew but requires too much replicated work to scale well.
     \item Therefore, we abandon static partitioning and design a \textsc{WCOJ} that applies work-stealing.
     We show that work-stealing can scale linearly on some input queries and beats \textit{logical} Shares for all levels of parallelism
     \item for 3-cliques and 5-cliques on three different datasets.
-    \item We run experiments on TODO datasets, TODO queries, for up to 382 workers using Spark's build-in hash join,
-    a general Leapfrog Triejoin and our specialize GraphWCOJ.
+    \item We run experiments on 5 datasets, 6 queries, for up to 382 workers using Spark's build-in hash join,
+    a general Leapfrog Triejoin and our specialized GraphWCOJ.
 \end{enumerate}
 
 \subsection{Thesis overview} \label{subsec:thesis-idea}
@@ -372,7 +372,6 @@ As a short study of us reveals, most large graph problems described in literatur
 main-memory (see~\cref{subsec:graph-analysis});
 and our compressed storage format further helps to keep memory usage under control.
 This has a few distinct advantages.
-% TODO description of the execution of a structured query
 
 First, the broadcast can be done once at system startup.
 Then, we can reuse it for any graph pattern matching query;
@@ -421,9 +420,24 @@ We discuss both specializations to the Leapfrog Triejoin algorithm in~\cref{sec:
 \subsection{Results} \label{subsec:introduction-results}
 TODO summarize the most important results here.
 
-%\subsection{Structure} \label{subsec:structure}
-%TODO outline?
-% structure
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 % Also introduce cached edge table, ref related work for why communication does not work
 % and goals for explanation of why we think caching is helpful

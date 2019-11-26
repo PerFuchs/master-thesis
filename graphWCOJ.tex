@@ -155,7 +155,6 @@ Furthermore, the experiment shows that optimizing by taking iterator sizes into 
 because
 once we start with the smallest iterator the further intersections are small (below 21) in the vast majority of all instances.
 
-
 \begin{figure}[H]
     \centering
     \subfloat[Smallest iterator\label{fig:intersection-workload-smallest}]{\includegraphics[width=0.3\textwidth]{intersections/smallest.png}}
@@ -195,6 +194,9 @@ Finally, we point out a few exceptional cases and pitfalls for implementors:
 \begin{itemize}
     \item If all iterators of the \textit{LeapfrogJoin} are on their first level, the intersection is near |V|. In this case, we fall back
     to the original
+    \item One should not include the first level iterators in the materialization because
+     moving them changes the state of their second level. Hence, they need to move once a
+     value is returned from the \textit{LeapfrogJoin} and not before.
     \textit{LeapfrogJoin}.
     \item We use an array to materialize the intersections because Scala collections are slow.
     Instead of deleting elements, we replace them with a special value.

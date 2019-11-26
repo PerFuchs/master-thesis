@@ -90,8 +90,8 @@ The \texttt{LiveJournal} graph represents the friendship relationship of a mediu
 
 \subsection{Queries}
 In this section, we detail the graph patterns used throughout our experiments.
-Most of the queries are cyclic because that is the primary use-case for WCOJ in former research~\cite{olddog,myria-detailed}.
-WCOJ's also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
+Most of the queries are cyclic because that is the primary use-case for \textsc{WCOJ} in former research~\cite{olddog,myria-detailed}.
+\textsc{WCOJ}'s also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
 
 We apply filters to most of our queries to make them more realistic, e.g. a clique query does make more sense if it is combined with a
 smaller-than filter, which requires that the attributes are bound such that \textit{a} smaller than \textit{b}, smaller than \textit{c}.
@@ -384,14 +384,14 @@ This query gets slower with materialization because of the overhead of copying v
     % TODO long twitter queries?
     }
     \caption{
-    WCOJ run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
+    \textsc{WCOJ} run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
     Diamond, house and cycle queries are not reported for Twitter because of their high
     run-time of over an hour.
     }
     \label{fig:lftj-graphWCOJ}
 \end{figure}
 
-\subsection{Scaling of \textit{Graph\textsc{WCOJ}}} \label{subsec:scaling-graphWCOJ}
+\subsection{Scaling of \textit{GraphWCOJ}} \label{subsec:scaling-graphWCOJ}
 
 In this section, we aim to analyse and compare the scaling of Graph\textsc{WCOJ} using different
 partitioning schemes.
