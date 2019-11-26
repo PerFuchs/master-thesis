@@ -614,6 +614,7 @@ We present the total run-time of these joins and the time needed by the distribu
 algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
 
 \begin{table}
+	\centering
     \begin{tabular}{lrrr}
         \toprule
         Parallelism & Spark BHJ [s] & Spark SMJ [s] & GraphWCOJ [s] \\ \midrule
@@ -622,11 +623,9 @@ algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
         \bottomrule
     \end{tabular}
     \caption{
-      Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashJoin} (BHJ),
-      \texttt{SortMergeJoin} (SMJ) and GraphWCOJ on LiveJournal.
-       Spark uses 1152 partitions for 384 workers as recommended by the Spark documentation\footnote{https://spark.apache
-    .org/docs/latest/tuning.html}.
-    }
+    	Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashJoin} (BHJ),
+    	\texttt{SortMergeJoin} (SMJ) and GraphWCOJ on LiveJournal.
+    	    	Spark uses 1152 partitions for 384 workers as recommended by the Spark documentation: https://spark.apache.org/docs/latest/tuning.html.}
     \label{table:spark-vs-distributed-work-stealing}
 \end{table}
 

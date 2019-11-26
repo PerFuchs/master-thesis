@@ -104,11 +104,50 @@ better than less skew resilient schemes and dynamic work-sharing approaches are 
 achieve good speedup in a Spark like system.
 However, these are not natural to Spark like systems and difficult to integrate.
 
-\subsection{Future work} \label{subsec:future-work}
+\subsection{Distributed work-stealing} \label{subsubsec:cluster-mode}
 
-\subsubsection{Cluster mode} \label{subsubsec:cluster-mode}
+Work-stealing between executors inherently needs communication.
+Spark does not offer any direct means of communication between two executors to the developer.
 
-\subsubsection{Finer-grained work-stealing} \label{subsubsec:finer-grained-work-stealing}
+\textit{Broacast variables} and \textit{Accumables} offer one-way communication from the driver to the executors and vice versa.
+On first sight, one could assume that these can be combined into a two way message channel.
+However, this is not the case.
+\textit{Broadcast variables} can transfer information to the executors but they do not offer the ability to check whether a message has
+arrived.
+The information they carry is accessed via a lazy attribute of an variable from the outer scope of a task closure.
+Once, the lazy attribute is evaluated by the task it takes the current value at the driver and will not change anymore even if
+it does so on the driver.
+Hence, the executor can only guess when to evaluate the value and if it does so too early the variable cannot be reused.
+Additionally, the number of broadcast variables needs to be known before the task is serialized because they are variables in the outer
+scope of the closure to serialize.
+Therefore, the number of broadcast variables cannot be infinite.
+If we take the two arguments together, it becomes clear that a it is not possible to use broadcast variables for dynamic communication.
+
+There are two possibilities to enable executors to communicate in Spark.
+
+First, one can use an external message-passing framework which can be setup during Spark's startup and connect all executors, e.g.
+Akka\footnote{https://akka.io/}.
+That is possible because often Spark executors are connected in the same network and otherwise the driver can be used as proxy.
+This has been done in Fractal (see~\cref{subsec:fractal}) for the use-case of inter executor work-stealing.
+We inspected the code and find that they use a straightforward Akka setup for a simple work-stealing approach via message-passing.
+There design is directly applicable to our setup.
+
+Second, Spark uses remote procedure calls internally to schedule tasks on executors and to receive heartbeats and accumables.
+The same functionality could be used to implement work-stealing.
+In particular, the \textit{BarrierTasksContexts} uses remote procedure calls to implement its barrier method.
+This remote procedure end-point could be made accessible to the user with minimal effort.
+However, the original design of the barrier mode explicitly names further communication methods as a \textit{Non-goal}\footnote{
+https://issues.apache.org/jira/browse/SPARK-24582?page=com.atlassian.jira.plugin.system.issuetabpanels\%3Aall-tabpanel\\
+https://docs.google.com/document/d/1GvcYR6ZFto3dOnjfLjZMtTezX0W5VYN9w1l4-tQXaZk/edit#heading=h.yqvxlbrdqkkb}.
+
+We conclude that both options to introduce communication between different executors are suboptimal.
+The first adds an additional dependency and requires the user to setup its cluster such that executors are located in the same
+network.
+The second uses private and undocumented Spark internals.
+We argue that the first approach is cleaner as it does not misuse parts of the Spark system in a way they have not be designed for
+and leaves us in full control of the setup.
+
+\subsection{Finer-grained work-stealing} \label{subsubsec:finer-grained-work-stealing}
 % TODO does the materialization section include a reference to not moving first level trieIterators
 In our experiment section~\ref{subsec:scaling-graphWCOJ}, we noted that work-stealing that
 operates only on the first level of variable bindings can still lead to skew for bigger queries.
