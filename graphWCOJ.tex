@@ -1,5 +1,12 @@
 \section{Graph\textsc{WCOJ}} \label{sec:graphwcoj}
-TODO
+In this section, we describe how we specialize a Leapfrog Triejoin implementation to
+the graph-pattern matching use-case.
+We use to different techniques.
+First, we change the backing data structure for the \textit{TrieIterator}'s.
+Second, we analyse the intersection workload and suggest a more suitable
+algorithm to compute them in the \textit{LeapfrogJoin}'s.
+
+% TODO everywhere \\textit{TrieIterator}'s
 \subsection{Combining \textsc{LFTJ} with \textsc{CSR}} \label{subsec:graphWCOJ-csr}
 For our graph pattern matching specialized Leapfrog Triejoin version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
