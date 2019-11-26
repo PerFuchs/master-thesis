@@ -4,7 +4,7 @@ TODO introduction
 
 \subsection{Setup} \label{subsec:experimental-setup}
 
-We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster owned by the CWI Database Architecture research
+We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster of the CWI Database Architecture research
 group.
 These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (48 cores / 96 threads)
 Each core has 32 KB of 1st level cache, 32KB 2nd level cache.
@@ -21,7 +21,7 @@ all necessary data into main memory.
 
 In our experiments, we use 4 different join algorithms.
 Two of them are worst-case optimal joins.
-That is our Leapfrog Triejoin implementation and a graph-pattern matching
+That is, our Leapfrog Triejoin implementation and a graph-pattern matching
 specialized Leapfrog Triejoin developed in this thesis: Graph\textsc{WCOJ}.
 LFTJ is only run as a sequential algorithm as a baseline against GraphWCOJ.
 We compare these two algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
@@ -34,7 +34,7 @@ if Spark is using a \textit{BroadcastHashJoin} or a \textit{SortMergeJoin}.
 
 \subsubsection{Datasets}
 We run our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
-We motivate our choice in the next paragraph.
+We motivate our choice in the next paragraphs.
 \Cref{table:datasets} includes a list of all graph datasets mentioned throughout the thesis.
 
 \begin{table}[]
@@ -211,7 +211,7 @@ We set these values accordingly in all further experiments.
 \subsection{Baseline: \texttt{BroadcastHashJoin} vs \texttt{seq}} \label{subsec:spark-vs-lftj}
 % TODO use uniform spelling for broadcasthashjoin
 In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation with the runtime of Spark's \texttt{BroadcastHashjoin}.
-Towards, this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
+Towards this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
 and
 \texttt{SNB-sf1}.
 
@@ -596,8 +596,6 @@ Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
 \subsection{Distributed work-stealing}\label{subsec:distributed-work-stealing}
 
-% TODO take out reference to spark local mode only from background and abstract.
-
 % TODO 5-clique query
 We run the distributed version of work-stealing as described in~\cref{subsubsec:distributed-work-stealing}
 on the LiveJournal and Orkut dataset for the 3-clique query.
@@ -609,6 +607,30 @@ We run the experiments on 16 to 384 of these cores.
 Each machine runs one executor which uses $\frac{1}{4}$ of the available cores.
 The tasks are evenly distributed over all four machines for all levels of parallelism by
 the standard behaviour of Spark's standalone mode scheduler.
+
+We also used Spark's \texttt{BroadcastHashJoin} as well as \texttt{SortMergeJoin} implementations
+for the 3-clique query on LiveJournal.
+We present the total run-time of these joins and the time needed by the distributed GraphWCOJ work-stealing
+algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
+
+\begin{table}
+    \begin{tabular}{lrrr}
+        \toprule
+        Parallelism & Spark BHJ [s] & Spark SMJ [s] & GraphWCOJ [s] \\ \midrule
+        192         &  428.53       &  423.98       &  4.3          \\
+        384         &  467.19       &  531.68       &  3.5          \\
+        \bottomrule
+    \end{tabular}
+    \caption{
+      Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashJoin} (BHJ),
+      \texttt{SortMergeJoin} (SMJ) and GraphWCOJ on LiveJournal.
+       Spark uses 1152 partitions for 384 workers as recommended by the Spark documentation\footnote{https://spark.apache
+    .org/docs/latest/tuning.html}.
+    }
+    \label{table:spark-vs-distributed-work-stealing}
+\end{table}
+
+We note that Spark that the best configuration for Spark slower than GraphWCOJ by the factor 100.
 
 We show the speedup of the different queries on the LiveJournal and Orkut dataset in \cref{fig:distributed-scaling}.
 We analyse the results by query and dataset.
