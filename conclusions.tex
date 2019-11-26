@@ -138,7 +138,7 @@ In particular, the \textit{BarrierTasksContexts} uses remote procedure calls to 
 This remote procedure end-point could be made accessible to the user with minimal effort.
 However, the original design of the barrier mode explicitly names further communication methods as a \textit{Non-goal}\footnote{
 https://issues.apache.org/jira/browse/SPARK-24582?page=com.atlassian.jira.plugin.system.issuetabpanels\%3Aall-tabpanel\\
-https://docs.google.com/document/d/1GvcYR6ZFto3dOnjfLjZMtTezX0W5VYN9w1l4-tQXaZk/edit#heading=h.yqvxlbrdqkkb}.
+https://docs.google.com/document/d/1GvcYR6ZFto3dOnjfLjZMtTezX0W5VYN9w1l4-tQXaZk/edit\#heading=h.yqvxlbrdqkkb}.
 
 We conclude that both options to introduce communication between different executors are suboptimal.
 The first adds an additional dependency and requires the user to setup its cluster such that executors are located in the same
