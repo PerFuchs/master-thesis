@@ -1,9 +1,12 @@
 \section{Related Work} \label{sec:related-work}
+We summarize three closely related papers and point out similarities and differences with our
+work.
+The first paper describes another distribute \textsc{WCOJ} on Timely Dataflow.
+The second, compares multiple worst-case optimal join algorithm parallelization
+approaches to determine the best given a specific use-case.
+Third we describe a general graph pattern mining system build on Spark which also
+employs work-stealing.
 
-TODO introduction
-% Maybe
-%   CAPs?a
-%   semih's work on binary plus other joins
 \subsection{\textsc{WCOJ} on Timely Data Flow}\label{subsec:wcoj-timely-data-flow}
 
 Mc Sherry et al. published a distributed worst-case optimal join based on Timely Data Flow in 2018~\cite{ammar2018distributed,naiad}.
@@ -265,7 +268,7 @@ They do not report on the benefits of \textsc{CSR} in the context of \textsc{WCO
 
 Their implementation of the fully replicated strategy differs from ours in two important factors.
 
-First, they use a different local algorithm % TODO read up on Dual sim
+First, they use a different local algorithm called Dual Sim. % TODO read up on Dual sim
 
 Second, they use a different partitioning scheme.
 Their scheme replicates work of finding bindings for the first and second variable in a query and does not actively counter skew.
