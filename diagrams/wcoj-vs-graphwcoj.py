@@ -15,23 +15,26 @@ def read_dataset(dataset_path, no_mat=False):
   if no_mat:
     data["Algorithm"] = "NoMat"
 
-  data = data.groupby(["Algorithm", "Query"])
-  data = data.median().round(2)
-
   return data
 
 
 def display_data(data, queries, annotate_speedup, output_name):
   algs = ["WCOJ", "NoMat", "GraphWCOJ"]
 
-  if not "NoMat" in data.index:
+  grouped = data.groupby(["Algorithm", "Query"])
+  # return grouped
+  median = grouped.median().round(2)
+  error = grouped.std()
 
+  if not "NoMat" in median.index:
     algs.remove("NoMat")
 
   wcoj_times = {}
+  errors = {}
 
   for a in algs:
-    wcoj_times[a] = list(map(lambda q: data["wcoj_time"][a][q], queries))
+    wcoj_times[a] = list(map(lambda q: median["wcoj_time"][a][q], queries))
+    errors[a] = list(map(lambda q: error["wcoj_time"][a][q], queries))
   speedup = list(map(lambda t: t[0] / t[1], zip(wcoj_times["WCOJ"], wcoj_times["GraphWCOJ"])))
 
   fig, ax = plt.subplots()
@@ -47,13 +50,13 @@ def display_data(data, queries, annotate_speedup, output_name):
   }
 
   for a in algs:
-    ax.bar(x + algs_offset[a], wcoj_times[a], align="center", width=width, label=algs_labels[a])
-    ax.vlines(x + width + 0.1, wcoj_times["GraphWCOJ"], wcoj_times["WCOJ"])
+    ax.bar(x + algs_offset[a], wcoj_times[a], yerr=errors[a], align="center", width=width, label=algs_labels[a])
+    # ax.vlines(x + width + 0.1, wcoj_times["GraphWCOJ"], wcoj_times["WCOJ"])
 
-  if annotate_speedup:
-    for i, l in enumerate(speedup):
-      ax.annotate('%.1f' % speedup[i], xy = (x[i] + width + 0.2, wcoj_times["GraphWCOJ"][i]
-                                    + (wcoj_times["WCOJ"][i] - wcoj_times["GraphWCOJ"][i]) / 2))
+  # if annotate_speedup:
+  #   for i, l in enumerate(speedup):
+  #     ax.annotate('%.1f' % speedup[i], xy = (x[i] + width + 0.2, wcoj_times["GraphWCOJ"][i]
+  #                                   + (wcoj_times["WCOJ"][i] - wcoj_times["GraphWCOJ"][i]) / 2))
 
   plt.legend()
   plt.xticks(x, queries, rotation=45)
@@ -71,7 +74,8 @@ def display_data(data, queries, annotate_speedup, output_name):
 
 data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-snb.csv", no_mat=True))
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-snb.svg")
+grouped = display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-snb.svg")
+
 display_data(data, ["house", "diamond", "4-cycle"], True, "lftj-graphWCOJ-snb-long.svg")
 
 data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv")
@@ -87,6 +91,3 @@ data = read_dataset(DATASET_FOLDER + "final/sequential/wcoj-graphwcoj-twitter.cs
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-twitter.csv", no_mat=True))
 display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-twitter.svg")
 # display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], True, "lftj-graphWCOJ-twitter.svg")
-
-# TODO twitter
-# TODO error bars

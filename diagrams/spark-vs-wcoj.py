@@ -15,18 +15,23 @@ def read_dataset(dataset_path):
   data["wcoj_time"] = (data["AlgoEnd-0"] - data["Scheduled-0"]) / 1000
   data["spark_time"] = (data["End"] - data["Start"]) / 1000
 
-  data = data.groupby(["Algorithm", "Query"])
-  data = data.median().round(2)
+
 
   return data
 
 
 def display_data(data, queries, annotate_speedup, output_name):
+  grouped = data.groupby(["Algorithm", "Query"])
+  mean = grouped.median().round(2)
+  error = grouped.std()
+
   algs = ["WCOJ", "BroadcastHashJoin"]
 
   times = {}
+  errors = {}
   for a in algs:
-    times[a] = list(map(lambda q: data["wcoj_time"][a][q] if a == "WCOJ" else data["spark_time"][a][q], queries))
+    times[a] = list(map(lambda q: mean["wcoj_time"][a][q] if a == "WCOJ" else mean["spark_time"][a][q], queries))
+    errors[a] = list(map(lambda q: error["wcoj_time"][a][q] if a == "WCOJ" else error["spark_time"][a][q], queries))
   speedup = list(map(lambda t: t[0] / t[1], zip(times["BroadcastHashJoin"], times["WCOJ"])))
 
   fig, ax = plt.subplots()
@@ -41,8 +46,8 @@ def display_data(data, queries, annotate_speedup, output_name):
   }
 
   for a in algs:
-    ax.bar(x + algs_offset[a], times[a], align="center", width=width, label=algs_labels[a])
-    ax.vlines(x + width + 0.1, times["WCOJ"], times["BroadcastHashJoin"])
+    ax.bar(x + algs_offset[a], times[a], yerr=errors[a], align="center", width=width, label=algs_labels[a])
+    # ax.vlines(x + width + 0.1, times["WCOJ"], times["BroadcastHashJoin"])
 
   if annotate_speedup:
     for i, l in enumerate(speedup):
@@ -66,20 +71,18 @@ def display_data(data, queries, annotate_speedup, output_name):
 data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon.csv"))
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], True, "spark-wcoj-amazon.svg")
-display_data(data, ["house", "diamond", "4-cycle"], True, "spark-wcoj-amazon-long.svg")
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon.svg")
+display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon-long.svg")
 
 
 data = read_dataset(DATASET_FOLDER + "final/sequential/amazon0601-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon0601.csv"))
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon0601.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], True, "spark-wcoj-amazon0601.svg")
-display_data(data, ["house", "diamond", "4-cycle"], True, "spark-wcoj-amazon0601-long.svg")
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon0601.svg")
+display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon0601-long.svg")
 
 data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-snb1.csv"))
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-snb.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path"], True, "spark-wcoj-snb.svg")
-display_data(data, ["house", "diamond", "4-cycle", "4-0.00-path"], True, "spark-wcoj-snb-long.svg")
-
-# TODO error bars
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path"], False, "spark-wcoj-snb.svg")
+display_data(data, ["house", "diamond", "4-cycle", "4-0.00-path"], False, "spark-wcoj-snb-long.svg")
