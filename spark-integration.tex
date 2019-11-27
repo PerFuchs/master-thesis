@@ -61,7 +61,6 @@ tackled these problems for the first time.
 The lack of peer-reviewed papers and the high complexity of the arXiv paper confirm that deeper integration with
 Spark's optimizer is out of scope for this thesis.
 
-% TODO graphWCOJ everywhere without \textit
 \subsection{A sequential linear Leapfrog Triejoin} \label{subsec:spark-integration-seq}
 For this section we assume that the reader is familiar with the background section about Catalyst (see \cref{subsubsec:catalyst}) and
 \textsc{LFTJ} (see \cref{subsubsec:leapfrog-triejoin}) where we explain the components of Catalyst planning phase and the requirements
@@ -129,7 +128,6 @@ Hence, we need to separate, materialized versions of the edge relationship.
 However, we never need more materialized relationships because all \textit{TrieIterators} can share the same underlying datastructures.
 
 GraphWCOJ uses a CSR representation of the edge relationship (see~\cref{sec:graphwcoj}).
-% TODO CSR accessible and sorted? definition not given.
 Hence, we need to build two CSR representations.
 One with its \textit{Indices} array build from the $src$ attribute and the \textit{AdjancencyLists} array build from the $dst$ attribute.
 The other, with \textit{Indices} from $dst$ and \textit{AdjacencyLists} from $src$.
@@ -207,7 +205,3 @@ The CSR broadcast variable cache is a simple dictionary with RDD ID's to broadca
 When, our system builds a broadcasted CSR structure, it registers the broadcast in the cache.
 Every time, we translate a logical \textsc{WCOJ} plan into a physical one, we check if the CSR for edge relationship has been broadcasted already
 if so, our strategy reuses this broadcast.
-
-
-% TODO disk cache? % CSR disk cache  % CSRTrieIterableBroadcast implements that
-
