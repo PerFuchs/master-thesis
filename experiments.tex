@@ -33,15 +33,15 @@ specialized Leapfrog Triejoin developed in this thesis: Graph\textsc{WCOJ}.
 LFTJ is only run as a sequential algorithm as a baseline against GraphWCOJ.
 We compare these two algorithms in \cref{subsec:lftj-vs-graphWCOJ}.
 
-The other two algorithms are Spark's binary joins: \textit{BroadcastHashJoin} and \textit{SortmergeJoin}.
+The other two algorithms are Spark's binary joins: \textit{BroadcastHashjoin} and \textit{SortmergeJoin}.
 We compare them against the sequential version of \textsc{LFTJ} and GraphWCOJ in \cref{subsec:spark-vs-lftj}.
 
 We adjust the \texttt{spark.sql.autoBroadcastJoinThreshold} parameter to control
-if Spark is using a \textit{BroadcastHashJoin} or a \textit{SortMergeJoin}.
+if Spark is using a \textit{BroadcastHashjoin} or a \textit{SortMergeJoin}.
 
 \subsection{Datasets}
 We run our experiments on multiple datasets from two different use-cases: social networks and product co-purchase.
-We motivate our choice in the next paragraphs.
+We explain our choice in the next paragraphs.
 \Cref{table:datasets} includes a list of all graph datasets mentioned throughout the thesis.
 
 \begin{table}[]
@@ -91,7 +91,7 @@ The \texttt{LiveJournal} graph represents the friendship relationship of a mediu
 \subsection{Queries}
 In this section, we detail the graph patterns used throughout our experiments.
 Most of the queries are cyclic because that is the primary use-case for \textsc{WCOJ} in former research~\cite{olddog,myria-detailed}.
-\textsc{WCOJ}'s also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
+\textsc{WCOJ}s also have been successfully applied to selective path queries in~\cite{olddog,longbin}.
 
 We apply filters to most of our queries to make them more realistic, e.g. a clique query does make more sense if it is combined with a
 smaller-than filter, which requires that the attributes are bound such that \textit{a} smaller than \textit{b}, smaller than \textit{c}.
@@ -177,7 +177,7 @@ SNB-1 respectively Twitter.
 This means that GraphWCOJ performs best when there are nearly no binary searches.
 A threshold of 1600 triggers no binary search in either of the datasets.
 
-We also note that the effect on the performance of the Leapfrog Triejoin is bigger.
+
 
 \begin{figure}
     \centering
@@ -187,6 +187,7 @@ We also note that the effect on the performance of the Leapfrog Triejoin is bigg
     \label{fig:linear-search-threshold}
 \end{figure}
 
+Also, we note that the effect the linear search threshold has on the performance is bigger for the Leapfrog Triejoin.
 We explain the observations as follows: \textsc{LFTJ} does use searches on the first
 and second level of the \textit{TrieIterators} while GraphWCOJ uses it only on the second
 level.
@@ -213,8 +214,7 @@ We choose 800 for GraphWCOJ because it is on the safe site:
 a binary search performance degrades less than the one of a linear search.
 We set these values accordingly in all further experiments.
 
-\subsection{Baseline: \texttt{BroadcastHashJoin} vs \textsc{LFTJ}} \label{subsec:spark-vs-lftj}
-% TODO use uniform spelling for broadcasthashjoin
+\subsection{Baseline: \texttt{BroadcastHashjoin} vs \textsc{LFTJ}} \label{subsec:spark-vs-lftj}
 In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation with the runtime of Spark's \texttt{BroadcastHashjoin}.
 Towards this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
 and \texttt{SNB-sf1}.
@@ -227,17 +227,17 @@ Setup time includes sorting and materialization.
 
 This section is focused on comparing the runtimes excluding the setup time, because the final system is meant to cache the readily sorted
 and formatted as \textsc{CSR}'s and reuse it for multiple queries.
-We anticipate that this is necessary to benefit from \textsc{WCOJ}'s in general.
+We anticipate that this is necessary to benefit from \textsc{WCOJ}s in general.
 
 We compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMergeJoin} because even when all data is arranged in a single
 partition, for simple sequential processing, Spark schedules its \texttt{SortMergeJoin} to use a shuffle.
 A shuffle writes and reads data to and from disk.
-Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashJoin}.
+Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashjoin}.
 We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{triangle} (8.1 seconds vs 58.9 seconds) and
 \texttt{5-clique} pattern (32.9 seconds vs 850.9 seconds).
 We assume that Spark can optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
-We point out that Spark's code generation is a huge advantage for the \texttt{BroadcastHashJoin} compared
+We point out that Spark's code generation is a huge advantage for the \texttt{BroadcastHashjoin} compared
 to our interpreted \textsc{LFTJ}.
 We ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for the triangle
 query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
@@ -252,7 +252,6 @@ e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to
 
 The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
 decreasing speedup on \texttt{Amazon-0302}.
-% TODO n-cycle results for snb
 
 The \texttt{House} and \texttt{5-clique} pattern seem to be quite similiar - the \texttt{House} is a \texttt{5-clique} with two missing
 edges.
@@ -267,8 +266,6 @@ This might be due to the different selectivity; it is extremely high on the co-p
 benchmark.
 This different in selectivity is not surprising given that the \texttt{SNB} network fulfils the small-world property, while the
 \texttt{Amazon} dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
-
-% TODO maybe run path query with different selectivity
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
 in the characteristics of the datasets themselves.
@@ -294,7 +291,7 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
     \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb}
     \includesvg[width=0.5\textwidth]{svg/spark-wcoj-snb-long}
     }
-    \caption{Runtime of a Leapfrog Triejoin and Spark's \texttt{BroadcastHashJoin}}
+    \caption{Runtime of a Leapfrog Triejoin and Spark's \texttt{BroadcastHashjoin}}
     \label{fig:spark-vs-lftj}
 \end{figure}
 
@@ -309,13 +306,12 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
 %
 %    \vspace{0.3cm}
 %    \input{generated/seq-table-snb-sf1}
-%    \caption{Runtimes for \texttt{BroadcastHashJoin} and \texttt{seq}.
+%    \caption{Runtimes for \texttt{BroadcastHashjoin} and \texttt{seq}.
 %    The speedup is calculated between join times and excludes setup.
 %    From top to bottom for dataset: \texttt{ama-0302}, \texttt{ama-0601} and \texttt{snb-sf1}.
 %    All times in seconds.
 %    }
 %    \label{table:seq-vs-bhj}
-%    % TODO align and remove headers
 %\end{table}
 
 \subsection{\textsc{LFTJ} vs GraphWCOJ} \label{subsec:lftj-vs-graphWCOJ}
@@ -381,7 +377,6 @@ This query gets slower with materialization because of the overhead of copying v
     \subfloat[Twitter]{
     \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter}
     %    \includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-twitter-long}
-    % TODO long twitter queries?
     }
     \caption{
     \textsc{WCOJ} run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
@@ -391,7 +386,7 @@ This query gets slower with materialization because of the overhead of copying v
     \label{fig:lftj-graphWCOJ}
 \end{figure}
 
-\subsection{Scaling of \textit{GraphWCOJ}} \label{subsec:scaling-graphWCOJ}
+\subsection{Scaling of GraphWCOJ} \label{subsec:scaling-graphWCOJ}
 
 In this section, we aim to analyse and compare the scaling of Graph\textsc{WCOJ} using different
 partitioning schemes.
@@ -423,8 +418,8 @@ Positively because adding more sockets means to add significantly more L3 cache 
 If we do not use all cores on a socket, each used core can use a bigger share of this cache.
 Negatively because each socket is in a different NUMA zone and the graph is not guaranteed to be cached in all
 NUMA zones.
-Indeed, Spark shares the broadcasts for all tasks on a single executor.
-So there is only one copy in memory.
+Indeed, Spark shares the broadcasts for all tasks on a single executor:
+there is only one copy in memory.
 
 Additionally, we run on an Intel processor with hyperthreading.
 Hence, we can not expect linear speedup above 48 workers because after multiple threads will share resources and cannot be
@@ -432,7 +427,6 @@ expected to reach the same performance as two cores.
 
 To conclude, we expect sub-linear speedup for Shares and better but still sub-linear speedup for \textit{work-stealing}.
 Anyhow, super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
-% TODO cite the internet source from Monday.
 
 We show the scaling behaviour of Shares and work-stealing on different datasets and for 3 queries in~\cref{fig:graphWCOJ-scaling}.
 
@@ -471,7 +465,7 @@ the first job and the time it takes to finalize the query by Spark.
 The overhead calculated by $(queryEnd - queryStart) - (lastTaskCompleted - firstTaskScheduled)$ is
 roughly 0.13 seconds for all levels of parallelism and the whole query runs for 0.19 seconds on
 48 cores.
-We depict the speedup archived when we measure only the time spent with the join in \cref{fig:twitter-3-clique-scaling}.
+We depict the speedup achieved when we measure only the time spent with the join in \cref{fig:twitter-3-clique-scaling}.
 
 % TODO bad scaling for hyperthreading
 
@@ -599,7 +593,7 @@ Each machine runs one executor which uses $\frac{1}{4}$ of the available cores.
 The tasks are evenly distributed over all four machines for all levels of parallelism by
 the standard behaviour of Spark's standalone mode scheduler.
 
-We also used Spark's \texttt{BroadcastHashJoin} as well as \texttt{SortMergeJoin} implementations
+We also used Spark's \texttt{BroadcastHashjoin} as well as \texttt{SortMergeJoin} implementations
 for the 3-clique query on LiveJournal.
 We present the total run-time of these joins and the time needed by the distributed GraphWCOJ work-stealing
 algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
@@ -614,7 +608,7 @@ algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
         \bottomrule
     \end{tabular}
     \caption{
-    	Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashJoin} (BHJ),
+    	Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashjoin} (BHJ),
     	\texttt{SortMergeJoin} (SMJ) and GraphWCOJ on LiveJournal.
     	    	Spark uses 1152 partitions for 384 workers as recommended by the Spark documentation: https://spark.apache.org/docs/latest/tuning.html.}
     \label{table:spark-vs-distributed-work-stealing}

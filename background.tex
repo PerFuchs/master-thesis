@@ -15,14 +15,14 @@ Finally, we present a study of real-world graph sizes used in literature assembl
 show that most graphs used today fit into main-memory.
 
 \subsection{Spark}\label{subsec:spark}
-Spark is the probably most widely used and industry accepted cluster computing framework.
+Spark probably is the most widely used and industry accepted cluster computing framework.
 It improves over former computing frameworks, e.g. MapReduce~\cite{mapreduce}, Hadoop~\cite{hadoop} or Haloop~\cite{haloop},
 by allowing to cache results in memory between multiple queries, using so-called resilient
 distributed datasets~\cite{rdd}; often abbreviated to RDD.
 Furthermore, it offers SQL as an alternative high-level query interface due to its extensible query optimizer framework, Catalyst.
 
 This section introduces Spark and is organized in four subsections.
-\Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark: the RDD's.
+\Cref{subsubsec:resilient-distributed-datasets} describes the core data structure of Spark: the RDDs.
 In~\cref{subsubsec:spark-architecture}, we explain the different components and processes in a Spark cluster.
 The query optimizer of Spark, Catalyst, is explained in~\cref{subsubsec:catalyst}.
 It is the component we integrate our \textsc{WCOJ} with;
@@ -31,13 +31,13 @@ Finally, in~\cref{subsubsec:broadcast-variables} we highlight important details 
 to implement our parallel worst-case optimal join.
 
 \subsubsection{Resilient distributed datasets} \label{subsubsec:resilient-distributed-datasets}
-RDD's form the core of Spark.
+RDDs form the core of Spark.
 However, for this thesis, it is not necessary to understand them in great detail.
-In the next paragraph, we give a short introduction to the relevant aspects of RDD's.
+In the next paragraph, we give a short introduction to the relevant aspects of RDDs.
 For the interested reader, a more in-depth description is given in the original paper~\cite{rdd}.
 
 Resilient distributed datasets describe a distributed collection of data items of a single type.
-In contrast, to other distributed share memory solutions, RDD's do not use fine-grained
+In contrast, to other distributed share memory solutions, RDDs do not use fine-grained
 operations to manipulate single data items but coarse-grained operations which are applied
 to all data items, e.g. \textit{map} to apply a function to each data item.
 These operations are called \textit{transformations}.
@@ -49,7 +49,7 @@ Hence, the dataset can be computed and recomputed on demand, e.g. when the user 
 of all items in the set.
 Operations which require that the data in the RDD is computed are called \textit{actions}.
 
-RDD's are distributed by organizing their data items into partitions.
+RDDs are distributed by organizing their data items into partitions.
 The partitioning can be chosen by the user or the Spark query optimizer such that it allows to run transformations on all partitions
 in parallel.
 For example, one might choose a round-robin partitioning to generate splits of equal size when reading data items from disk or one
@@ -57,10 +57,10 @@ groups items by hashing a specific key to support parallelizable aggregation on 
 The process of repartitioning an RDD is called a \textit{shuffle}.
 It is an expensive operation because it involves writing and reading the whole RDD to disk.
 
-Describing datasets as RDD's comes with two main benefits.
+Describing datasets as RDDs comes with two main benefits.
 First, it is resilient because if the dataset or some partitions of it get lost, it is possible to recompute them from persistent storage
 using lineage graph information.
-Second, it allows Spark to compute RDD's in parallel.
+Second, it allows Spark to compute RDDs in parallel.
 
 Spark can parallelize the computation of RDD in two ways.
 First, by data-parallelism, since different partitions of an RDD can
@@ -98,7 +98,7 @@ When it encounters parallelizable tasks, it schedules them on the available exec
 
 All tasks scheduled on the same executor share a cache for in-memory data structures like \textit{Broadcast variables} or persisted RDD
 partitions.
-This is important in the context of this thesis because it means that we cache the input graph once per executor;
+This is important in the context of this thesis because it means that we cache the input graph once per executor,
 which in many Spark deployments is once per worker or physical machine.
 This would not be possible if different tasks in the same JVM would not share the same cache.
 
@@ -183,7 +183,7 @@ It is broken up into a partial aggregation directly after the last join, an exch
 partition and a second aggregation over that partition to calculate the total count.
 The last is a good example of Catalyst introducing a shuffle.
 
-To conclude, the translation to a physical plan translates logical operators into concrete implementations of these and adds exchanges
+To summarize, the translation to a physical plan translates logical operators into concrete implementations of these and adds exchanges
 to organize the data such that it can be processed independently in partitions.
 
 After generating and choosing a physical plan, Catalyst enters the \textit{code generation} phase in which it generates
@@ -207,7 +207,7 @@ It translates the plan into RDD operations implemented by Spark's core.
 Hence, the result of Catalysts query compilation is an RDD representing the query.
 One should note that structured query execution does not materialize the query: the result is an RDD which is a non-materialized
 representation of the operations necessary to generate the result.
-In this thesis, we are not concerned with the internals of RDD's.
+In this thesis, we are not concerned with the internals of RDDs.
 We do not need to introduce any new RDD operations or even touch Spark's core functionality.
 Thanks to the extensibility of Catalyst, we can integrate worst-case optimal joins by adding one logical operator, multiple
 physical operators and a Strategy to translate between them.
@@ -289,7 +289,8 @@ Next, we compare these two algorithm in ease of implementation.
 
 The description of the Leapfrog Triejoin implementation in its original paper~\cite{lftj} is excellent.
 Furthermore, multiple open source implementation exists~\cite{leapfrog-triejoin-schroeder,myria-detailed}.
-In particular, the implementation of Christian Schroeder for a course at Oxford is helpful because it is standalone and
+In particular, Christian Schroeder's implementation for a course at Oxford is helpful because it is standalone
+and
 does not require us to understand a whole system\footnote{https://github.com/schroederdewitt/leapfrog-triejoin}.
 
 \textit{Generic Join} is described as a generalization of \textsc{NPRR} and Leapfrog Triejoin in its original
@@ -300,7 +301,7 @@ is backed by an executable implementation.
 To conclude, we choose Leapfrog Triejoin as the basis for our work based on its openly available records of performance, use in
 academia as well as industrial systems and good description for direct implementation.
 Furthermore, the Database research group of CWI (where this thesis was performed)
-has an ongoing collaboration with the inventors of \textsc{LFTJ} giving us access to valuable
+has an ongoing collaboration with the inventors of \textsc{LFTJ} which gives us access to valuable
 expertise if necessary.
 
 \subsubsection{Leapfrog Triejoin} \label{subsubsec:leapfrog-triejoin}
@@ -644,7 +645,7 @@ and intermediate results.
 They show that adaptive planning can improve the performance of many plans.
 Furthermore, it makes the query optimizer more robust against choosing bad orderings.
 
-To conclude, the work of Mhedhbi et al. is the most comprehensive study on query vertex orderings for \textsc{WCOJs} currently available;
+The work of Mhedhbi et al. is the most comprehensive study on query vertex orderings for \textsc{WCOJs} currently available;
 they introduce a cost metric, a query optimizer to use this metric and prove that it is possible and beneficial to compute parts of
 the results using a different variable order.
 
@@ -675,10 +676,10 @@ we noticed that for some queries, e.g. 5-clique, the intersection between the fi
 intersection.
 This opens the interesting question in which order we should intersect the lists.
 
-We conclude that two concepts to choose a good variable ordering exists which are both (partially) applicable to our system.
+We conclude that two concepts to choose a good variable ordering exist which are both (partially) applicable to our system.
 The LogixBlox approach is simpler and directly integratable but not well documented.
 The solution used in GraphFlow is far more complex and developed for another \textsc{WCOJ}.
-Anyhow, the paper describes it in great detail and parts of it could be integrated directly, while others need some engineering effort or
+However, the paper describes it in great detail and parts of it could be integrated directly, while others need some engineering effort or
 need to be redesigned completely.
 
 
@@ -1083,12 +1084,12 @@ This allows us to predict the number of tuples assigned to each worker by $|E| *
 the edge relationship.
 
 \Cref{table:shares-workload-estimate} shows the expected percentage of tuples from the edge relationship assigned to each worker for graph
-patterns of different sizes calculated using Poison binomial distribution and optimal shares assignments according to the method used
+patterns of different sizes calculated using Poisson binomial distribution and optimal shares assignments according to the method used
 in~\cite{myria-detailed}.
 As we can see in this table, the number of tuples assigned to each worker grows over linear in the size of the graph pattern.
 Furthermore, doubling the number of workers is inefficient to counter this growth.
 
-In particular, already small clique queries of four vertices replicate over half of the tuples on all 64 workers.
+In particular, already a small clique queries of four vertices replicate over half of the tuples on all 64 workers.
 5-clique queries require nearly a full broadcast with each worker holding 82\% or 90\% of all tuples with 128 respectively 64 workers.
 The diamond query used in practice by the Twitter recommendation engine has to replicate far more than half of the tuples to all workers.
 
@@ -1112,7 +1113,7 @@ The diamond query used in practice by the Twitter recommendation engine has to r
     % See hc-workload-1.csv computed with a28fc458f4f8959a5af81a65f593ea22dcb8dd44
 \end{table}
 
-The second observation has two reasons.
+This has two reasons.
 First, doubling the number of workers does not allow us to double the dimensions of the hypercube because a hypercube always needs
 product of all dimension sizes to be built.
 Second, the number of replicated tuples increases with a growing hypercube because each tuple is replicated to more workers;

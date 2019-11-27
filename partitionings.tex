@@ -12,7 +12,7 @@ materializing new data structures for the \textit{LeapfrogTriejoin}, e.g. sorted
 Arranging the data into suitable data structures and shuffling data is a one-off action on system startup.
 
 This design allows us to implement a new flavour of the Shares partitioning in which we filter the vertices of the
-graph on-the-fly while processing it with our \textit{GraphWCOJ} algorithm.
+graph on-the-fly while processing it with our GraphWCOJ algorithm.
 We describe this contribution in \cref{subsec:shares-logical}.
 
 We also consider partitioning the work based on a single variable.
@@ -48,7 +48,7 @@ Partitionings based on any other variable run the same work on each worker up to
 are duplication free after.
 These partitioning on later variables tend to be more skew resilient because there are fewer variables still to bind, which are often
 restricted by the bindings of earlier variables.
-In particular, partitioning on the second variable is interesting because bindings for the first variable are cheap to compute;
+In particular, partitioning on the second variable is interesting because bindings for the first variable are cheap to compute:
 they are the scan of the first level of a \textit{TrieIterator}.
 
 \subsection{Logical Shares} \label{subsec:shares-logical}
@@ -112,7 +112,7 @@ a cache for common configurations.
 Due to time constraints, we leave this to future work and keep our focus on the scaling behaviour of Shares.
 
 To conclude, we succeeded to integrate Shares with \textit{LeapfrogTriejoin} and report our results in \cref{subsec:scaling-graphWCOJ}.
-We cannot improve on the main weakness of Shares that it duplicates a lot of work.
+We cannot improve on the main weakness of Shares which is that it duplicates a lot of work.
 Indeed, our design filters tuples only after the \textit{LeapfrogJoin}.
 Therefore, all tuples are considered in the \textit{TrieIterator} and their binary search of the first variable.
 This does not influence scaling much because only the correct logical partition of values for the first variable
@@ -139,8 +139,8 @@ Contrary, to hash-based mappings which are checked value by value until one matc
 Furthermore, this conditional is predictable for the processor because, for all but one call, the value is in range and returned.
 So, contrary to hash-based filter we can push a range based filter into the \textit{TrieIterators}.
 
-We implement this idea by dividing the vertice ids per attribute into as many ranges as the size of the corresponding hypercube dimension.
-For example, assume we have edge ids from 0 to 899, three attributes and the hypercube dimension have the size 3, 2 and 2.
+We implement this idea by dividing the vertice IDs per attribute into as many ranges as the size of the corresponding hypercube dimension.
+For example, assume we have edge IDs from 0 to 899, three attributes and the hypercube dimension have the size 3, 2 and 2.
 Then, we choose the ranges [0,300), [300,600) and [600,900) for the first attribute and the ranges [0,450) and [450,900) for the other
 two attributes.
 The worker with the coordinate (0, 0, 0) is then assigned the ranges [0,300), [0,450) and [0,450).
@@ -153,13 +153,13 @@ However, we find that high skew between the workers leads to much worse performa
 The explanation is that if a worker is assigned the same range multiple times and this range turns out to take long to compute, it takes
 much longer than all other workers.
 
-To mitigate this problem, we break down the vertice ids into more ranges than there are workers in the hypercube dimension corresponding to
+To mitigate this problem, we break down the vertice IDs into more ranges than there are workers in the hypercube dimension corresponding to
 the attributes.
 Then, we assign multiple ranges to each \textit{TrieIterator} in such a way that the overlap on the first two attributes equals the overlap
 of a hash-based implementation and assign the ranges of the later attributes randomly such that all combinations are covered.
 However, experiments still show a high skew: some workers find many more instances of the searched pattern in their ranges than others.
 For the triangle query on \textit{LiveJournal}, we find that the fastest worker outputs only 0.4 times the triangles than the slowest worker.
-We conclude that the pattern instances are unevenly distributed over the ranges of vertice ids which leads to high skew in
+We conclude that the pattern instances are unevenly distributed over the ranges of vertice IDs which leads to high skew in
 a range based solution.
 We show performance measurements in the coming section and stopped our investigation in this direction.
 
@@ -236,11 +236,9 @@ Second, how do workers get their tasks?
 We address these questions in order by first describing our preferred solution and then their integration with Spark.
 We conclude the section with an evaluation of the limitations of this integration.
 
-Before, we remember that we built our solution for the Spark \textit{local-mode} (see~\cref{subsubsec:spark-architecture}).
-Hence, the Spark master and all executors are threads within the same JVM process.
+For the local version, the Spark master and all executors are threads within the same JVM process.
 This is important because it allows us to share data structures between multiple Spark tasks as normal JVM objects.
-We discuss how the design can be extended Spark's \textit{cluster-mode} in future work (\cref{subsubsec:cluster-mode}) and
-related work (\cref{subsec:fractal}).
+We discuss how the design can be extended Spark's \textit{cluster-mode} in \cref{subsubsec:distributed-work-stealing}.
 
 The first design decision is the definition of a work-stealing task.
 It is not necessary to define the tasks such that they have all the same size.
@@ -253,16 +251,16 @@ However, given the huge amount of tasks (as many as vertices in the graph), we b
 We will evaluate this during our experiments.
 
 The second design choice in work-stealing is how to hand tasks to workers.
-For simplicity, we choose to use a shared, thread-safe queue that holds all tasks.
+For simplicity, we chose to use a shared, thread-safe queue that holds all tasks.
 The main drawback of this solution is that the access to the queue has to be synchronized between all workers.
 If there are too many workers contending for the critical section of polling a job from the queue, they can slow each other down.
 However, the critical section is short because it includes only the call to the poll method of the queue.
-Additionally, we decide to implement a batching scheme such that a single poll can assign multiple tasks to a worker.
+Additionally, we decided to implement a batching scheme such that a single poll can assign multiple tasks to a worker.
 This allows us to fine-tune how often a worker needs to return to the queue for new tasks.
 % TODO batch size experiment?
 
 It turns out that the work-stealing scheme as described above is straightforward to integrate into Spark.
-We choose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
+We chose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
 Java. Most importantly they are shared between all threads of the same JVM.} to hold a dictionary which associates an ID for each
 query with a thread-safe queue instance.
 This queue can be accessed by each Spark thread.
@@ -272,7 +270,7 @@ The queue for a query is filled by the first Spark task that accesses it.
 This can be implemented by a short synchronized code section at the beginning of all tasks.
 It checks if the queue is empty and if so pushes one task per possible binding (all graph vertices) or batch of possible bindings.
 The synchronized section is fast and only runs once when the tasks start.
-Hence, it comes at neglectable performance costs.
+Hence, it comes at negligible performance costs.
 
 Once the queue is filled, we run our normal \textit{LeapfrogTriejoin} with filtered \textit{Leapfrog join} for the first attribute.
 This filter is implemented as a decorator around the original \textit{Leapfrog join}.
@@ -293,7 +291,7 @@ If the user depends on a stable partitioning per query, he should cache the quer
 % TODO partitioning sizes? Skew after the join, do we always need to repartition?
 
 We do not integrate our work-stealing scheme into the Spark scheduler but we provide a best-effort implementation because
-we use all resources assigned to us as soon as they are assigned to us.
+we use all resources assigned to us as soon as they are available to us.
 We can handle all scheduler decisions.
 The first worker assigned fills the queue.
 The worker who takes the last element from the queue sets a boolean that this query has been completed.
@@ -327,7 +325,7 @@ the tasks as evenly spread over all executors as possible.
 Alternatively, the standalone mode offers the possibility to consolidate all tasks as much as possible on a single worker.
 This can be controlled by the setting \texttt{spark.deploy.spreadOut}.}.
 We need to use the slots assigned to our tasks as best as possible.
-To archive this goal, we would like to know how many tasks were scheduled on each worker.
+To achieve this goal, we would like to know how many tasks were scheduled on each worker.
 With this knowledge, we can split the workload between executors such that each of them deals with $\frac{w}{e} \times t_e$
 where $w$ is the workload, $e$ the number of executors and $t_e$ the number of tasks on executor $e$.
 
@@ -347,9 +345,8 @@ We experimented with two different partitioning schemes for the queue: round-rob
 However, both schemes lead to similar run-times and behaviours.
 We choose the round-robin partitioning because it is generally more skew resilient.
 
-To conclude, we distribute work-stealing in Spark by partitioning the work queue over all executors with respect to the
+We distribute work-stealing in Spark by partitioning the work queue over all executors with respect to the
 number of tasks assigned on each of them.
-
 This approach has two drawbacks.
 
 First, we use the barrier mode which requires Spark to find as enough available resources to schedule all tasks at the same time.

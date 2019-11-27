@@ -71,7 +71,7 @@ This is a simple instance of the \textit{Generic Join} implemented in data flow 
 
 The algorithm described so far can build a high amount of possible extensions in each round.
 This keeps it from keeping worst-case optimal guarantees for memory usage.
-The authors fix this problem by batching the prefixes;
+The authors fix this problem by batching the prefixes:
 they allow only a certain number of prefixes in the system at all times.
 They defer building new prefixes until the current batch of prefixes has been completed.
 This is natively supported by Timely Dataflow.
@@ -177,7 +177,7 @@ we rely on the fact that each worker holds the complete index.
 Finally, we would like to point out that~\cite{ammar2018distributed} does not publish any number on the amount
 of network traffic caused by their algorithm.
 Given that it sends many prefixes via the network this could be a bottleneck in many deployments, i.e. in cheaper instances
-int in the Amazon cloud.
+in the Amazon cloud.
 An analysis of the network traffic would be beneficial for a better understanding of the advantages and disadvantages
 of their approach.
 
@@ -256,8 +256,6 @@ They draw their conclusions from experiments run with 10 GB network infrastructu
 Interestingly, Shares incurs fewer communication costs than \textit{BigJoin}.
 
 Their paper differs from our thesis in multiple ways.
-However, they come to the same conclusions, namely that fully replicating is the preferred strategy
-when the graph fits into main memory and that Shares is not a good strategy for graph pattern matching.
 
 We implement our system in Spark which has wide-spread usage in industry and a surrounding eco-system
 of graph pattern matching systems (see \cref{subsec:graphs-on-spark}).
@@ -281,6 +279,9 @@ bigger queries (see \cref{subsec:scaling-graphWCOJ}).
 Their scheme could be applied to our system.
 It is simpler than work-stealing but less resilient to skew.
 
+However, they come to the same conclusions, namely that fully replicating is the preferred strategy
+when the graph fits into main memory and that Shares is not a good strategy for graph pattern matching.
+
 \subsection{Fractal a graph pattern mining system on Spark} \label{subsec:fractal}
 Fractal is a general-purpose graph pattern mining system built on top of Spark published at SIGMOD'19~\cite{fractal}.
 We first describe the relevant aspects of their system.
@@ -301,9 +302,7 @@ They can expand the subgraph, e.g. if the subgraph is vertex induced, one expand
 vertices to the subgraph.
 
 Another workflow operator is to filter the subgraph instances.
-
 Then it is possible to aggregate subgraphs by computing a key, a value and possibly a reduction.
-
 Finally, these workflow steps can be looped to be repeated multiple times.
 
 To execute the workflow the user can use one out of two output operators: \textit{subgraphs} and
