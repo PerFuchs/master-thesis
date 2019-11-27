@@ -10,12 +10,11 @@ intersection algorithm.
 Using \textsc{CSR} is a big advantage for dense queries where it leads up to 11 times better performance.
 Sparse queries profit less but are often 2 times faster.
 
-We partially succeeded in finding a better intersection algorithm to use in the \textit{LeapfrogJoin}'s for the graph-pattern use-case.
-We find that intersections tend to converge to their final size quickly when using binary intersections driven by the often small
-intermediary result.
-Therefore, multiple binary intersections are often faster than the n-ary intersection proposed in the original Leapfrog Triejoin
-paper~\cite{lftj}.
-Again, dense queries can profit while sparse queries show no difference or even a slow down.
+We partially succeeded in finding a better intersection algorithm to use in the \textit{LeapfrogJoins} for the graph-pattern use-case.
+We find that intersections tend to converge to their final size quickly when using binary intersections.
+Therefore, multiple binary intersections driven by the small intermediary result are often faster than the n-ary intersection proposed in
+the original Leapfrog Triejoin paper~\cite{lftj}.
+Again, dense queries can profit while sparse queries show no difference or become slower.
 
 The slow down in sparse queries is likely caused by our second attempted specialization, namely materializing the intersections in
 hope for better use of the processor cache.
@@ -28,12 +27,12 @@ Even straightforward optimizations like using a compact graph representation can
 better performance.
 
 Our second research question concerns the scalability of \textsc{WCOJ}'s in Spark.
-In our background research, we find that the implementation in Myria of a provably optimal partitioning scheme, Shares, suitable for
+We find that the implementation in Myria of a provably optimal partitioning scheme, Shares, suitable for
 Spark does not scale well.
 In \cref{subsubsec:shares}, we demonstrate that Shares scaling behaviour is inherently bad for graph-pattern matching because
 it leads to a lot of duplicated work and its partitioning deteriorates to a full broadcast;
-hence, it cannot save much communication or memory over simply replicating the whole graph on each machine, in particular, if
-we run multiple queries.
+hence, it cannot save much communication or memory over simply replicating the whole graph on each machine.
+In particular, if we run multiple queries.
 We conclude that caching the complete edge relationship of the graph on each machine at system start-up is the better design.
 This fits well with \textsc{WCOJ} joins because they need to sort and materialize their input relationships which comes at non-trivial
 costs.
@@ -47,9 +46,9 @@ Second, we build a range based and a hashed based Shares partitioning into the \
 We find that hash-based Shares is the best \textit{logical}, static partitioning scheme because it is most skew resilient.
 Although, it replicates more work than partitioning on the first or second variable.
 
-However, the replicated work leads to bad scaling of \textit{logical} Shares;
-measured over 3 queries on three different datasets Shares strongest speedup is 25 for 96 workers, mostly it does not
-reach speedup of 20 and more for any query, dataset and level of parallelism of 48 and up.
+However, the replicated work leads to bad scaling of \textit{logical} Shares:
+measured over 3 queries on three different datasets, Shares strongest speedup is 25 for 96 workers.
+On most queries, it does not reach a speedup of 20 or more using 48 cores.
 
 Based on this result, we conclude that static partitioning schemes are not scalable when using the \textsc{LFTJ} for graph-pattern
 matching.
@@ -71,7 +70,7 @@ It scales as good or better for most levels of parallelism for the 5-clique quer
 We do not have data for the local version on more than 96 cores due to the size of our machines.
 
 The scaling above 96 workers for the 5-clique query is dataset dependent, while
-the Orkut dataset leads a speedup of 56 for a parallelism level of 384;
+the Orkut dataset shows a speedup of 56 for a parallelism level of 384;
 on LiveJournal, the algorithm reaches a speedup of 182 for 384 workers.
 This seems a decent result given that only 192 physical cores are used and the fact that
 it could be improved by avoiding internal executor skew by the more fine-grained work-stealing
@@ -91,8 +90,8 @@ While being far from perfect it is the best scaling distributed \textsc{WCOJ} on
 like system to the best of our knowledge.
 
 However, we recognize that our distributed version works best on a cluster with a few
-big machines, like the one we ran experiments for this thesis on.
-This is because then the graph is broken down in a few big pieces which are processed by
+big machines, like the one we ran our experiments on.
+In this setup, the graph is broken down in a few big pieces which are processed by
 many tasks that share work.
 If one uses a cluster that has many small machines, the graph is partitioned in many small pieces
 which are worked upon by a few tasks each.
@@ -110,27 +109,27 @@ Work-stealing between executors inherently needs communication.
 Spark does not offer any direct means of communication between two executors to the developer.
 
 \textit{Broacast variables} and \textit{Accumables} offer one-way communication from the driver to the executors and vice versa.
-On first sight, one could assume that these can be combined into a two way message channel.
+One could assume that these can be combined into a two-way message channel.
 However, this is not the case.
 \textit{Broadcast variables} can transfer information to the executors but they do not offer the ability to check whether a message has
 arrived.
-The information they carry is accessed via a lazy attribute of an variable from the outer scope of a task closure.
-Once, the lazy attribute is evaluated by the task it takes the current value at the driver and will not change anymore even if
+The information they carry is accessed via a lazy attribute of a variable from the outer scope of the task closure.
+Once, the lazy attribute is evaluated by the task, it takes the current value at the driver and will not change anymore even if
 it does so on the driver.
 Hence, the executor can only guess when to evaluate the value and if it does so too early the variable cannot be reused.
 Additionally, the number of broadcast variables needs to be known before the task is serialized because they are variables in the outer
 scope of the closure to serialize.
 Therefore, the number of broadcast variables cannot be infinite.
-If we take the two arguments together, it becomes clear that a it is not possible to use broadcast variables for dynamic communication.
+If we take the two arguments together, it becomes clear that it is not possible to use broadcast variables for dynamic communication.
 
 There are two possibilities to enable executors to communicate in Spark.
 
-First, one can use an external message-passing framework which can be setup during Spark's startup and connect all executors, e.g.
+First, one can use an external message-passing framework which can be set up during Spark's startup and connect all executors, e.g.
 Akka\footnote{https://akka.io/}.
-That is possible because often Spark executors are connected in the same network and otherwise the driver can be used as proxy.
-This has been done in Fractal (see~\cref{subsec:fractal}) for the use-case of inter executor work-stealing.
+That is possible because often Spark executors are connected in the same network and otherwise the driver can be used as a proxy.
+This approach is taken by Fractal (see~\cref{subsec:fractal}) for the use-case of inter executor work-stealing.
 We inspected the code and find that they use a straightforward Akka setup for a simple work-stealing approach via message-passing.
-There design is directly applicable to our setup.
+Their design is directly applicable to our setup.
 
 Second, Spark uses remote procedure calls internally to schedule tasks on executors and to receive heartbeats and accumables.
 The same functionality could be used to implement work-stealing.
@@ -141,8 +140,7 @@ https://issues.apache.org/jira/browse/SPARK-24582?page=com.atlassian.jira.plugin
 https://docs.google.com/document/d/1GvcYR6ZFto3dOnjfLjZMtTezX0W5VYN9w1l4-tQXaZk/edit\#heading=h.yqvxlbrdqkkb}.
 
 We conclude that both options to introduce communication between different executors are suboptimal.
-The first adds an additional dependency and requires the user to setup its cluster such that executors are located in the same
-network.
+The first adds an additional dependency.
 The second uses private and undocumented Spark internals.
 We argue that the first approach is cleaner as it does not misuse parts of the Spark system in a way they have not be designed for
 and leaves us in full control of the setup.
@@ -167,7 +165,7 @@ Once all of these initial bindings are processed, we start stealing work from ot
 It is beneficial to steal bindings of variables higher in the global order because this
 maximizes the amount of work stolen.
 A task is encoded as a prefix of variable bindings, e.g. if we steal work in a 5-clique query at
-the third level a prefix might be $[4, 1 , 5]$.
+the third level a prefix might be $[4, 1, 5]$.
 If the work-stealing request successfully returns a binding, we set the state of all components
 of the thief to the values of the prefix.
 Then we run the normal Leapfrog Triejoin algorithm to generate all complete bindings for the stolen
