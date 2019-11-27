@@ -72,6 +72,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
   colors = {"Shares": "C0", "FirstVariablePartitioningWithWorkstealing": "C1", "FirstVariablePartitioningWithWorkstealing-batched": "C2" }
   markers = {"3-clique": "o", "5-clique": "^"}
   plots = OrderedDict()
+  queries.sort()
   for p in partitionings:
     if p != "AllTuples":
       for q in queries:
