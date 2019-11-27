@@ -102,7 +102,7 @@ A complete list of all queries and filters used is shown in~\cref{table:patterns
 \Cref{fig:all-queries} shows depiction of all graph patterns.
 
 Patterns and filters are combined as follows.
-Cliques and the kite query use smaller than filters which require the bindings to increase
+Cliques and the Kite query use smaller than filters which require the bindings to increase
 in value according to the variable ordering.
 All other queries are run with a filter such that each of their bindings must be distinct.
 
@@ -117,9 +117,9 @@ All other queries are run with a filter such that each of their bindings must be
         n-clique & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ \\
         n-cycle  & \# vertices                & $n$        & $n$                 \\
         n-s-path & \# edges / selectivity     & $n$        & $n - 1$                 \\
-        kite     & NA                         & $4$        & $5$                    \\
-        house    & NA                         & $5$        & $9$                 \\
-        diamond  & NA                         & $4$        & $4$                 \\
+        Kite     & NA                         & $4$        & $5$                    \\
+        House    & NA                         & $5$        & $9$                 \\
+        Diamond  & NA                         & $4$        & $4$                 \\
         \textbf{Filters}   &                            &          &                   \\
         distinct  &                            &          &                   \\
         less-than &                            &          &                   \\ \bottomrule
@@ -135,8 +135,8 @@ All other queries are run with a filter such that each of their bindings must be
     \subfloat[5-clique]{\includesvg[width=0.2\textwidth]{svg/5clique}}
     \subfloat[4-cycle]{\includesvg[width=0.2\textwidth]{svg/4cycle}}\\
     \subfloat[5-cycle]{\includesvg[width=0.2\textwidth]{svg/5cycle}}
-    \subfloat[diamond]{\includesvg[width=0.2\textwidth]{svg/diamond}}
-    \subfloat[kite]{\includesvg[width=0.2\textwidth]{svg/kite}}
+    \subfloat[Diamond]{\includesvg[width=0.2\textwidth]{svg/diamond}}
+    \subfloat[Kite]{\includesvg[width=0.2\textwidth]{svg/kite}}
     \caption{Queries used in our experiments.}
     \label{fig:all-queries}
 \end{figure}
@@ -255,7 +255,7 @@ decreasing speedup on Amazon-0302.
 The House and 5-clique pattern seem to be quite similiar - the House is a 5-clique with two missing
 edges.
 However, as the count of their results indicates these two edges and the fact that we use a less-than for the 5-clique and a distinct
-vertice filter (the bindings must be distinct but not ordered as in a less-than filter) for the house query lead to dramatically different
+vertice filter (the bindings must be distinct but not ordered as in a less-than filter) for the House query lead to dramatically different
 outcomes.
 Hence, their different timing and speedup behaviour.
 
@@ -335,16 +335,16 @@ The maximum speedup over all queries and datasets is 11.4 for a 5-clique query o
 The lowest speedup is 1.2 on a 4-cycle query on SNB-sf-1.
 
 It shows the biggest speedup for the clique queries which is increasing with the size of the clique.
-The effect on the house and kite query is generally lower.
-The diamond and 4-cycle query do not improve much when we use GraphWCOJ.
+The effect on the House and Kite query is generally lower.
+The Diamond and 4-cycle query do not improve much when we use GraphWCOJ.
 
 This can be explained by the fact that \textsc{CSR} mostly improves by implementing searches on
 the first level of the \textit{TrieIterators} as a two array reads instead of a binary search for
 the column-based implementation of the original Leapfrog Triejoin.
 The denser the query the more first level \textit{TrieIterator} accesses are used.
-Hence, clique, house and kite query profit more than the sparse cycle and diamond query.
+Hence, clique, House and Kite query profit more than the sparse cycle and Diamond query.
 For example, the 5-clique query uses the 10 \textit{TrieIterators} with 10 first levels to set while
-the 4-cylce and diamond need only 4 \textit{TrieIterators}.
+the 4-cylce and Diamond need only 4 \textit{TrieIterators}.
 
 We find that materialization does not improve the algorithm much.
 The strongest speedup can be seen for dense queries, e.g. 5-clique.
@@ -381,7 +381,7 @@ This query gets slower with materialization because of the overhead of copying v
     }
     \caption{
     \textsc{WCOJ} run time of \textsc{LFTJ} and GraphWCOJ on different datasets and queries.
-    Diamond, house and cycle queries are not reported for Twitter because of their high
+    Diamond, House and cycle queries are not reported for Twitter because of their high
     run-time of over an hour.
     }
     \label{fig:lftj-graphWCOJ}
