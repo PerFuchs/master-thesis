@@ -19,7 +19,7 @@ We also consider partitioning the work based on a single variable.
 Here we use the values of the bindings for this variable to determine if a worker processes a specific part of the join.
 
 Furthermore, we consider a work-stealing based partitioning which does not replicate any work and produces less
-skew than Shares. % TODO is that always correct.
+skew than Shares.
 This comes at the price of implementing work-stealing on Spark.
 The design of work-stealing in Spark is described in \cref{subsec:work-stealing}.
 
@@ -257,7 +257,6 @@ If there are too many workers contending for the critical section of polling a j
 However, the critical section is short because it includes only the call to the poll method of the queue.
 Additionally, we decided to implement a batching scheme such that a single poll can assign multiple tasks to a worker.
 This allows us to fine-tune how often a worker needs to return to the queue for new tasks.
-% TODO batch size experiment?
 
 It turns out that the work-stealing scheme as described above is straightforward to integrate into Spark.
 We chose a Scala object\footnote{Methods and fields defined on a Scala object are the Scala equivalent to static methods and fields in
@@ -288,8 +287,6 @@ If the user relies on any specific partitioning, he needs to repartition the res
 Moreover, we cannot guarantee to construct an equal partitioning over multiple runs of the same query.
 If the user depends on a stable partitioning per query, he should cache the query after the worst-case optimal join execution.
 
-% TODO partitioning sizes? Skew after the join, do we always need to repartition?
-
 We do not integrate our work-stealing scheme into the Spark scheduler but we provide a best-effort implementation because
 we use all resources assigned to us as soon as they are available to us.
 We can handle all scheduler decisions.
@@ -307,8 +304,6 @@ With these operations, it is guaranteed that the master can reconstruct all valu
 So, after a task failure, the master can add these values to the work queue again such that other tasks will redo the computations.
 
 \subsubsection{Work-stealing in cluster mode} \label{subsubsec:distributed-work-stealing}
-% TODO reread
-% TODO spell check
 In this section, we describe a simple, yet promising design to integrate work-stealing with Spark's cluster mode.
 We assume clusters in which one worker runs one executor.
 This is the case in Databrick's clusters.
@@ -354,7 +349,20 @@ This is not a huge issue in our experiments where we run one join at the time.
 However, it could be difficult to find enough open spots in a busy production cluster.
 In particular, if it runs workloads with many small tasks.
 
+We note that using the barrier mode is necessary because to distribute the queue we need to know how many executors are used and
+how many tasks are on each of them.
+We considered the alternative design to distribute the first variable bindings over the tasks by assigning $\frac{1}{t}$ bindings with
+$t$ the number of tasks to each of them.
+Then tasks that are scheduled on the same worker could detect each other dynamically via a shared data structure and share work.
+However, this design is not recommendable because it cannot be determined when a single task should finish and return its resources as
+it cannot check if other tasks have not been scheduled yet.
+Therefore, each task would terminate once it finishes its list and cannot find a \textit{currently} collocated task.
+This leads to a situation where we could end up with highly suboptimal work-stealing when the tasks run one after another and do not
+share work at all.
+To summarize, this design makes work-stealing highly dependent on Spark's scheduler where no parallelism can be guaranteed.
+Using the barrier mode, we can guarantee the level of parallelism by setting the number of tasks.
+
 Second, this scheme does not manage skew between executors.
-If it turns out that the part of the work-stealing queue assigned to any executor requires significantly more work than
+If it turns out that the part of the work-stealing queue assigned to an executor requires significantly more work than
 to the other executors, then this executor will dominate the overall run-time of the whole algorithm.
 We establish if this is a problem in practice in our experiments~\cref{subsec:distributed-work-stealing}.
