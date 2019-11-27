@@ -2,11 +2,10 @@
 In this section, we describe how we specialize a Leapfrog Triejoin implementation to
 the graph-pattern matching use-case.
 We use to different techniques.
-First, we change the backing data structure for the \textit{TrieIterator}'s.
+First, we change the backing data structure for the \textit{TrieIterators}.
 Second, we analyse the intersection workload and suggest a more suitable
 algorithm to compute them in the \textit{LeapfrogJoin}'s.
 
-% TODO everywhere \\textit{TrieIterator}'s
 \subsection{Combining \textsc{LFTJ} with \textsc{CSR}} \label{subsec:graphWCOJ-csr}
 For our graph pattern matching specialized Leapfrog Triejoin version we choose \textsc{CSR} (see \cref{subsec:csr-background}) as
 backing data structure.
@@ -81,7 +80,7 @@ Additionally to this advantage, \textsc{CSR} based \textit{TrieIterator} do less
 nearly no time on processing \textit{atEnd} for the second level, while a column based \textit{TrieIterator} needs to calculate the
 number of outgoing edges for each source vertice in its \textit{open} method, to allow a fast \textit{atEnd} method.
 
-We conclude that \textsc{CSR} based \textit{TrieIterator}'s are a promising match for \textsc{LFTJ} and graph pattern matching.
+We conclude that \textsc{CSR} based \textit{TrieIterators} are a promising match for \textsc{LFTJ} and graph pattern matching.
 The improvements of this optimization can be seen in \cref{fig:wcoj-vs-graphWCOJ}.
 It demonstrates an up to 2.6 speedup over a column-based \textsc{LFTJ}. % NUMBER
 We also see that the optimization has a stronger impact on queries with more edges and vertices, e.g. \texttt{5-clique}.
@@ -95,8 +94,6 @@ For a more thorough evaluation refer to the experiment section \ref{sec:experime
 \end{figure}
 
 \subsection{Exploiting low average outdegrees} \label{subsec:graphWCOJ-materalization}
-% TODO study in backgrounda
-
 It is well-known that most real-world graphs have a low average outdegree, mostly far below 200.
 This leads to the hypothesis that the intersection of multiple adjacency lists is small, e.g. below 10 in many cases.
 

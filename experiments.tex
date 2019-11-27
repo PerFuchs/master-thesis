@@ -52,7 +52,6 @@ We explain our choice in the next paragraphs.
     \textbf{Amazon}      & 0302    & 262,111     &  1,234,877     & \cite{snapnets} \\
     & 0601    & 403,394     &  3,387,388     & \cite{snapnets} \\
     \textbf{Twitter}     & sc-d    & 81,306      &  1,768,135     & \cite{snapnets} \\
-    %                             & sc-u    &   TODO      &       TODO     & \cite{snapnets} \\
     \textbf{LiveJournal} &         & 4,847,571   & 68,993,773     & \cite{snapnets} \\
     \textbf{Orkut}       &         & 3,072,441   & 117,185,083    & \cite{snapnets} \\ \bottomrule
     \end{tabular}
@@ -429,6 +428,7 @@ To conclude, we expect sub-linear speedup for Shares and better but still sub-li
 Anyhow, super-linear scaling in MapReduce like systems is not unheard of and could be possible on our machines.
 
 We show the scaling behaviour of Shares and work-stealing on different datasets and for 3 queries in~\cref{fig:graphWCOJ-scaling}.
+The run-times and speedup in raw numbers are given as an appendix~\cref{app:local-mode-scaling}.
 
 \begin{figure}
     \centering
@@ -617,6 +617,7 @@ algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
 We note that Spark that the best configuration for Spark slower than GraphWCOJ by the factor 100.
 
 We show the speedup of the different queries on the LiveJournal and Orkut dataset in \cref{fig:distributed-scaling}.
+The run-times and speedup in raw numbers are given as an appendix~\cref{app:distributed-scaling}.
 We analyse the results by query and dataset.
 
 The 3-clique query scales very differently on both datasets.
