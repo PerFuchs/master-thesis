@@ -56,5 +56,3 @@ def display_data(data, queries, output_name):
 data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/nomat-snb.csv", no_mat=True))
 display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], "wcoj-csr.svg")
-
-# TODO error bars

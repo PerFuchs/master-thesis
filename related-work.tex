@@ -30,6 +30,7 @@ We assume static graphs while they operate on graphs with the ability to find ne
 
 \textit{BigJoin} is closest to our work.
 It has been implemented and is a worst-case optimal join for static graphs.
+
 In the following paragraphs, we describe \textit{BigJoin}, analyse why it is not likely to be a good fit for Spark,
 discuss and compare the index structures used in their work to represent the input relationships and compare the
 guarantees are given by them and us.
@@ -368,7 +369,7 @@ They allow stealing work at every level of the depth-first enumeration of all su
 We only share work on the first level.
 This makes their solution strictly more fine-grained and likely to perform better on big
 queries.
-We discuss this issue in our future work section~\ref{subsubsec:work-stealing}.
+We discuss this issue in our future work section~\ref{subsubsec:finer-grained-work-stealing}.
 
 Fractal is built for Spark in cluster mode.
 Hence, they allow processes to steal work from different workers.
