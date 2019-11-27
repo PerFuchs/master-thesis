@@ -12,7 +12,7 @@ a single machine.
 Finally, we show the speedup our distributed version reaches on four machines with up
 to 384 cores and compare the run-time with Spark's binary joins in a distributed setting.
 
-We run our experiments on machines of the type \texttt{diamond} of the Scilens cluster of the CWI Database Architecture research
+We run our experiments on machines of the type \textit{diamond} of the Scilens cluster of the CWI Database Architecture research
 group.
 These machines feature 4 Intel Xeon E5-4657Lv2 processors with 12 cores each and hyperthreading of 2 (48 cores / 96 threads)
 Each core has 32 KB of 1st level cache, 32KB 2nd level cache.
@@ -66,7 +66,7 @@ that the edge table becomes truly undirected.
 
 The benchmark comes with an extensively parameterizable graph generation engine
 which allows us to experiment with sizes as small as 1GB and up to 1TB for big experiments and different levels of selectivity.
-The different sizes are called scale-factor or \texttt{sf}, e.g. \texttt{SNB-sf1} refers to a Social network benchmark dataset generated with
+The different sizes are called scale-factor or sf, e.g. SNB-sf1 refers to a Social network benchmark dataset generated with
 default parameters and scale-factor 1.
 
 The Amazon co-purchasing network contains edges between products that have been purchased together and hence are closely related to each other~\cite{snapnets}.
@@ -74,8 +74,8 @@ This is a directed relationship from the product purchased first to the product 
 products have been purchased varies.
 
 The Snap dataset collection contains multiple Amazon co-purchase datasets, each of them containing a single day of purchases.
-We choose the smallest and biggest dataset from the 2nd of March and the 1st of June 2003 which we call them \texttt{Amazon-0302} and
-\texttt{Amazon-0601}.
+We choose the smallest and biggest dataset from the 2nd of March and the 1st of June 2003 which we call them Amazon-0302 and
+Amazon-0601.
 
 We pick co-purchase datasets for evaluation because former work often concentrated on social networks and web crawl based
 graphs~\cite{myria-detailed,ammar2018distributed} but~\cite{salihoglu2018} points out that the biggest graphs are actually graphs like
@@ -85,7 +85,7 @@ To allow comparisons with former work, we run a subset of our experiments on the
 This dataset includes the follower relationship of one thousand Twitter users; each of these follows 10 to 4.964 other users and
 relationships between these are included.
 
-The \texttt{LiveJournal} graph represents the friendship relationship of a medium-sized social network.
+The LiveJournal and Orkut graph represent the friendship relationships of a medium-sized social network.
 
 \subsection{Queries}
 In this section, we detail the graph patterns used throughout our experiments.
@@ -102,7 +102,7 @@ A complete list of all queries and filters used is shown in~\cref{table:patterns
 \Cref{fig:all-queries} shows depiction of all graph patterns.
 
 Patterns and filters are combined as follows.
-Cliques and the \texttt{kite} query use smaller than filters which require the bindings to increase
+Cliques and the kite query use smaller than filters which require the bindings to increase
 in value according to the variable ordering.
 All other queries are run with a filter such that each of their bindings must be distinct.
 
@@ -113,16 +113,16 @@ All other queries are run with a filter such that each of their bindings must be
         Name     & Parameters                 & Vertices & Edges
 
         \\ \midrule
-        \texttt{triangle} & NA                          & $3$        & 3                 \\
-        \texttt{n-clique} & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ \\
-        \texttt{n-cycle}  & \# vertices                & $n$        & $n$                 \\
-        \texttt{n-s-path} & \# edges / selectivity  & $n$       & $n - 1$                 \\
-        \texttt{kite}  & NA                         & $4$        & $5$                    \\
-        \texttt{house}    & NA                         & $5$        & $9$                 \\
-        \texttt{diamond}  & NA                         & $4$        & $4$                 \\
+        triangle & NA                         & $3$        & 3                 \\
+        n-clique & \# vertices                & $n$        & $1/2 \times n \times (n - 1)$ \\
+        n-cycle  & \# vertices                & $n$        & $n$                 \\
+        n-s-path & \# edges / selectivity     & $n$        & $n - 1$                 \\
+        kite     & NA                         & $4$        & $5$                    \\
+        house    & NA                         & $5$        & $9$                 \\
+        diamond  & NA                         & $4$        & $4$                 \\
         \textbf{Filters}   &                            &          &                   \\
-        \texttt{distinct}  &                            &          &                   \\
-        \texttt{less-than} &                            &          &                   \\ \bottomrule
+        distinct  &                            &          &                   \\
+        less-than &                            &          &                   \\ \bottomrule
     \end{tabular}
     \caption{Summary of patterns and filters used.}
     \label{table:patterns}
@@ -142,7 +142,7 @@ All other queries are run with a filter such that each of their bindings must be
 \end{figure}
 
 For a selective path query, we first select two sets of nodes with respect to the \textit{selectivity} parameter.
-Then we search for all paths of a certain length according to the \textit{edges} parameter, e.g. \texttt{4-0.1-path} finds all
+Then we search for all paths of a certain length according to the \textit{edges} parameter, e.g. 4-0.1-path finds all
 paths between two randomly selected fixed sets of vertices of length 4.
 The sets of nodes contain roughly 10\% of all input nodes and are
 not guaranteed to be intersection free.
@@ -215,13 +215,13 @@ We set these values accordingly in all further experiments.
 
 \subsection{Baseline: \texttt{BroadcastHashjoin} vs \textsc{LFTJ}} \label{subsec:spark-vs-lftj}
 In this experiment, we compare the runtime of our sequential Leapfrog Triejoin implementation with the runtime of Spark's \texttt{BroadcastHashjoin}.
-Towards this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: \texttt{Amazon-0302}, \texttt{Amazon-0601}
-and \texttt{SNB-sf1}.
+Towards this goal we ran all queries from~\cref{table:patterns} on our three of our datasets: Amazon-0302, Amazon-0601
+and SNB-sf1.
 
-Our experiment measures the time it takes to perform a \texttt{count} on the cached dataset using \texttt{BroadcastHashjoin} and
+Our experiment measures the time it takes to perform a count on the cached dataset using \texttt{BroadcastHashjoin} and
 \textsc{LFTJ}.
 For \texttt{BroadcastHashjoin}, the time to run the whole query is reported.
-For \texttt{seq}, we the time, it takes to run the join, excluding setup time.
+For the \textsc{LFTJ}, we the time, it takes to run the join, excluding setup time.
 Setup time includes sorting and materialization.
 
 This section is focused on comparing the runtimes excluding the setup time, because the final system is meant to cache the readily sorted
@@ -232,49 +232,51 @@ We compare against Spark's \texttt{BroadcastHashjoin} instead of \texttt{SortMer
 partition, for simple sequential processing, Spark schedules its \texttt{SortMergeJoin} to use a shuffle.
 A shuffle writes and reads data to and from disk.
 Hence, \texttt{SortMergeJoin} is much slower than a \texttt{BroadcastHashjoin}.
-We compared the algorithms on the \texttt{Amazon-0601} dataset for the \texttt{triangle} (8.1 seconds vs 58.9 seconds) and
-\texttt{5-clique} pattern (32.9 seconds vs 850.9 seconds).
+We compared the algorithms on the Amazon-0601 dataset for the triangle (8.1 seconds vs 58.9 seconds) and
+5-clique pattern (32.9 seconds vs 850.9 seconds).
 We assume that Spark can optimize its broadcasts when \texttt{local[1]} is used to start the Spark session because then Spark uses the driver as executor.
 
 We point out that Spark's code generation is a huge advantage for the \texttt{BroadcastHashjoin} compared
 to our interpreted \textsc{LFTJ}.
-We ran Spark without code generation for comparision on the \texttt{Amazon-0302} dataset for the triangle
+We ran Spark without code generation for comparision on the Amazon-0302 dataset for the triangle
 query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
 
 We show our results in~\cref{fig:spark-vs-lftj}.
 Next, we analyze the results.
 
-We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except \texttt{5-clique-lt} on \texttt{Amazon-0602}.
-Generally, we see that for \texttt{n-clique} patterns the speedup over Spark decreases for bigger $n$.
-This is because many binary joins in a \texttt{n-clique} are semi-joins which to do not increase but decrease the size of intermediary results,
-e.g. for \texttt{5-clique} on \texttt{Amazon-0302} only 3 out of 9 joins lead to a bigger intermediary result.
+We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except 5-clique on Amazon-0602.
+Generally, we see that for n-clique patterns the speedup over Spark decreases for bigger $n$.
+This is because many binary joins in a n-clique are semi-joins which to do not increase but decrease the size of intermediary results,
+e.g. for 5-clique on Amazon-0302 only 3 out of 9 joins lead to a bigger intermediary result.
 
-The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on \texttt{Amazon-0602} but a
-decreasing speedup on \texttt{Amazon-0302}.
+The cycle query results are highly interesting because we see an increasing speedup for higher $n$ on Amazon-0602 but a
+decreasing speedup on Amazon-0302.
 
-The \texttt{House} and \texttt{5-clique} pattern seem to be quite similiar - the \texttt{House} is a \texttt{5-clique} with two missing
+The House and 5-clique pattern seem to be quite similiar - the House is a 5-clique with two missing
 edges.
-However, as the count of their results indicates these two edges lead to dramatically different outcomes.
+However, as the count of their results indicates these two edges and the fact that we use a less-than for the 5-clique and a distinct
+vertice filter (the bindings must be distinct but not ordered as in a less-than filter) for the house query lead to dramatically different
+outcomes.
 Hence, their different timing and speedup behaviour.
 
-The \texttt{Kite} pattern produces consistently the second highest speedup after the \texttt{3-clique}.
-Most likely since a \texttt{Kite} is two triangles back-to-back.
+The Kite pattern produces consistently the second highest speedup after the 3-clique.
+Most likely since a Kite is two triangles back-to-back.
 
-The path query shows very different behaviour on the \texttt{Amazon} and the \texttt{SNB} datasets.
+The path query shows very different behaviour on the Amazon and the SNB datasets.
 This might be due to the different selectivity; it is extremely high on the co-purchase datasets and rather low on the social network
 benchmark.
-This different in selectivity is not surprising given that the \texttt{SNB} network fulfils the small-world property, while the
-\texttt{Amazon} dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
+This different in selectivity is not surprising given that the SNB network fulfils the small-world property, while the
+Amazon dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
 in the characteristics of the datasets themselves.
 
 In particular, it becomes clear that co-purchase datasets and social network datasets must have very different characteristics.
-Although, \texttt{SNB-sf1} is much smaller than \texttt{Amazon-0601}, queries on it take a similar or even much more time,
-e.g. \texttt{5-clique} takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much
-smaller on \texttt{SNB-sf1};
-\texttt{4-cycles} takes roughly 8 times longer on the small dataset and has a much bigger result set.
-In general, we see a higher speedup on \texttt{SNB-sf1}
+Although, SNB-sf1 is much smaller than Amazon-0601, queries on it take a similar or even much more time,
+e.g. 5-clique takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much
+smaller on SNB-sf1;
+4-cycles takes roughly 8 times longer on the small dataset and has a much bigger result set.
+In general, we see a higher speedup on SNB-sf1
 
 \begin{figure}
     \centering
@@ -316,9 +318,9 @@ In general, we see a higher speedup on \texttt{SNB-sf1}
 \subsection{\textsc{LFTJ} vs GraphWCOJ} \label{subsec:lftj-vs-graphWCOJ}
 
 In this experiment, we compare sequentials runs of the Leapfrog Triejoin and GraphWCOJ
-on the \texttt{Amazon}, \texttt{SNB-1} and \texttt{Twitter} datasets.
-We do not show the run-time of \texttt{Path} queries because GraphWCOJ is not able to run
-them\footnote{\texttt{Path} queries require us to filter the input relationship before
+on the Amazon, SNB-1 and Twitter datasets.
+We do not show the run-time of Path queries because GraphWCOJ is not able to run
+them\footnote{Path queries require us to filter the input relationship before
 the join. This has not been implemented for GraphWCOJ due to time constraints.}.
 
 We show the run-time of the queries on different datasets in~\cref{fig:lftj-graphWCOJ}.
@@ -329,8 +331,8 @@ We first analyze the impact of using the \textsc{CSR} data structure as basis fo
 
 Throughout all datasets, we see that GraphWCOJ is faster than a \textsc{LFTJ} for all queries.
 The biggest speedups are reached for 5-cliques and the lowest speedup for 4-cycles.
-The maximum speedup over all queries and datasets is 11.4 for a 5-clique query on \texttt{Amazon-0601}.
-The lowest speedup is 1.2 on a 4-cycle query on \texttt{SNB-sf-1}.
+The maximum speedup over all queries and datasets is 11.4 for a 5-clique query on Amazon-0601.
+The lowest speedup is 1.2 on a 4-cycle query on SNB-sf-1.
 
 It shows the biggest speedup for the clique queries which is increasing with the size of the clique.
 The effect on the house and kite query is generally lower.
@@ -389,8 +391,8 @@ This query gets slower with materialization because of the overhead of copying v
 
 In this section, we aim to analyse and compare the scaling of Graph\textsc{WCOJ} using different
 partitioning schemes.
-Towards this goal, we run Graph\textsc{WCOJ} on datasets of different size namely \texttt{Twitter},
-\texttt{LiveJournal} and \texttt{Orkut}.
+Towards this goal, we run Graph\textsc{WCOJ} on datasets of different size namely Twitter,
+LiveJournal and Orkut.
 We compare two partitioning schemes: Shares and work-stealing.
 These are the two most promising schemed identified in \cref{sec:worst-case-optimal-join-parallelization}.
 The experiment is performed on 3-clique, 4-clique and 5-clique.
@@ -564,7 +566,6 @@ that the number of threads increased by a threefold.
 
 One could argue that we should use a different definition of \textit{best} hypercube configuration.
 As we see, it is not necessarily efficient to distribute the computation along the last axis.
-% TODO prefix shares
 %We implemented to version of the configuration finder that considers only the first \textit{i} axes and
 %call this partitioning scheme \textit{i-prefixShares}.
 %However for time constraints, we do not investigate this issue further and do not include \textit{i-prefixShares}
@@ -575,13 +576,7 @@ super-linear scaling for \textit{work-stealing} up to 48 workers,
 \textit{work-stealing} scales significantly better than Shares.
 Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
-
-
-% TODO experiment about scaling of Spark
-
 \subsection{Distributed work-stealing}\label{subsec:distributed-work-stealing}
-
-% TODO 5-clique query
 We run the distributed version of work-stealing as described in~\cref{subsubsec:distributed-work-stealing}
 on the LiveJournal and Orkut dataset for the 3-clique query.
 
@@ -673,7 +668,6 @@ When we choose it too low for the level of parallelism, the work-stealing queue 
 to highly unpredictable performance.
 However, using batching immediately raises the skew in the query, which leads to lower performance on less
 than 48 cores and to suboptimal speedup with higher levels of parallelism due to skew.
-% TODO fix legend of livejournal scaling to include the batch line
 
 Due to time constraints, we run 5-clique only on the LiveJournal dataset.
 As expected we see stronger speedup than for 3-clique as there is more work to share.
@@ -706,7 +700,6 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
     It is displayed for 3-clique run with a batch size of 1 and a batch size of 40 for the work-stealing
     algorithm.
     }
-    % TODO did I explain batch size? in the work-stealing chapter.
     \label{table:distributed-skew-livej}
 \end{table}
 

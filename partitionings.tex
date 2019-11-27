@@ -87,8 +87,8 @@ We hypothesize that this is the case because the original \textit{next} and \tex
 by a linear search for a matching value.
 Furthermore, many of these values are later dropped in the intersection of the \textit{LeapfrogJoin} which
 can also be seen as a filter over the values of the \textit{TrieIterators}.
-% TODO forward reference
-As we know from~\cref{subsec:graphWCOJ-materalization}, the \textit{LeapfrogJoin} is a rather selective filter.
+As we argue in~\cref{subsec:graphWCOJ-materalization}, the \textit{LeapfrogJoin} is a rather selective filter which
+excludes most of its input in the process of building the intersection.
 It does not make sense to push a less selective filter below a more selective filter.
 
 With this idea in mind, we built a logical Shares implementation that filters the return values of the \textit{leapfrogNext}
@@ -97,7 +97,6 @@ This is implemented as a decorator pattern around the original \textit{LeapfrogJ
 The use of the decorator pattern allows us to easily integrate Shares with the \textsc{LFTJ} while keeping it decoupled enough
 to use other partitioning schemes.
 
-% TODO to negative?
 The second design decision is how and where to compute the best hypercube configuration.
 The how has been discussed extensively in former literature~\cite{shares,myria-detailed,shares-proof,shares-skew}.
 We implement the exhaustive search algorithm used in the Myria system~\cite{myria-detailed}.
@@ -149,9 +148,9 @@ It configures its \textit{TrieIterators} accordingly such that they are limited 
 We run the first experiments to evaluate this idea.
 We expect it to scale better than a hash-based Shares because it saves intersection work in the \textit{LeapfrogJoins}.
 However, we find that high skew between the workers leads to much worse performance than a hash-based Shares.
-% TODO present data?
 The explanation is that if a worker is assigned the same range multiple times and this range turns out to take long to compute, it takes
 much longer than all other workers.
+We show the scaling behaviour of this scheme in the next section.
 
 To mitigate this problem, we break down the vertice IDs into more ranges than there are workers in the hypercube dimension corresponding to
 the attributes.
@@ -163,10 +162,8 @@ We conclude that the pattern instances are unevenly distributed over the ranges 
 a range based solution.
 We show performance measurements in the coming section and stopped our investigation in this direction.
 
-% TODO source code for clarification?
 
 \subsection{Comparision of static partitioning schemes} \label{subsec:statical-partitioning-experiment}
-% TODO add 5-clique
 In this section, we show how the static partitioning schemes implemented by us scale on the 3-clique query on the
 \texttt{LiveJournal} dataset.
 We partition the work according to logical Shares, on the first and second variable and according to both range-based, logical Shares schemes.
