@@ -6,7 +6,7 @@ from matplotlib.patches import Patch
 
 from diagrams.base import *
 
-OUTPUT = False
+OUTPUT = True
 
 def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealing, parallelism_levels_5_clique_shares, output_path,
                            new_3c_data_path=""):
@@ -120,6 +120,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
 
 def tabulize_data(data, output_path):
   data.to_latex(buf=open(output_path, "w"),
+                longtable=True,
                 # columns=["Par", "Count", "Time", "WCOJTime_wcoj", "setup", "ratio"],
                 # header = ["Query", "\\# Result", "\\texttt{BroadcastHashJoin}", "\\texttt{seq}", "setup", "Speedup"],
                 column_format="llr|rr",

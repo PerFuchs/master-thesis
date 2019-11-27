@@ -147,6 +147,7 @@ def tabulize_data(data, output_path):
                 # columns=["Par", "Count", "Time", "WCOJTime_wcoj", "setup", "ratio"],
                 # header = ["Query", "\\# Result", "\\texttt{BroadcastHashJoin}", "\\texttt{seq}", "setup", "Speedup"],
                 column_format="llr|rr",
+                longtable=True,
                 # formatters = {
                 # "ratio": lambda r: str(round(r, 1)),
                 #   "Count": lambda c: "{:,}".format(c),

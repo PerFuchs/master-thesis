@@ -1,7 +1,15 @@
-\begin{tabular}{llr|rr}
+\begin{longtable}{llr|rr}
 \toprule
   Partitioning &     Query &  Parallelism &    Time &  Speedup \\
 \midrule
+\endhead
+\midrule
+\multicolumn{5}{r}{{Continued on next page}} \\
+\midrule
+\endfoot
+
+\bottomrule
+\endlastfoot
         Shares &  3-clique &            1 &    16.3 &      1.0 \\
         Shares &  3-clique &            2 &     7.7 &      2.1 \\
         Shares &  3-clique &            4 &     4.0 &      4.0 \\
@@ -50,5 +58,4 @@
  work-stealing &  5-clique &           48 &    31.6 &     35.2 \\
  work-stealing &  5-clique &           64 &    35.2 &     31.6 \\
  work-stealing &  5-clique &           96 &    37.4 &     29.8 \\
-\bottomrule
-\end{tabular}
+\end{longtable}

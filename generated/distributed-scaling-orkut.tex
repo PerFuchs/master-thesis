@@ -1,7 +1,15 @@
-\begin{tabular}{llr|rr}
+\begin{longtable}{llr|rr}
 \toprule
   Partitioning &     Query &  Parallelism &     Time &  Speedup \\
 \midrule
+\endhead
+\midrule
+\multicolumn{5}{r}{{Continued on next page}} \\
+\midrule
+\endfoot
+
+\bottomrule
+\endlastfoot
  work-stealing &  3-clique &            1 &    978.6 &      1.0 \\
  work-stealing &  3-clique &           16 &     51.0 &     19.2 \\
  work-stealing &  3-clique &           32 &     25.4 &     38.5 \\
@@ -20,5 +28,4 @@
  work-stealing &  5-clique &          128 &   1541.3 &     43.3 \\
  work-stealing &  5-clique &          192 &   1434.7 &     46.5 \\
  work-stealing &  5-clique &          384 &   1176.4 &     56.7 \\
-\bottomrule
-\end{tabular}
+\end{longtable}

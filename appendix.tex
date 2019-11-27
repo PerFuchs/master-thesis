@@ -1,35 +1,30 @@
 \begin{appendix}
-\section{Experimental Results}
-\subsection{Graph\textsc{WCOJ} scaling}
+    \section{Additional experimental results}
+    \subsection{Graph\textsc{WCOJ} local mode scaling} \label{app:local-mode-scaling}
+    Run-times and speedups of the local mode GraphWCOJ scaling experiment.
+    Time shown in minutes.
+    \begin{center}
+        Twitter
+        \input{generated/graphWCOJ-scaling-twitter.tex}
 
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-twitter.tex}
-    \caption{
-      Table showing the speedup of Graph\textsc{WCOJ} for 3-clique and
-      5-clique on the Twitter dataset.
-      Time is shown in minutes.
-    }\label{table:graphWCOJ-scaling-twitter}
-\end{table}
+        LiveJournal
+        \input{generated/graphWCOJ-scaling-livej.tex}
 
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-livej.tex}
-    \caption{
-      Table showing the speedup of Graph\textsc{WCOJ} for 3-clique and
-      5-clique on the LiveJournal dataset.
-      Time is shown in minutes.
-    }\label{table:graphWCOJ-scaling-liveJ}
-\end{table}
+        Orkut
+        \input{generated/graphWCOJ-scaling-orkut.tex}
 
-\begin{table}
-    \centering
-    \input{generated/graphWCOJ-scaling-orkut.tex}
-    \caption{
-      Table showing the speedup of Graph\textsc{WCOJ} for 3-clique and
-      5-clique on the Orkut dataset.
-      Time is shown in minutes.
-    }\label{table:graphWCOJ-scaling-orkut}
-\end{table}
+    \end{center}
+
+    \subsection{Graph\textsc{WCOJ} distributed scaling} \label{app:distributed-scaling}
+    Run-times and speedups of the distributed GraphWCOJ scaling experiment.
+    Time shown in minutes.
+    \begin{center}
+        LiveJournal
+        \input{generated/distributed-scaling-livej.tex}
+
+        Orkut
+        \input{generated/distributed-scaling-orkut.tex}
+
+    \end{center}
 
 \end{appendix}
