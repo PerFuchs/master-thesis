@@ -66,7 +66,8 @@ We describe an alternative algorithm to generalize work-stealing to all levels o
 
 Then, we investigate the scaling of a simple, communication free, distributed work-stealing integration into Spark.
 We find that the scaling of it is similar to the local mode version in 3 out of 4 measured queries.
-It scales as good or better for most levels of parallelism for the 5-clique query up to 96 workers.
+It scales as good or better for most levels of parallelism for the 5-clique query up to 96 workers on the LiveJournal dataset
+and half as good to as good on the Orkut dataset.
 We do not have data for the local version on more than 96 cores due to the size of our machines.
 
 The scaling above 96 workers for the 5-clique query is dataset dependent, while
