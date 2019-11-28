@@ -357,13 +357,32 @@ We cannot measure any significant difference in cache utilization between the tw
 
 The last reason why materialization can improve the performance it because it uses binary
 intersections starting with the smallest intersection which leads to less \textit{seek} calls.
-We measure this effect by counting all \textit{seek} calls on the 5-clique of the SNB dataset.
-We count TODO calls with and TODO without materialization.
+We measure this effect by counting all \textit{seek} calls for the different queries on the
+SNB-1 dataset and tabulate the results in~\cref{table:seek-calls}.
+We note a clear correlation between the percentage of saved calls to the run-time difference with materialization:
+Kite, 4-clique and 5-clique profit from the optimization and save more than 15\% of all \textit{seek} calls, while
+the other queries show no big difference or a slow-down and save less than 10\% of the \textit{seek} calls.
+In the next paragraph, we explain these measurements.
 
 The effect on dense clique queries is highest because they employ intersections between up to
 four adjacency lists while the 4-cycle intersects at-most two adjacency lists.
-Hence, using binary intersection makes no difference for 4-cylcles.
+Hence, using binary intersection makes no difference for 4-cycles.
+We still save \textit{seek} calls because we defer them for the first-level \textit{TrieIterators} until after building
+the intersection.
 This query gets slower with materialization because of the overhead of copying values into a new buffer.
+
+\begin{table}
+    \begin{tabular}[lrr]
+        Query       & w\textbackslash o materialization & materialization  & $\Delta$ [\%]\\
+        3-clique    &       34739080                    &    33526024      &    3.4       \\
+        4-clique    &      118451741                    &    99402372      &   16.1       \\
+        5-clique    &      262304687                    &   192296784      &   26.7       \\
+        kite        &      346636041                    &   272840747      &   21.2       \\
+        house       &     5985294145                    &  5550487243      &    7.2       \\
+        4-cycle     &     4591408924                    &  4402790869      &    4.1       \\
+        diamond     &    10230067028                    &  9680437365      &    5.3       \\
+    \end{tabular}
+\end{table}
 
 \begin{figure}
     \subfloat[Amazon-0302]{\includesvg[width=0.3\textwidth]{svg/lftj-graphWCOJ-amazon}}
