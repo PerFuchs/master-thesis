@@ -372,18 +372,21 @@ the intersection.
 This query gets slower with materialization because of the overhead of copying values into a new buffer.
 
 \begin{table}
-    \begin{tabular}[lrr]
-        Query       & w\textbackslash o materialization & materialization  & $\Delta$ [\%]\\
-        3-clique    &       34739080                    &    33526024      &    3.4       \\
-        4-clique    &      118451741                    &    99402372      &   16.1       \\
-        5-clique    &      262304687                    &   192296784      &   26.7       \\
-        kite        &      346636041                    &   272840747      &   21.2       \\
-        house       &     5985294145                    &  5550487243      &    7.2       \\
-        4-cycle     &     4591408924                    &  4402790869      &    4.1       \\
-        diamond     &    10230067028                    &  9680437365      &    5.3       \\
+    \centering
+    \begin{tabular}{lrrr}
+        \toprule
+        Query       & w\textbackslash o materialization & materialization  &   $\Delta$   [\%]  \\ \midrule
+        3-clique    &        34.739.080                    &     33.526.024      &    3.4       \\
+        4-clique    &       118.451.741                    &     99.402.372      &   16.1       \\
+        5-clique    &       262.304.687                    &    192.296.784      &   26.7       \\
+        kite        &       346.636.041                    &    272.840.747      &   21.2       \\
+        house       &      5985.294.145                    &  5.550.487.243      &    7.2       \\
+        4-cycle     &     4.591.408.924                    &  4.402.790.869      &    4.1       \\
+        diamond     &    10.230.067.028                    &  9.680.437.365      &    5.3       \\
+        \bottomrule
     \end{tabular}
     \caption{Count of all \textit{TrieIterator} \textit{seek} calls for different queries on the SNB-1 dataset with and
-      without materialization and difference in percent.}
+    without materialization and difference in percent.}
     \label{table:seek-calls}
 \end{table}
 
