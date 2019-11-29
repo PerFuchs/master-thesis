@@ -65,30 +65,14 @@ This is caused by our design decision to use one binding for the first variable 
 We describe an alternative algorithm to generalize work-stealing to all levels of variables in~\cref{subsubsec:finer-grained-work-stealing}.
 
 Then, we investigate the scaling of a simple, communication free, distributed work-stealing integration into Spark.
-We find that the scaling of it is similar to the local mode version in 3 out of 4 measured queries.
-It scales as good or better for most levels of parallelism for the 5-clique query up to 96 workers on the LiveJournal dataset
-and half as good to as good on the Orkut dataset.
-We do not have data for the local version on more than 96 cores due to the size of our machines.
+We find that the scaling of it is similar to the local mode version in 2 out of 4 measured queries.
+A third query (5-clique on Orkut) scales roughly half as well as in the local version.
 
-The scaling above 96 workers for the 5-clique query is dataset dependent, while
-the Orkut dataset shows a speedup of 56 for a parallelism level of 384;
-on LiveJournal, the algorithm reaches a speedup of 182 for 384 workers.
-This seems a decent result given that only 192 physical cores are used and the fact that
-it could be improved by avoiding internal executor skew by the more fine-grained work-stealing
-approach described in~\cref{subsubsec:finer-grained-work-stealing}.
-
-The scaling for 3-clique on the LiveJournal dataset is worse than in the local version and
-deteriorates for higher levels of parallelism.
+The last of the 4 queries (3-clique on LiveJournal), lacks strongly behind the local version and seems not to scale
+to higher levels of parallelism.
 This is partly caused by the contention of the work-stealing queue which can be easily mitigated
 by using one queue per worker which leaves queues uncontested until most tasks are finished;
 we provide a more detailed analysis of the expected contention of this design in~\cref{subsubsec:finer-grained-work-stealing}.
-
-We conclude that executor internal work-stealing is a good starting point to fully distribute
-\textsc{WCOJ} optimal joins on Spark.
-It often reaches similar speedups than the local version and beats Spark's built-in joins
-by two magnitudes.
-While being far from perfect it is the best scaling distributed \textsc{WCOJ} on a Spark
-like system to the best of our knowledge.
 
 However, we recognize that our distributed version works best on a cluster with a few
 big machines, like the one we ran our experiments on.
@@ -99,10 +83,19 @@ which are worked upon by a few tasks each.
 This setup is likely to lead to higher inter worker skew.
 We discuss possible solutions in~\cref{subsubsec:cluster-mode}.
 
-The answers to our second set of research questions are: Shares does not scale well but
-better than less skew resilient schemes and dynamic work-sharing approaches are needed to
-achieve good speedup in a Spark like system.
-However, these are not natural to Spark like systems and difficult to integrate.
+We conclude that executor internal work-stealing is a good starting point to fully distribute
+\textsc{WCOJ} optimal joins on Spark.
+It can reach similar speedups than the local version and beats Spark's built-in joins
+by two magnitudes.
+While being far from perfect it is the best scaling distributed \textsc{WCOJ} on a Spark
+like system to the best of our knowledge.
+
+The answers to our second set of research questions are: Shares scales better than less skew resilient schemes but
+does not scale well in absolute terms.
+Therefore, dynamic work-sharing approaches are needed to achieve good speedup in a Spark like system.
+We find that work-stealing works well when used on a single machine but distribution to multiple
+machines is difficult because it is not possible to communicate between executors in Spark.
+We discuss possible solutions in~\cref{subsubsec:cluster-mode}.
 
 \subsection{Distributed work-stealing} \label{subsubsec:cluster-mode}
 
