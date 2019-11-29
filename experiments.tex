@@ -244,7 +244,8 @@ query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds without
 We show our results in~\cref{fig:spark-vs-lftj}.
 Next, we analyze the results.
 
-We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except 5-clique on Amazon-0602.
+We are able to beat Spark's \texttt{BroadcastHashjoin} on all datasets and queries except 5-clique and house on Amazon-0602 and
+path queries on SNB-1.
 Generally, we see that for n-clique patterns the speedup over Spark decreases for bigger $n$.
 This is because many binary joins in a n-clique are semi-joins which to do not increase but decrease the size of intermediary results,
 e.g. for 5-clique on Amazon-0302 only 3 out of 9 joins lead to a bigger intermediary result.
@@ -266,7 +267,7 @@ The path query shows very different behaviour on the Amazon and the SNB datasets
 This might be due to the different selectivity; it is extremely high on the co-purchase datasets and rather low on the social network
 benchmark.
 This different in selectivity is not surprising given that the SNB network fulfils the small-world property, while the
-Amazon dataset relates products purchased together which naturally leads to multiple loosely connected, denser components.
+Amazon dataset relates products purchased together which naturally leads to multiple loosely connected components.
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
 in the characteristics of the datasets themselves.
@@ -276,7 +277,7 @@ Although, SNB-sf1 is much smaller than Amazon-0601, queries on it take a similar
 e.g. 5-clique takes 14.21 seconds on the bigger dataset and 12.65 seconds smaller, even though, the result set is much
 smaller on SNB-sf1;
 4-cycles takes roughly 8 times longer on the small dataset and has a much bigger result set.
-In general, we see a higher speedup on SNB-sf1
+In general, we see a higher speedup on SNB-sf1.
 
 \begin{figure}
     \centering
@@ -343,7 +344,7 @@ the first level of the \textit{TrieIterators} as a two array reads instead of a 
 the column-based implementation of the original Leapfrog Triejoin.
 The denser the query the more first level \textit{TrieIterator} accesses are used.
 Hence, clique, House and Kite query profit more than the sparse cycle and Diamond query.
-For example, the 5-clique query uses the 10 \textit{TrieIterators} with 10 first levels to set while
+For example, the 5-clique query uses the 10 \textit{TrieIterators} with 10 first levels to iterate while
 the 4-cylce and Diamond need only 4 \textit{TrieIterators}.
 
 We find that materialization does not improve the algorithm much.
@@ -352,17 +353,17 @@ However, sparse queries, as the 4-cycle, take longer with enabled materializatio
 
 To explain these weak results, we used \textit{perf} to monitor cache hits and misses while running
 GraphWCOJ with and without materialization on the 5-clique query on the SNB dataset.
-This is where materialization shows its strongest impact.
+On this query and dataset materialization shows its strongest impact.
 We cannot measure any significant difference in cache utilization between the two configurations.
 
-The last reason why materialization can improve the performance it because it uses binary
+The last reason why materialization can improve the performance is because it uses binary
 intersections starting with the smallest intersection which leads to less \textit{seek} calls.
 We measure this effect by counting all \textit{seek} calls for the different queries on the
-SNB-1 dataset and tabulate the results in~\cref{table:seek-calls}.
+SNB-1 dataset and show the results in~\cref{table:seek-calls}.
 We note a clear correlation between the percentage of saved calls to the run-time difference with materialization:
 Kite, 4-clique and 5-clique profit from the optimization and save more than 15\% of all \textit{seek} calls, while
 the other queries show no big difference or a slow-down and save less than 10\% of the \textit{seek} calls.
-In the next paragraph, we explain these measurements.
+In the next paragraph, we explain these results.
 
 The effect on dense clique queries is highest because they employ intersections between up to
 four adjacency lists while the 4-cycle intersects at-most two adjacency lists.
@@ -757,7 +758,7 @@ up to 192 tasks, while the local version uses hyper-threading for more than 48 t
 The 5-clique query on Orkut shows roughly half the speedup up to 48 workers then the difference
 in speedup decreases due to the use of virtual cores in the local version.
 
-The distributed version lacks behind for the 3-clique query on LiveJournal independent on
+The distributed version lacks behind for the 3-clique query on LiveJournal independent of
 the batch size chosen.
 
 \begin{table}

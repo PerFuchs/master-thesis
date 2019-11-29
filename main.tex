@@ -2,29 +2,74 @@
 \input{preamble.tex}
 
 \title{
-  Fast, scalable worst-case optimal joins for graph-pattern matching on in-memory graphs in Spark\\
-  \vspace{0.6cm}
-  \large Master thesis
 }
-\author{Per Fuchs}
-\date{November 2019}
+\author{}
+\date{}
 
 \begin{document}
+  \thispagestyle{empty}
 
+  \begin{center}
+
+    Vrije Universiteit Amsterdam
+
+    \vspace{1mm}
+
+    \includegraphics[height=25mm]{figures/vu-griffioen.pdf}
+
+    \vspace{1cm}
+
+    {\Large Master Thesis}
+
+    \vspace*{1.5cm}
+
+    \rule{.9\linewidth}{.6pt}\\[0.4cm]
+    {\Large \bfseries Fast, scalable worst-case optimal joins for graph-pattern matching on in-memory graphs in Spark\par}\vspace{0.4cm}
+    \rule{.9\linewidth}{.6pt}\\[1.5cm]
+
+    \vspace*{2mm}
+
+    {\Large
+    \begin{tabular}{l}
+    {\bf Author:} ~~Per Fuchs ~~~~ (2614613)
+    \end{tabular}
+    }
+
+    \vspace*{2cm}
+
+    \begin{tabular}{ll}
+    {\it 1st supervisor:}   & Prof.dr P.A. Peter Boncz (CWI) \\
+    {\it daily supervisor:} & Prof.dr P.A. Peter Boncz  \\
+    {\it 2nd reader:}       & Dr. Bogdan Ghit (databricks)
+    \end{tabular}
+
+    \vspace*{2.5cm}
+
+    \textit{A thesis submitted in fulfillment of the requirements for\\ Parallel and Distributed Systems Master of Science degree in
+    Computer Science}
+
+%    \vspace*{1.8cm}
+
+    \today % Date
+
+  \end{center}
+  \newpage
 \maketitle
 
 \abstract{
-  Graph pattern matching is a challenge for data processing systems like Spark because the size of the intermediary
-  result required by finding the matches with standard binary join operators grow over linear with regards to the
-  inputs.
-  Recently popularized worst-case optimal join algorithms, \textsc{WCOJ}s, seem a better match to tackle this challenge
-  because they do not materialize the aforementioned large intermediary results.
-  We investigate two major open questions regarding \textsc{WCOJ}s in graph use cases.
-  First, we develop a \textsc{WCOJ} specialized to graph-pattern matching, where the joins are self-joins on an edge table and compare its performance with a generic \textsc{WCOJ}. Second, we propose a novel method for distributed execution of such WCOJs. We show that the previously proposed methods to distribute WCOJs that would fit Spark, do not scale well to large graph patterns (five vertices and more). Based on this result, we propose to keep the edge relationship cached in compressed form on all workers but distribute the computation using a logical partitioning.
-  Our approach trades off memory usage for better scalability.
-  This is reasonable as most graphs today fit in main memory~\cite{snap}.
-  In all, our work provides the first scalable Spark implementation of a \textsc{WCOJ}, very suited for graph use.
-}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.7em}
+      Graph pattern matching is a challenge for data processing systems like Spark because the size of the intermediary
+      result required by finding the matches with standard binary join operators grow over linear with regards to the
+      inputs.
+      Recently popularized worst-case optimal join algorithms, \textsc{WCOJ}s, seem a better match to tackle this challenge
+      because they do not materialize the aforementioned large intermediary results.
+      We investigate two major open questions regarding \textsc{WCOJ}s in graph use cases.
+      First, we develop a \textsc{WCOJ} specialized to graph-pattern matching, where the joins are self-joins on an edge table and compare its performance with a generic \textsc{WCOJ}. Second, we propose a novel method for distributed execution of such WCOJs. We show that the previously proposed methods to distribute WCOJs that would fit Spark, do not scale well to large graph patterns (five vertices and more). Based on this result, we propose to keep the edge relationship cached in compressed form on all workers but distribute the computation using a logical partitioning.
+      Our approach trades off memory usage for better scalability.
+      This is reasonable as most graphs today fit in main memory~\cite{snap}.
+      In all, our work provides the first scalable Spark implementation of a \textsc{WCOJ}, very suited for graph use.
+      }
 \newpage
 
 \setlength{\parindent}{0em}
