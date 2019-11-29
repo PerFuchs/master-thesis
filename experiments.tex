@@ -602,7 +602,7 @@ Shares exhibits less speedup for 64 workers than for 32 and 64 workers.
 
 \subsection{Distributed work-stealing}\label{subsec:distributed-work-stealing}
 We run the distributed version of work-stealing as described in~\cref{subsubsec:distributed-work-stealing}
-on the LiveJournal and Orkut dataset for the 3-clique query.
+on the LiveJournal and Orkut dataset for the 3-clique and 5-clique query.
 
 For this experiment, we use four \textit{diamond} machines as described in the beginning of the section.
 Each of this machine has 48 physical cores with hyper-threading.
@@ -629,82 +629,17 @@ algorithm in~\cref{table:spark-vs-distributed-work-stealing}.
     \caption{
     	Total run-time of the 3-clique query for Spark's \texttt{BroadcastHashjoin} (BHJ),
     	\texttt{SortMergeJoin} (SMJ) and GraphWCOJ on LiveJournal.
-    	    	Spark uses 1152 partitions for 384 workers as recommended by the Spark documentation: https://spark.apache.org/docs/latest/tuning.html.}
+    	    	Spark uses 3 times as many partitions than cores as recommended by the Spark documentation: https://spark.apache
+    .org/docs/latest/tuning.html.}
     \label{table:spark-vs-distributed-work-stealing}
 \end{table}
 
-We note that Spark that the best configuration for Spark slower than GraphWCOJ by the factor 100.
+We note that the best configuration for Spark 100 times slower than GraphWCOJ.
 
 We show the speedup of the different queries on the LiveJournal and Orkut dataset in \cref{fig:distributed-scaling}.
 The run-times and speedup in raw numbers are given as an appendix~\cref{app:distributed-scaling}.
 We analyse the results by query and dataset.
 
-The 3-clique query scales very differently on both datasets.
-We show two plots for the 3-clique query on LiveJournal with different parameters for the work-stealing
-batch size.
-One with the batch size of 1 and one with a batch size of 40.
-We explain this choice later.
-
-On the Orkut dataset, we see similar speedup as in the local version.
-It is super-linear in the beginning up to 96 cores then the curve flattens out.
-Partly this is due to the use of hyper-threading and partly due to skew.
-
-Skew can be broken down into two components: internal executor skew and inter executor skew.
-
-Internal executor skew is defined as the different end times of the tasks running and sharing work on
-a single executor.
-There is not internal executor skew for the 3-clique query;
-all tasks on the same executor finish work in a time-span of maximal 5 microseconds.
-
-Inter executor skew is the difference between the duration of the longest-running executor and the average
-run-time of all other executors.
-We show the absolute skew in seconds and the percentage of skew in the total query run-time
-in~\cref{table:distributed-skew-orkut} for the Orkut dataset.
-
-The total skew decreases with higher levels of parallelism.
-This is because the work is equally distributed on 4 executors and with more tasks running per executor,
-the run-time difference between executor falls when there is no internal executor skew.
-
-Skew accords for 5\% to 10\% of the total query run-time with a decreasing trend for higher levels of
-parallelism.
-Although, decreasing this contributes to a flattening of the speedup curve for 128 workers and more.
-
-On the LiveJournal dataset for 3-clique, we see lower speedup.
-With a batch size of 1, it is sub-linear until 48 cores and deteriorates after.
-Again, there is no internal executor skew.
-
-During our study of inter executor skew, we noticed that the worker which takes longest can differ widely
-for different repetitions of the experiment for the same configuration.
-This is unexpected because in all of them the executors receive the same workload.
-We run the experiments with a batch size of 1 for the work-stealing algorithm.
-Therefore, we suspect contention of the work-stealing queue to be the reason speedup deterioration and
-repeat the experiment with a batch size of 40.
-
-The speedup for a batch size of 40 is weaker than using a batch size of 1 up to 48 nodes.
-With more cores, it is stronger.
-This supports our hypothesis that lock contention is a problem for higher levels of parallelism.
-The scaling is weaker for less than 64 nodes because the higher batch size leads to more skew as we see
-in~\cref{table:distributed-skew-livej}.
-% TODO use logical shares instead of shares as names in table
-This experiment shows that choosing the right batch size is not trivial for queries which have
-short running work-stealing tasks.
-When we choose it too low for the level of parallelism, the work-stealing queue becomes contended which leads
-to highly unpredictable performance.
-However, using batching immediately raises the skew in the query, which leads to lower performance on less
-than 48 cores and to suboptimal speedup with higher levels of parallelism due to skew.
-
-Due to time constraints, we run 5-clique only on the LiveJournal dataset.
-As expected we see stronger speedup than for 3-clique as there is more work to share.
-The scaling is sub-linear due to internal and inter executor skew.
-The internal executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:skew-liveJ}.
-
-The inter executor skew is shown in~\cref{table:distributed-skew-livej}.
-We see that the total and relative skew decrease with the number of workers used which is to be
-expected as explained above.
-Nevertheless, it leads to sub-optimal scaling behaviour and the total value of nearly 3 minutes
-can be quite high for a low amount of workers.
-Reducing the internal executor skew is likely to reduce the inter executor skew;
-we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-work-stealing}.
 
 \begin{figure}
     \subfloat[LiveJournal]{\includesvg[width=0.5\textwidth]{svg/distributed-scaling-livej}}
@@ -737,6 +672,118 @@ we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-wor
 
     \label{table:distributed-skew-orkut}
 \end{table}
+
+The 3-clique query scales very differently on both datasets.
+We show two plots for the 3-clique query on LiveJournal with different parameters for the work-stealing
+batch size.
+One with the batch size of 1 and one with a batch size of 40.
+We explain this choice later.
+
+On the Orkut dataset, we see similar speedup as in the local version.
+It is super-linear in the beginning up to 96 cores then the curve flattens out.
+Partly this is due to the use of hyper-threading and partly due to skew.
+
+Skew can be broken down into two components: internal executor skew and inter executor skew.
+
+Internal executor skew is defined as the different end times of the tasks running and sharing work on
+a single executor.
+There is no internal executor skew for the 3-clique query;
+all tasks on the same executor finish work in a time-span of maximal 5 microseconds.
+
+Inter executor skew is the difference between the duration of the longest-running executor and the average
+run-time of all other executors.
+We show the absolute skew in seconds and the percentage of skew in the total query run-time
+in~\cref{table:distributed-skew-orkut} for the Orkut dataset.
+
+The total skew decreases with higher levels of parallelism.
+This is because the work is equally distributed on 4 executors and with more tasks running per executor,
+the run-time difference between executor falls when there is no internal executor skew.
+
+Skew accords for 5\% to 10\% of the total query run-time with a decreasing trend for higher levels of
+parallelism.
+Although, decreasing this contributes to a flattening of the speedup curve for 128 workers and more.
+
+On the LiveJournal dataset for 3-clique, we see lower speedup.
+With a batch size of 1, it is sub-linear until 48 cores and deteriorates after.
+Again, there is no internal executor skew.
+
+During our study of inter executor skew, we noticed that the worker which takes longest can differ widely
+for different repetitions of the experiment for the same configuration.
+This is unexpected because in all of them the executors receive the same workload.
+We run the experiments with a batch size of 1 for the work-stealing algorithm.
+Therefore, we suspect contention of the work-stealing queue to be the reason speedup deterioration and
+repeat the experiment with a batch size of 40.
+
+The speedup for a batch size of 40 is weaker than using a batch size of 1 up to 48 nodes.
+With more cores, it is stronger.
+This supports our hypothesis that lock contention is a problem for higher levels of parallelism.
+The scaling is weaker for less than 64 nodes because the higher batch size leads to more skew as we see
+in~\cref{table:distributed-skew-livej}.
+
+This experiment shows that choosing the right batch size is not trivial for queries which have
+short running work-stealing tasks.
+When we choose it too low for the level of parallelism, the work-stealing queue becomes contended which leads
+to highly unpredictable performance.
+However, using batching raises the skew in the query, which leads to lower performance on less
+than 48 cores and to suboptimal speedup with higher levels of parallelism due to skew.
+
+We first discuss the 5-clique query on the LiveJournal.
+As expected we see stronger speedup than for 3-clique as there is more work to share.
+The scaling is sub-linear due to internal and inter executor skew.
+The internal executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:skew-liveJ}.
+
+The total skew is shown in~\cref{table:distributed-skew-livej}.
+We see that the total and relative skew decrease with the number of workers used which is to be
+expected as explained above.
+Nevertheless, it leads to sub-optimal scaling behaviour and the total value of nearly 3 minutes
+can be quite high for a low amount of workers.
+Reducing the internal executor skew is likely to reduce the inter executor skew;
+we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-work-stealing}.
+
+The 5-clique query run on the Orkut dataset scales less well than the 3-clique query due
+to much higher intra and inter executor skew.
+Again the intra executor skew is similar to the skew in the local experiment~(see \cref{table:skew-orkut}).
+The total skew is displayed in~\cref{table:distributed-skew-orkut}.
+
+We compare the speedup of the distributed work-stealing version against the speedup of the local
+work-stealing version in~\cref{table:local-vs-distributed}.
+The performance of the distributed version is strongly dataset and query dependent.
+The 3-clique query on Orkut and 5-clique query on LiveJournal scale better than in the
+local version;
+in particular, for high levels of parallelism.
+This is most likely because no hyper-threading is used in the distributed version
+up to 192 tasks, while the local version uses hyper-threading for more than 48 tasks.
+
+The 5-clique query on Orkut shows roughly half the speedup up to 48 workers then the difference
+in speedup decreases due to the use of virtual cores in the local version.
+
+The distributed version lacks behind for the 3-clique query on LiveJournal independent on
+the batch size chosen.
+
+\begin{table}
+    \centering
+\begin{tabular}{lllrrrrr}
+\toprule
+Dataset & Query & Version & 16 & 32 & 48 & 64 & 96 \\\midrule
+\multirow{4}{*}{LiveJournal}  & \multirow{2}{*}{3-clique} & local & 19.6  & 36.7 & 50.0 & 54.7 & 61.3 \\
+& & distributed & 13.7 & 27.1 & 34.7 & 24.3 & 41.1 \\
+\cline{2-8}
+& \multirow{2}{*}{5-clique} & local & 14.3 & 28.3 & 40.3 & 44.1 & 48.7 \\
+& &  distributed &  17.4 & 29.2& 37.5 & 46.7 & 62.7\\\hline
+\multirow{4}{*}{Orkut}  & \multirow{2}{*}{3-clique} & local & 18.8  & 36.9 & 54.0 & 58.0 & 69.6 \\
+& & distributed & 19.2 & 38.5 & 55.5 & 71.8 & 98.6 \\
+\cline{2-8}
+& \multirow{2}{*}{5-clique} & local & 14.3 & 28.1 & 35.2 & 31.6 &  29.8 \\
+& &  distributed & 7.1 & 13.2 & 19.1 & 25.9 & 36.8\\
+    \bottomrule
+\end{tabular}
+    \caption{Speedup of local and distributed work-stealing version on different queries and datasets.
+      For 3-clique on LiveJournal with the distributed version, we report the speedup of batch size 1.
+    }
+    \label{table:local-vs-distributed}
+\end{table}
+
+
 
 
 % comparison against other work
