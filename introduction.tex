@@ -381,7 +381,7 @@ Therefore, we can answer many graph pattern matching queries without shuffling d
 We explain the integration of replicated edge relationships into Spark in~\cref{subsec:spark-integration-graphWCOJ} and introduce
 the necessary background in~\cref{subsubsec:broadcast-variables}.
 
-Furthermore, such reuse helps to amortize the none trivial setup costs for worst-case optimal joins;
+Furthermore, such reuse helps to amortize the non-trivial setup costs for worst-case optimal joins;
 they require their input data to be sorted.
 
 Finally, a replicated data structure allows us to use dynamic work-sharing schemes as work-stealing cheaply without relocating
@@ -406,7 +406,7 @@ $\mathcal{O} (\log N)$.
 Furthermore, it mainly uses intersections to compute the join.
 The algorithm is explained in detail in~\cref{subsubsec:leapfrog-triejoin}.
 
-We specialize the Leapfrog Triejoin to graph pattern matching by introducing a compressed sparse row representation~(\textsc{CSR}, dsee
+We specialize the Leapfrog Triejoin to graph pattern matching by introducing a compressed sparse row representation~(\textsc{CSR}, see
 \cref{subsec:csr-background}) as backing data structure for the input relationships.
 \textsc{CSR} can compress the graph edge relationship by a compression factor of nearly 2.
 Additionally, we show that it speeds up the \textsc{WCOJ} execution to be backed by a \textsc{CSR} because this representation

@@ -274,7 +274,7 @@ The \textit{leapfrogNext} method of this decorator returns only values that are 
 Our integration of work-stealing in Spark comes with some limitations.
 We see it more as a proof-of-concept that work-stealing is a good choice for the parallelization of worst-case optimal joins in Spark than
 as a solid implementation of work-stealing in Spark.
-The later is not possible within the time-frame of this thesis.
+The latter is not possible within the time-frame of this thesis.
 In the following, we discuss the constraints of our integration.
 
 Work-stealing leads to an unforeseeable partitioning of the results: it is not possible to foresee which bindings end up in a certain
@@ -340,7 +340,7 @@ We distribute work-stealing in Spark by partitioning the work queue over all exe
 number of tasks assigned on each of them.
 This approach has two drawbacks.
 
-First, we use the barrier mode which requires Spark to find as enough available resources to schedule all tasks at the same time.
+First, we use the barrier mode which requires Spark to find enough available resources to schedule all tasks at the same time.
 This is not a huge issue in our experiments where we run one join at the time.
 However, it could be difficult to find enough open spots in a busy production cluster.
 In particular, if it runs workloads with many small tasks.
@@ -352,7 +352,7 @@ $t$ the number of tasks to each of them.
 Then tasks that are scheduled on the same worker could detect each other dynamically via a shared data structure and share work.
 However, this design is not recommendable because it cannot be determined when a single task should finish and return its resources as
 it cannot check if other tasks have not been scheduled yet.
-Therefore, each task would terminate once it finishes its list and cannot find a \textit{currently} collocated task.
+Therefore, each task would terminate once it finishes its list and cannot find a \textit{currently} co-located task.
 This leads to a situation where we could end up with highly suboptimal work-stealing when the tasks run one after another and do not
 share work at all.
 To summarize, this design makes work-stealing highly dependent on Spark's scheduler where no parallelism can be guaranteed.

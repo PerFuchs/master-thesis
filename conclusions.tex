@@ -1,7 +1,7 @@
 \section{Conclusions} \label{sec:conclusions}
 
 First, we summarize the answers to our research questions outlined in~\cref{subsec:research-questions-and-contributions}.
-Then, we explain to areas of future work: finer-grained work-stealing and possibilities for inter executor work-stealing in Spark.
+Then, we explain two areas of future work: finer-grained work-stealing and possibilities for inter executor work-stealing in Spark.
 
 The first research question is if we can gain performance by specializing \textsc{LFTJ} to graphs.
 We explored two possibilities: to use \textsc{CSR} to store the graphs edge relationship and to find a more suitable
@@ -16,7 +16,7 @@ Therefore, multiple binary intersections driven by the small intermediary result
 the original Leapfrog Triejoin paper~\cite{lftj}.
 Again, dense queries can profit while sparse queries show no difference or become slower.
 
-The slow down in sparse queries is likely caused by our second attempted specialization, namely materializing the intersections in
+The slow-down in sparse queries is likely caused by our second attempted specialization, namely materializing the intersections in
 hope for better use of the processor cache.
 We can not measure any difference in cache use.
 Hence, this optimization is not worth-while.

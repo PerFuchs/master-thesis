@@ -209,7 +209,7 @@ For simplicity, we do not use two different thresholds for \textsc{LFTJ} in any 
 
 From this experiment, we conclude that the optimal threshold for \textsc{LFTJ} is 200 and 800
 for GraphWCOJ.
-We choose 800 for GraphWCOJ because it is on the safe site:
+We choose 800 for GraphWCOJ because it is on the safe side:
 a binary search performance degrades less than the one of a linear search.
 We set these values accordingly in all further experiments.
 
@@ -239,7 +239,7 @@ We assume that Spark can optimize its broadcasts when \texttt{local[1]} is used 
 We point out that Spark's code generation is a huge advantage for the \texttt{BroadcastHashjoin} compared
 to our interpreted \textsc{LFTJ}.
 We ran Spark without code generation for comparision on the Amazon-0302 dataset for the triangle
-query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds without 14 and 16 seconds.
+query and 5-clique: with code generation Spark takes 3.1 and 4.2 seconds, and without 14 and 16 seconds.
 
 We show our results in~\cref{fig:spark-vs-lftj}.
 Next, we analyze the results.
@@ -266,7 +266,7 @@ Most likely since a Kite is two triangles back-to-back.
 The path query shows very different behaviour on the Amazon and the SNB datasets.
 This might be due to the different selectivity; it is extremely high on the co-purchase datasets and rather low on the social network
 benchmark.
-This different in selectivity is not surprising given that the SNB network fulfils the small-world property, while the
+This difference in selectivity is not surprising given that the SNB network fulfils the small-world property, while the
 Amazon dataset relates products purchased together which naturally leads to multiple loosely connected components.
 
 Finally, we observe that all three datasets lead to quite different results which are most likely not comparable to each other without deeper research
@@ -420,7 +420,7 @@ partitioning schemes.
 Towards this goal, we run Graph\textsc{WCOJ} on datasets of different size namely Twitter,
 LiveJournal and Orkut.
 We compare two partitioning schemes: Shares and work-stealing.
-These are the two most promising schemed identified in \cref{sec:worst-case-optimal-join-parallelization}.
+These are the two most promising schemes identified in \cref{sec:worst-case-optimal-join-parallelization}.
 The experiment is performed on 3-clique, 4-clique and 5-clique.
 3-clique is the smallest of our queries.
 Therefore, it is most difficult to scale.
@@ -484,7 +484,7 @@ For 5-clique, \textit{work-stealing} exhibits near-linear scaling up to 48 worke
 clique-3 reaches the maximum speedup of 6.22 for 8 workers.
 The highest speedup for 5-clique is 45 on 96 workers; clique-3 reaches its highest speedup
 with 13.2 on 64 workers.
-Shares lacks behind in scaling for both queries and all levels of parallelism.
+Shares lags behind in scaling for both queries and all levels of parallelism.
 The best-observed speedup is 21.3 for 5-clique and 96 workers.
 
 We note that the 3-clique query does not scale well because there is not enough work.
@@ -684,11 +684,11 @@ On the Orkut dataset, we see similar speedup as in the local version.
 It is super-linear in the beginning up to 96 cores then the curve flattens out.
 Partly this is due to the use of hyper-threading and partly due to skew.
 
-Skew can be broken down into two components: internal executor skew and inter executor skew.
+Skew can be broken down into two components: intra executor skew and inter executor skew.
 
-Internal executor skew is defined as the different end times of the tasks running and sharing work on
+Intra executor skew is defined as the different end times of the tasks running and sharing work on
 a single executor.
-There is no internal executor skew for the 3-clique query;
+There is no intra executor skew for the 3-clique query;
 all tasks on the same executor finish work in a time-span of maximal 5 microseconds.
 
 Inter executor skew is the difference between the duration of the longest-running executor and the average
@@ -698,7 +698,7 @@ in~\cref{table:distributed-skew-orkut} for the Orkut dataset.
 
 The total skew decreases with higher levels of parallelism.
 This is because the work is equally distributed on 4 executors and with more tasks running per executor,
-the run-time difference between executor falls when there is no internal executor skew.
+the run-time difference between executor falls when there is no intra executor skew.
 
 Skew accords for 5\% to 10\% of the total query run-time with a decreasing trend for higher levels of
 parallelism.
@@ -706,7 +706,7 @@ Although, decreasing this contributes to a flattening of the speedup curve for 1
 
 On the LiveJournal dataset for 3-clique, we see lower speedup.
 With a batch size of 1, it is sub-linear until 48 cores and deteriorates after.
-Again, there is no internal executor skew.
+Again, there is no intra executor skew.
 
 During our study of inter executor skew, we noticed that the worker which takes longest can differ widely
 for different repetitions of the experiment for the same configuration.
@@ -730,16 +730,16 @@ than 48 cores and to suboptimal speedup with higher levels of parallelism due to
 
 We first discuss the 5-clique query on the LiveJournal.
 As expected we see stronger speedup than for 3-clique as there is more work to share.
-The scaling is sub-linear due to internal and inter executor skew.
-The internal executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:skew-liveJ}.
+The scaling is sub-linear due to intra and inter executor skew.
+The intra executor skew is similar to the skew displayed for our local mode experiment in~\cref{table:skew-liveJ}.
 
 The total skew is shown in~\cref{table:distributed-skew-livej}.
 We see that the total and relative skew decrease with the number of workers used which is to be
 expected as explained above.
 Nevertheless, it leads to sub-optimal scaling behaviour and the total value of nearly 3 minutes
 can be quite high for a low amount of workers.
-Reducing the internal executor skew is likely to reduce the inter executor skew;
-we outline a solution for the internal skew in~\cref{subsubsec:finer-grained-work-stealing}.
+Reducing the intra executor skew is likely to reduce the inter executor skew;
+we outline a solution for the intra skew in~\cref{subsubsec:finer-grained-work-stealing}.
 
 The 5-clique query run on the Orkut dataset scales less well than the 3-clique query due
 to much higher intra and inter executor skew.

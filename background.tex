@@ -9,7 +9,7 @@ system, called Myria.
 There implementation uses a communication optimal, physical partitioning scheme named
 Shares.
 We also analyse its scaling behaviour for graph-pattern matching.
-This analysis is a contribution of us, although it is presented in the background section.
+This analysis is a contribution of this thesis, although it is presented in the background section.
 Fourth, we explain the compressed sparse row data structure.
 Finally, we present a study of real-world graph sizes used in literature assembled by us to
 show that most graphs used today fit into main-memory.
@@ -55,7 +55,7 @@ in parallel.
 For example, one might choose a round-robin partitioning to generate splits of equal size when reading data items from disk or one
 groups items by hashing a specific key to support parallelizable aggregation on that key per partition.
 The process of repartitioning an RDD is called a \textit{shuffle}.
-It is an expensive operation because it involves writing and reading the whole RDD to disk.
+It is an expensive operation because it typically involves writing and reading the whole RDD to disk.
 
 Describing datasets as RDDs comes with two main benefits.
 First, it is resilient because if the dataset or some partitions of it get lost, it is possible to recompute them from persistent storage
@@ -69,7 +69,7 @@ Second, by task parallelism, because some parts of the DAG can be computed witho
 Indeed, it is possible to compute all parts of an RDD in parallel which are not related in a topological sort of the graph.
 
 \subsubsection{Spark architecture} \label{subsubsec:spark-architecture}
-Spark allows the user to run a program on a single machine or hundreds of machines organized in a cluster.
+Spark allows the user to run a program on a single machine or hundredsco of machines organized in a cluster.
 In this section, we explain the architecture that allows this flexibility.
 \Cref{fig:spark-cluster} shows the schematics of a Spark cluster setup.
 
@@ -325,7 +325,7 @@ The process can be thought of as a backtracking, depth-first search for possible
 
 The algorithms implemented in this thesis can process joins of the full conjunctive fragment of first-order logic or conjunctive
 equijoin in relational algebra terms.
-Possible extentsions to disjunctions, ranges (none-equi joins), negation, projection, functions and scalar operations on join variables are
+Possible extentsions to disjunctions, ranges (non-equi joins), negation, projection, functions and scalar operations on join variables are
 explained in the original Leapfrog Triejoin paper~\cite{lftj}.
 However, they are not relevant to the core of this work because many interesting graph patterns can be answered using the full conjunctive
 fragment, e.g. cliques or cycles.
@@ -619,9 +619,9 @@ First, the size of the adjacency lists.
 Second, the number of intermediate matches.
 The concept of intermediate matches is best understood by a simple example;
 we see the tailed-triangle query in~\cref{fig:tailed-triangle}.
-Two very different vertice ordering categories exist for this query.
+Two very different vertex ordering categories exist for this query.
 The ones that start on $v_4$ and find all 2-paths of the graph;
-and vertice orderings that start with $v_1, v_2, v_3$ in any order which closes the triangle first.
+and vertex orderings that start with $v_1, v_2, v_3$ in any order which closes the triangle first.
 Clearly, there are more 2-paths in any graph than triangles.
 Hence, the second category produces far less intermediate matches.
 

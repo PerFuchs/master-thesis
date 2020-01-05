@@ -55,7 +55,7 @@ In each round, they bind one variable.
 So each round takes the prefixes as input and fixes one more binding.
 
 A single round starts with all prefixes from the former round distributed among all workers arbitrarily.
-Then they find join relation that offers the smallest set of extensions for each prefix.
+Then they find join relations that offers the smallest set of extensions for each prefix.
 This is done in steps with one step per relationship.
 In each step, the prefix is sent to a worker by the hash of the attributes bound in the relationship of that step.
 When the relationship offers less possible values for the new binding then the current minimum, i.e. the size of its matching adjacency
@@ -96,8 +96,8 @@ Additionally, it would be hard to define a good user interface over a batched qu
 
 \textsc{GraphWCOJ} does not require batching because it only processes at most as many prefixes as workers in the system in parallel.
 Therefore, we do not have the problem of memory pressure to remember prefixes.
-This is because the \textsc{LFTJ} algorithm is a none materialized representation of the join.
-When the Leapfrog Triejoin is executed, it changes its state such that the state always represents the none materialized
+This is because the \textsc{LFTJ} algorithm is a non-materialized representation of the join.
+When the Leapfrog Triejoin is executed, it changes its state such that the state always represents the non-materialized
 part of the join;
 the state is encoded in the positions of the \textit{TrieIterators}.
 In other words, the \textsc{LFTJ} performs a depth-first search of all possible bindings while the \textit{BigJoin}
@@ -132,7 +132,7 @@ Then we have the likelihood that a tuple is not assigned given by $\mathcal{B} (
 so the fraction of the indices assigned to each worker is $1 - \mathcal{B} (V, 0, \frac{1}{w})$.
 
 We plot this function for different numbers of workers and variables in~\cref{fig:big-join-indices}.
-The split of the indices hold by each worker decreases drastically with the numbers of workers in
+The split of the indices held by each worker decreases drastically with the numbers of workers in
 the system.
 Hence, this partitioning scheme scales relatively well.
 
@@ -283,7 +283,7 @@ It is simpler than work-stealing but less resilient to skew.
 However, they come to the same conclusions, namely that fully replicating is the preferred strategy
 when the graph fits into main memory and that Shares is not a good strategy for graph pattern matching.
 
-\subsection{Fractal a graph pattern mining system on Spark} \label{subsec:fractal}
+\subsection{Fractal: a graph pattern mining system on Spark} \label{subsec:fractal}
 Fractal is a general-purpose graph pattern mining system built on top of Spark published at SIGMOD'19~\cite{fractal}.
 We first describe the relevant aspects of their system.
 Then we compare it to our approach.
