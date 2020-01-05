@@ -131,7 +131,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
       para_levels = parallelism_levels_5_clique_workstealing
     for i, s in enumerate(v):
       p = para_levels[i]
-      time = median["total_time"][pa if p != 1 else "AllTuples"][q][p] / 1000
+      time = median["total_time"][pa if p != 1 else "AllTuples"][q][p] / 60000
       rows.append([partitioning_names[pa], q, p, time, s])
 
   table = pd.DataFrame(rows, columns=("Partitioning", "Query", "Parallelism", "Time", "Speedup"))
