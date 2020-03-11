@@ -84,5 +84,5 @@ display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon060
 data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-snb1.csv"))
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-snb.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path"], False, "spark-wcoj-snb.svg")
-display_data(data, ["house", "diamond", "4-cycle", "4-0.00-path"], False, "spark-wcoj-snb-long.svg")
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], False, "spark-wcoj-snb.svg")
+display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-snb-long.svg")
