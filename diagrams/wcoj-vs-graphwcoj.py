@@ -45,7 +45,7 @@ def display_data(data, queries, annotate_speedup, output_name):
   algs_offset = {"WCOJ": -width, "GraphWCOJ": width, "NoMat": 0}
   algs_labels = {
     "WCOJ": "LFTJ",
-    "NoMat": "GraphWCOC w/o materialization",
+    "NoMat": "LFTJ + CSR",
     "GraphWCOJ": "GraphWCOJ"
   }
 
