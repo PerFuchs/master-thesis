@@ -15,7 +15,18 @@ partitioning_names = {
 }
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=16)
+plt.rc('font', family='serif', size=19)
+
+linewidth = 1.1
+plt.rc('grid', linewidth=linewidth)
+import pprint
+# pprint.pprint(plt., indent=2)
+plt.rc("errorbar", capsize=3)
+plt.rcParams['lines.markersize'] = 8
+plt.rcParams['lines.linewidth'] = linewidth + 1
+plt.rcParams["xtick.major.width"] = linewidth
+plt.rcParams["ytick.major.width"] = linewidth
+# plt.rc('xtick', width=0.8)
 
 QUERY_ORDER = ["3-0.00-path", "3-clique", "kite", "4-clique", "house", "5-clique", "4-cycle", "diamond", "5-cycle"]
 
