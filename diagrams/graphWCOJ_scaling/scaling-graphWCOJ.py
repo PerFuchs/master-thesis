@@ -70,7 +70,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
           marker=markers[q]
         )
 
-  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color="C7")[0]
+  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color="C7", linestyle="--")[0]
 
   legend = OrderedDict()
   legend["linear"] = linear_plot
@@ -81,13 +81,14 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
     legend[q] = Line2D([0], [0], marker=markers[q], color='w', markerfacecolor='black')
 
 
-  plt.legend(list(legend.values()), list(legend.keys()))
+  plt.legend(list(legend.values()), list(legend.keys()), fontsize=15)
   plt.xticks(list(filter(lambda p: p != 2, parallelism_levels)))
 
-  plt.xlabel("\\# Workers")
+  plt.xlabel("Total number of threads")
   plt.ylabel("Speedup")
 
   plt.grid(axis="y")
+
 
   plt.tight_layout()
   if OUTPUT:
@@ -157,5 +158,5 @@ def replace_workstealing_3(data, new_data_path):
   return data
 
 output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-orkut.svg")
-output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-livej.svg")
-output_table_and_graph(DATASET_TWITTER, [1, 2, 4, 8, 16, 32, 48, 64, 96], [1, 2, 4, 8, 16, 32, 48, 64, 96], "graphWCOJ-scaling-twitter.svg")
+# output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-livej.svg")
+# output_table_and_graph(DATASET_TWITTER, [1, 2, 4, 8, 16, 32, 48, 64, 96], [1, 2, 4, 8, 16, 32, 48, 64, 96], "graphWCOJ-scaling-twitter.svg")

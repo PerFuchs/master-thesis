@@ -61,7 +61,7 @@ def output_scaling_graph(data, output_path):
           marker=markers[q]
         )
 
-  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color=colors["linear"])[0]
+  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color=colors["linear"], linestyle="--")[0]
 
   legend = OrderedDict()
   legend["linear"] = linear_plot
@@ -124,7 +124,7 @@ def output_skew_graph(data, output_path):
 
   plt.xticks(list(filter(lambda p: p != 2, parallelism_levels)))
 
-  plt.xlabel("\\# Workers")
+  plt.xlabel("Total number of threads")
   plt.ylabel("Skew")
 
   plt.grid(axis="y")

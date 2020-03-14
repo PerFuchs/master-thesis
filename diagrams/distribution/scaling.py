@@ -88,7 +88,7 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
           marker=markers[q]
         )
 
-  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color="C7")[0]
+  linear_plot = plt.plot(parallelism_levels, parallelism_levels, color="C7", linestyle="--")[0]
 
   legend_labels = {
     (WORKSTEALING, "3-clique"): "3-clique",
@@ -108,10 +108,10 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
   #   legend[q] = Line2D([0], [0], marker=markers[q], color='w', markerfacecolor='black')
 
 
-  plt.legend(list(legend.values()), list(legend.keys()))
+  # plt.legend(list(legend.values()), list(legend.keys()))
   plt.xticks(list(filter(lambda p: p != 2 and p != 32 and p != 64, parallelism_levels)))
 
-  plt.xlabel("\\# Workers")
+  plt.xlabel("Total number of threads")
   plt.ylabel("Speedup")
 
   plt.grid(axis="y")
@@ -163,4 +163,4 @@ DATASET_LIVEJ = DATASET_FOLDER + "final/distributed/liveJ.csv"
 
 output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 48, 64, 96, 128, 192, 384], "distributed-scaling-orkut.svg")
 
-data = output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96, 128, 192, 384], "distributed-scaling-livej.svg")
+# data = output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96, 128, 192, 384], "distributed-scaling-livej.svg")

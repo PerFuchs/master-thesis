@@ -20,7 +20,7 @@ def read_dataset(dataset_path):
   return data
 
 
-def display_data(data, queries, annotate_speedup, output_name):
+def display_data(data, queries, annotate_speedup, output_name, legend):
   grouped = data.groupby(["Algorithm", "Query"])
   mean = grouped.median().round(2)
   error = grouped.std()
@@ -53,10 +53,10 @@ def display_data(data, queries, annotate_speedup, output_name):
     for i, l in enumerate(speedup):
       ax.annotate('%.1f' % speedup[i], xy = (x[i] + width + 0.2, times["WCOJ"][i]
                                              + (times["BroadcastHashJoin"][i] - times["WCOJ"][i]) / 2))
-
-  plt.legend()
-  plt.xticks(x, queries, rotation=45)
-  plt.ylabel("runtime time [s]")
+  if legend:
+    plt.legend()
+  plt.xticks(x, list(map(lambda s: s.capitalize(), queries)), rotation=45)
+  plt.ylabel("Query runtime [s]")
 
   plt.grid(axis="y")
 
@@ -68,21 +68,21 @@ def display_data(data, queries, annotate_speedup, output_name):
   plt.show()
 
 
-data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv")
-data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon.csv"))
-data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon.svg")
-display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon-long.svg")
-
-
-data = read_dataset(DATASET_FOLDER + "final/sequential/amazon0601-wcoj-graphwcoj.csv")
-data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon0601.csv"))
-data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon0601.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon0601.svg")
-display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon0601-long.svg")
+# data = read_dataset(DATASET_FOLDER + "final/sequential/amazon-wcoj-graphwcoj.csv")
+# data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon.csv"))
+# data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon.csv"), sort=False)
+# display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon.svg")
+# display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon-long.svg")
+#
+#
+# data = read_dataset(DATASET_FOLDER + "final/sequential/amazon0601-wcoj-graphwcoj.csv")
+# data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-amazon0601.csv"))
+# data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-amazon0601.csv"), sort=False)
+# display_data(data, ["3-clique", "4-clique", "5-clique", "kite", "3-0.00-path", "4-0.00-path"], False, "spark-wcoj-amazon0601.svg")
+# display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-amazon0601-long.svg")
 
 data = read_dataset(DATASET_FOLDER + "final/sequential/snb-wcoj-graphwcoj.csv")
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/spark-snb1.csv"))
 data = data.append(read_dataset(DATASET_FOLDER + "final/sequential/paths-snb.csv"), sort=False)
-display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], False, "spark-wcoj-snb.svg")
-display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-snb-long.svg")
+display_data(data, ["3-clique", "4-clique", "5-clique", "kite"], False, "spark-wcoj-snb.svg", True)
+display_data(data, ["house", "diamond", "4-cycle"], False, "spark-wcoj-snb-long.svg", False)
