@@ -19,9 +19,10 @@ a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), densit
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.ylabel("CDF")
 
 plt.tight_layout()
-plt.savefig(FIGURE_PATH + "/intersections/total.png")
+plt.savefig(FIGURE_PATH + "/intersections/total.svg")
 plt.show()
 
 project = data[["smallestIterator"]]
@@ -29,9 +30,10 @@ a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), densit
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.ylabel("CDF")
 
 plt.tight_layout()
-plt.savefig(FIGURE_PATH + "/intersections/smallest.png")
+plt.savefig(FIGURE_PATH + "/intersections/smallest.svg")
 plt.show()
 
 
@@ -40,7 +42,8 @@ a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), densit
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.ylabel("CDF")
 
 plt.tight_layout()
-plt.savefig(FIGURE_PATH + "/intersections/smallest-biggest.png")
+plt.savefig(FIGURE_PATH + "/intersections/smallest-biggest.svg")
 plt.show()
