@@ -22,7 +22,7 @@ def output_scaling_graph(data, output_path):
   grouped = data.groupby(["partitioning_base", "Query", "Parallelism"])
   queries = ["3-clique"]
 
-  partitionings = ["Shares", "SharesRange", "SharesRangeMulti", "1-variable", "2-variable"]
+  partitionings = ["Shares", "1-variable", "2-variable"]
 
   parallelism_levels = [1, 4, 8, 16, 32, 48]
   parallelism_levels.sort()
