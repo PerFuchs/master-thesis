@@ -15,10 +15,11 @@ print("Smallest with any (biggest) max: ", max(data["smallestIteratorBiggest"]))
 
 
 project = data[["total"]]
-a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), density=True, cumulative=True)
+a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 201, 1)), density=True, cumulative=True)
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.xlim(0, 200)
 plt.ylabel("CDF")
 
 plt.tight_layout()
@@ -26,10 +27,11 @@ plt.savefig(FIGURE_PATH + "/intersections/total.svg")
 plt.show()
 
 project = data[["smallestIterator"]]
-a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), density=True, cumulative=True)
+a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 201, 1)), density=True, cumulative=True)
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.xlim(0, 200)
 plt.ylabel("CDF")
 
 plt.tight_layout()
@@ -38,10 +40,11 @@ plt.show()
 
 
 project = data[["smallestIteratorBiggest"]]
-a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 200, 1)), density=True, cumulative=True)
+a = project.plot.hist(histtype="stepfilled", bins=list(range(0, 201, 1)), density=True, cumulative=True)
 
 a.legend().remove()
 plt.xlabel("Size")
+plt.xlim(0, 200)
 plt.ylabel("CDF")
 
 plt.tight_layout()

@@ -32,6 +32,8 @@ def output_table_and_graph(dataset_path, parallelism_levels_5_clique_workstealin
 
   parallelism_levels = list(set(data["Parallelism"]))
   parallelism_levels.sort()
+  parallelism_levels.remove(64)
+  parallelism_levels.remove(96)
 
   median = grouped.median()
 
@@ -157,6 +159,6 @@ def replace_workstealing_3(data, new_data_path):
 
   return data
 
-output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-orkut.svg")
+output_table_and_graph(DATASET_ORKUT, [1, 16, 32, 48], [1, 16, 32, 48], "graphWCOJ-scaling-orkut.svg")
 # output_table_and_graph(DATASET_LIVEJ, [1, 16, 32, 48, 64, 96], [1, 16, 32, 48, 64, 96], "graphWCOJ-scaling-livej.svg")
 # output_table_and_graph(DATASET_TWITTER, [1, 2, 4, 8, 16, 32, 48, 64, 96], [1, 2, 4, 8, 16, 32, 48, 64, 96], "graphWCOJ-scaling-twitter.svg")
